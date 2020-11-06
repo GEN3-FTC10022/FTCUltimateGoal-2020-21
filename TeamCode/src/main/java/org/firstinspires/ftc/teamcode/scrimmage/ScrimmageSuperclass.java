@@ -64,7 +64,7 @@ public abstract class ScrimmageSuperclass extends LinearOpMode {
     // Drive Methods
     public void forward(double pow, double inches) {
 
-        double target = inches * DRIVE_TICKS_PER_INCH * (5.15/6);
+        double target = inches * DRIVE_TICKS_PER_INCH;
 
         if (opModeIsActive()) {
 
@@ -75,7 +75,6 @@ public abstract class ScrimmageSuperclass extends LinearOpMode {
             setDriveMode();
 
             while (opModeIsActive() && driveIsBusy()) {
-
                 setDrivePower(pow);
             }
 
@@ -84,10 +83,9 @@ public abstract class ScrimmageSuperclass extends LinearOpMode {
         }
     }
 
-      // is this what you want 
     public void backward(double pow, double inches) {
 
-        double target = inches * DRIVE_TICKS_PER_INCH * (5.15/6);
+        double target = inches * DRIVE_TICKS_PER_INCH;
 
         if (opModeIsActive()) {
 
@@ -98,14 +96,76 @@ public abstract class ScrimmageSuperclass extends LinearOpMode {
             setDriveMode();
 
             while (opModeIsActive() && driveIsBusy()) {
-
                 setDrivePower(pow);
             }
 
             setDrivePower(0);
             resetDriveMode();
         }
-    } 
+    }
+
+    public void strafeRight(double pow, double inches) {
+
+        double target = inches * DRIVE_TICKS_PER_INCH;
+
+        if (opModeIsActive()) {
+
+            resetDriveEncoders();
+            setDriveTarget(target,
+                    1, -1,
+                    -1, 1);
+            setDriveMode();
+
+            while (opModeIsActive() && driveIsBusy()) {
+                setDrivePower(pow);
+            }
+
+            setDrivePower(0);
+            resetDriveMode();
+        }
+    }
+
+    public void strafeLeft(double pow, double inches) {
+
+        double target = inches * DRIVE_TICKS_PER_INCH;
+
+        if (opModeIsActive()) {
+
+            resetDriveEncoders();
+            setDriveTarget(target,
+                    -1, 1,
+                    1, -1);
+            setDriveMode();
+
+            while (opModeIsActive() && driveIsBusy()) {
+                setDrivePower(pow);
+            }
+
+            setDrivePower(0);
+            resetDriveMode();
+        }
+    }
+
+    public void rotateRight(double pow, double angle) {
+
+        double target = angle * DRIVE_TICKS_PER_DEGREE;
+
+        if (opModeIsActive()) {
+
+            resetDriveEncoders();
+            setDriveTarget(target,
+                    1, -1,
+                    1, -1);
+            setDriveMode();
+
+            while (opModeIsActive() && driveIsBusy()) {
+                setDrivePower(pow);
+            }
+
+            setDrivePower(0);
+            resetDriveMode();
+        }
+    }
 
     public void rotateLeft(double pow, double angle) {
 
@@ -128,27 +188,6 @@ public abstract class ScrimmageSuperclass extends LinearOpMode {
         }
     }
 
-   // is this good 
-    public void rotateRight(double pow, double angle) {
-
-        double target = angle * DRIVE_TICKS_PER_DEGREE;
-
-        if (opModeIsActive()) {
-
-            resetDriveEncoders();
-            setDriveTarget(target,
-                    1, -1,
-                    1, -1);
-            setDriveMode();
-
-            while (opModeIsActive() && driveIsBusy()) {
-                setDrivePower(pow);
-            }
-
-            setDrivePower(0);
-            resetDriveMode();
-        }
-    }
     // UTILITY METHODS -----------------------------------------------------------------------------
 
     // Drivetrain
