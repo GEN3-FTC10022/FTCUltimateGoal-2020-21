@@ -1,9 +1,16 @@
 package org.firstinspires.ftc.teamcode.scrimmage;
 
+import android.graphics.Bitmap;
+import android.graphics.Color;
+import android.os.Environment;
+
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.vuforia.Image;
+import com.vuforia.PIXEL_FORMAT;
+import com.vuforia.Vuforia;
 
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
@@ -16,9 +23,14 @@ import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackable;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackableDefaultListener;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import static android.graphics.Bitmap.createBitmap;
+import static android.graphics.Bitmap.createScaledBitmap;
 import static org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer.CameraDirection.BACK;
 
 public abstract class ScrimmageSuperclass extends LinearOpMode {
@@ -68,6 +80,9 @@ public abstract class ScrimmageSuperclass extends LinearOpMode {
     VuforiaTrackables targetsUltimateGoal;
 
     List<VuforiaTrackable> allTrackables;
+
+    public Image rgbImage = null;
+    public VuforiaLocalizer.CloseableFrame closeableFrame = null;
 
     // CONTROL CONSTANTS ---------------------------------------------------------------------------
 
@@ -270,7 +285,7 @@ public abstract class ScrimmageSuperclass extends LinearOpMode {
     }
 
     // Vision Methods
-    public void vuforiaScan() {
+    public void vuforiaScanTarget() {
 
         // Note: To use the remote camera preview:
         // AFTER you hit Init on the Driver Station, use the "options menu" to select "Camera Stream"
@@ -296,6 +311,158 @@ public abstract class ScrimmageSuperclass extends LinearOpMode {
 
         // Disable Tracking when we are done;
         targetsUltimateGoal.deactivate();
+    }
+
+    public void vuforiaScanPixel(boolean saveBitmap) {
+
+        Vuforia.setFrameFormat(PIXEL_FORMAT.RGB565, true); // Enables RGB565 format for image
+        vuforia.setFrameQueueCapacity(1); // Store only one frame at a time
+
+        // Capture Vuforia Frame
+        while (rgbImage == null) {
+
+            try {
+
+                closeableFrame = vuforia.getFrameQueue().take();
+                long numImages = closeableFrame.getNumImages();
+
+                for (int i = 0; i < numImages; i++) {
+
+                    if (closeableFrame.getImage(i).getFormat() == PIXEL_FORMAT.RGB565) {
+
+                        rgbImage = closeableFrame.getImage(i);
+
+                        if (rgbImage != null)
+                            break;
+                    }
+                }
+
+            } catch (InterruptedException exc) {
+
+            } finally {
+
+                if (closeableFrame != null)
+                    closeableFrame.close();
+            }
+        }
+
+        if (rgbImage != null) {
+
+            // Copy Bitmap from Vuforia Frame
+            Bitmap quarry = createBitmap(rgbImage.getWidth(), rgbImage.getHeight(), Bitmap.Config.RGB_565);
+            quarry.copyPixelsFromBuffer(rgbImage.getPixels());
+
+            // Find Directory
+            String path = Environment.getExternalStorageDirectory().toString();
+            FileOutputStream out = null;
+
+            // Save Bitmap to file
+            if (saveBitmap) {
+                try {
+
+                    File file = new File(path, "Bitmap.png");
+                    out = new FileOutputStream(file);
+                    quarry.compress(Bitmap.CompressFormat.PNG, 100, out);
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+
+                } finally {
+
+                    try {
+                        if (out != null) {
+                            out.flush();
+                            out.close();
+                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+
+            // Crop Bitmap
+            // (0,0) is the top-left corner of the bitmap
+            int cropStartX;
+            int cropStartY;
+            int cropWidth;
+            int cropHeight;
+
+            int quarryWidth, quarryHeight;
+            quarryWidth = quarry.getWidth();
+            quarryHeight = quarry.getHeight();
+
+            cropStartX = (int) (quarryWidth * 20.0 / 69.5);     // x initial | max: 31.5 original 26.0 / 69.5
+            cropStartY = (int) (quarryHeight * 13.0 / 39.0);    // y initial | max: 33.0 original 13.0 / 39.0
+            cropWidth = (int) (quarryWidth * 38.0 / 69.5);      // delta x
+            cropHeight = (int) (quarryHeight * 6.0 / 39.0);     // delta y
+
+            // Create cropped bitmap to show only stones
+            quarry = createBitmap(quarry, cropStartX, cropStartY, cropWidth, cropHeight);
+
+            // Save cropped bitmap to file
+            if (saveBitmap) {
+                try {
+
+                    File file = new File(path, "CroppedBitmap.png");
+                    out = new FileOutputStream(file);
+                    quarry.compress(Bitmap.CompressFormat.PNG, 100, out);
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+
+                } finally {
+
+                    try {
+                        if (out != null) {
+                            out.flush();
+                            out.close();
+                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+
+            // Compress bitmap to reduce scan time
+            quarry = createScaledBitmap(quarry, 110, 20, true);
+
+            int yPos, xPos, pixel, tempColorSum;
+            int bitmapWidth = quarry.getWidth();
+            int bitmapHeight = quarry.getHeight();
+            int maxColor = 1000;
+            double factor = 0;              // moves yPos based on which stone
+            double difference = 1.0 / 12;   // moves yPos based on the point on the stone
+
+            yPos = (int) (bitmapHeight / 5);
+
+            // cycles through the three stones furthest from the wall
+            for (int currentStone = 4; currentStone <= 6; currentStone++) {
+
+                // cycles through 3 points on the stone
+                for (int i = 1; i <= 3; i++) {
+
+                    // set yPosition
+                    xPos = (int) (bitmapWidth * (factor + difference * i));
+
+                    // gets the pixel
+                    pixel = quarry.getPixel(xPos, yPos);
+
+                    // finds the color sum of that pixel
+                    tempColorSum = Color.red(pixel) + Color.green(pixel) + Color.blue(pixel);
+
+                    // if it's the darkest pixel yet, it will set the skyStonePos to the currentStone
+                    if (tempColorSum < maxColor) {
+
+                        maxColor = tempColorSum;
+                    }
+                }
+
+                // updates factor so the next cycle will look at pixels on the next stone
+                factor += 1.0 / 3.0;
+            }
+
+            telemetry.update();
+        }
     }
 
     // UTILITY METHODS -----------------------------------------------------------------------------
@@ -366,5 +533,3 @@ public abstract class ScrimmageSuperclass extends LinearOpMode {
         return robotHeading;
     }
 }
-
-// Test push
