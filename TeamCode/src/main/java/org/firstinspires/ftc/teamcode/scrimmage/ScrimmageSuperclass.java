@@ -460,6 +460,8 @@ public abstract class ScrimmageSuperclass extends LinearOpMode {
                 // updates factor so the next cycle will look at pixels on the next stone
                 factor += 1.0 / 3.0;
             }
+
+            /*
             // this is a test Rbg ----------------------------------------------------------------------------------
             // this program takes the Rbg of the pixel by use arrays 
             // then it compare it to a set rbg if true it add one to a value
@@ -481,6 +483,8 @@ public abstract class ScrimmageSuperclass extends LinearOpMode {
             }
 
             telemetry.update();
+            
+             */
         }
     }
 
