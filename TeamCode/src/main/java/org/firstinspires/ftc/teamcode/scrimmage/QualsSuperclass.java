@@ -33,7 +33,7 @@ import static android.graphics.Bitmap.createBitmap;
 import static android.graphics.Bitmap.createScaledBitmap;
 import static org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer.CameraDirection.BACK;
 
-public abstract class ScrimmageSuperclass extends LinearOpMode {
+public abstract class QualsSuperclass extends LinearOpMode {
 
     // ROBOT OBJECTS -------------------------------------------------------------------------------
 
@@ -43,13 +43,11 @@ public abstract class ScrimmageSuperclass extends LinearOpMode {
     // REV Sensors
     public BNO055IMU imu;
     public Orientation orientation = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.XYZ, AngleUnit.DEGREES);
-    public Orientation theta;
-    public double temp;
-    public double flpower;
-    public double frpower;
-    public double blpower;
-    public double brpower;
     public float angle = orientation.thirdAngle; // temp
+    public double theta;
+
+    public double temp;
+    public double flpower, frpower, blpower, brpower;
 
     // Vuforia
     // IMPORTANT: If you are using a USB WebCam, camera choice "BACK" and phone portrait "false"
