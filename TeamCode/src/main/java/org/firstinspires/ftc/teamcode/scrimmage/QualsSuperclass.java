@@ -33,7 +33,7 @@ import static android.graphics.Bitmap.createBitmap;
 import static android.graphics.Bitmap.createScaledBitmap;
 import static org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer.CameraDirection.BACK;
 
-public abstract class ScrimmageSuperclass extends LinearOpMode {
+public abstract class QualsSuperclass extends LinearOpMode {
 
     // ROBOT OBJECTS -------------------------------------------------------------------------------
 
@@ -42,8 +42,12 @@ public abstract class ScrimmageSuperclass extends LinearOpMode {
 
     // REV Sensors
     public BNO055IMU imu;
-    public Orientation orientation = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.XYZ, AngleUnit.DEGREES);;
+    public Orientation orientation = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.XYZ, AngleUnit.DEGREES);
     public float angle = orientation.thirdAngle; // temp
+    public double theta;
+
+    public double temp;
+    public double flpower, frpower, blpower, brpower;
 
     // Vuforia
     // IMPORTANT: If you are using a USB WebCam, camera choice "BACK" and phone portrait "false"
@@ -461,7 +465,30 @@ public abstract class ScrimmageSuperclass extends LinearOpMode {
                 factor += 1.0 / 3.0;
             }
 
+            /*
+            // this is a test Rbg ----------------------------------------------------------------------------------
+            // this program takes the Rbg of the pixel by use arrays 
+            // then it compare it to a set rbg if true it add one to a value
+            // if value 3 =  one stone
+            // if value 6 = two stone
+            // if value 9 = three stone 
+            int[] Yloc = {}; // put 3 locations 
+            int[] Xloc = {}; // put 3 locations
+            int loc = 0; // this is for the arrays
+            int stonenum = 0; //this is for the stong count 
+            Color stonecolor = new Color(255,255,255);//this is the stone color it is set to white have to change that 
+            for( int i = 0; i < 9; i++){
+                pixel = quarry.getPixel(Xloc[loc], Yloc[loc]);// this is not needed 
+                Color c1 = new Color(quarry.getRGB(Xloc[loc], Yloc[loc]));// this takes the Rbg of the pixel have to test 
+                if(c1.getRGB() == stonecolor.getRGB()){
+                    stonenum += 1;
+                }
+                loc += 1;
+            }
+
             telemetry.update();
+            
+             */
         }
     }
 
