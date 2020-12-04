@@ -42,7 +42,13 @@ public abstract class ScrimmageSuperclass extends LinearOpMode {
 
     // REV Sensors
     public BNO055IMU imu;
-    public Orientation orientation = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.XYZ, AngleUnit.DEGREES);;
+    public Orientation orientation = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.XYZ, AngleUnit.DEGREES);
+    public Orientation theta;
+    public double temp;
+    public double flpower;
+    public double frpower;
+    public double blpower;
+    public double brpower;
     public float angle = orientation.thirdAngle; // temp
 
     // Vuforia
