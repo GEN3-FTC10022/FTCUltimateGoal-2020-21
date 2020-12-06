@@ -1,11 +1,7 @@
-package org.firstinspires.ftc.teamcode.scrimmage;
+package org.firstinspires.ftc.teamcode.Quals;
 
 
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
-import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 
 @TeleOp(name = "TeleOp: Quals")
 public class QualsTeleOp extends QualsSuperclass {
