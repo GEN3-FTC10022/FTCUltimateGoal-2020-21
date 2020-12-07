@@ -49,6 +49,9 @@ public abstract class QualsSuperclass extends LinearOpMode {
     public double temp;
     public double flpower, frpower, blpower, brpower;
 
+    // button trackers
+    public int x = 0, a = 0;
+
     // Vuforia
     // IMPORTANT: If you are using a USB WebCam, camera choice "BACK" and phone portrait "false"
     private static final VuforiaLocalizer.CameraDirection CAMERA_CHOICE = BACK;

@@ -15,7 +15,7 @@ public class QualsTeleOp extends QualsSuperclass {
 
         while (opModeIsActive()) {
 
-            // FIELD-CENTRIC DRIVE
+            // FIELD-CENTRIC DRIVE -----------------------------------------------------------------
 
             theta = Math.toRadians(angle);      // convert the angle to radians for easy use
 
@@ -122,6 +122,38 @@ public class QualsTeleOp extends QualsSuperclass {
             frontRight.setPower(-frpower);
             backLeft.setPower(-blpower);
             backRight.setPower(brpower);
+
+
+            // WOBBLE MECH -------------------------------------------------------------------------
+            /* uncomment when wired
+            // CLAMP
+            if (gamepad1.x && x == 0)
+                x = 1;
+            else if (!gamepad1.x && x == 1) {
+                //close wobble mech
+                x = 2;
+            }
+            else if (gamepad1.x && x == 2)
+                x = 3;
+            else if (!gamepad1.x && x == 3) {
+                //open wobble mech
+                x = 0;
+            }
+
+            // LIFT
+            if (gamepad1.a && a == 0)
+                a = 1;
+            else if (!gamepad1.a && a == 1) {
+                //raise wobble mech
+                a = 2;
+            }
+            else if (gamepad1.a && a == 2)
+                a = 3;
+            else if (!gamepad1.a && a == 3) {
+                //lower wobble mech
+                a = 0;
+            }
+            */
 
         }
     }
