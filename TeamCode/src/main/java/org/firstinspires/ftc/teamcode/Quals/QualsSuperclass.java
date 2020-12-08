@@ -22,6 +22,8 @@ import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackable;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackableDefaultListener;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
+import org.firstinspires.ftc.robotcore.internal.android.dex.EncodedValueReader;
+import org.firstinspires.ftc.teamcode.util.Encoder;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -39,6 +41,9 @@ public abstract class QualsSuperclass extends LinearOpMode {
 
     // Drivetrain
     public DcMotorEx frontLeft, frontRight, backLeft, backRight;
+
+    // Odometry
+    public Encoder leftVertical, rightVertical, horizontal;
 
     // REV Sensors
     public BNO055IMU imu;
@@ -118,6 +123,8 @@ public abstract class QualsSuperclass extends LinearOpMode {
         backRight = (DcMotorEx)hardwareMap.dcMotor.get("backRight");
         frontLeft.setDirection(DcMotor.Direction.REVERSE);
         backLeft.setDirection(DcMotor.Direction.REVERSE);
+
+        // Odometry
 
         // REV Sensors
         BNO055IMU.Parameters imuParameters = new BNO055IMU.Parameters();
@@ -491,7 +498,7 @@ public abstract class QualsSuperclass extends LinearOpMode {
             }
 
             telemetry.update();
-            
+
              */
         }
     }
