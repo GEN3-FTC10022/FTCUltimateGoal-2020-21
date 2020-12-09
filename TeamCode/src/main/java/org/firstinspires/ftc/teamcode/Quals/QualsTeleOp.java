@@ -17,12 +17,11 @@ public class QualsTeleOp extends QualsSuperclass {
 
             // FIELD-CENTRIC DRIVE -----------------------------------------------------------------
 
-            theta = Math.toRadians(angle);      // convert the angle to radians for easy use
-
             // Display rotation data
-            telemetry.addData("Rotation (Radians): ", theta);
-            telemetry.addData("Rotation (Degrees): ", angle);
-            telemetry.update();
+            telemetry.addData("FC Rotation (Radians): ", getHeading(true));
+            telemetry.addData("FC Rotation (Degrees): ", getHeading(true));
+            telemetry.addData("Normal Rotation: ", getHeading(false));
+            telemetry.addData("Normal Rotation: ", getHeading(false));
 
             double forward = -gamepad1.left_stick_y;
             double right = gamepad1.left_stick_x;
@@ -37,17 +36,18 @@ public class QualsTeleOp extends QualsSuperclass {
                 clockwise = 0;
 
             // math
-            if (theta <= 0) {       // If theta is measured clockwise from zero reference
+            if (getHeading(true) <= 0) {       // If theta is measured clockwise from zero reference
 
-                temp = forward * Math.cos(-theta) + right * Math.sin(-theta);
-                right = -forward * Math.sin(-theta) + right * Math.cos(-theta);
+                temp = forward * Math.cos(-getHeading(true)) + right * Math.sin(getHeading(true));
+                right = -forward * Math.sin(-getHeading(true)) + right * Math.cos(getHeading(true));
                 forward = temp;
             }
-            if (theta > 0) {    // If theta is measured counterclockwise from zero reference
+
+            if (getHeading(true) > 0) {    // If theta is measured counterclockwise from zero reference
 
                 // Theta is reversed to account for IMU measurement
-                temp = forward * Math.cos(theta) - right * Math.sin(theta);
-                right = forward * Math.sin(theta) + right * Math.cos(theta);
+                temp = forward * Math.cos(getHeading(true)) - right * Math.sin(getHeading(true));
+                right = forward * Math.sin(getHeading(true)) + right * Math.cos(getHeading(true));
                 forward = temp;
             }
 
@@ -90,6 +90,7 @@ public class QualsTeleOp extends QualsSuperclass {
                 blpower /= 3;
                 brpower /= 3;
             }
+
             // If the trigger is held down, but not pressed all the way down, motor power will
             // slow down proportionally to how much the trigger is pressed
             else if (gamepad1.right_trigger > 0.1) {
@@ -125,36 +126,39 @@ public class QualsTeleOp extends QualsSuperclass {
 
 
             // WOBBLE MECH -------------------------------------------------------------------------
-            /* uncomment when wired
-            // CLAMP
-            if (gamepad1.x && x == 0)
+
+            // Wobble Clamp
+            if (gamepad1.x && x == 0) {
                 x = 1;
-            else if (!gamepad1.x && x == 1) {
-                //close wobble mech
+            } else if (!gamepad1.x && x == 1) {
+                wobbleClamp.setPosition(wobbleClampClose);
                 x = 2;
-            }
-            else if (gamepad1.x && x == 2)
+            } else if (gamepad1.x && x == 2) {
                 x = 3;
-            else if (!gamepad1.x && x == 3) {
-                //open wobble mech
+            } else if (!gamepad1.x && x == 3) {
+                wobbleClamp.setPosition(wobbleClampOpen);
                 x = 0;
             }
 
-            // LIFT
-            if (gamepad1.a && a == 0)
+            // Wobble Lift
+            if (gamepad1.a && a == 0) {
                 a = 1;
-            else if (!gamepad1.a && a == 1) {
-                //raise wobble mech
+            } else if (!gamepad1.a && a == 1) {
+                setWobbleMech(0.5, 1);
                 a = 2;
-            }
-            else if (gamepad1.a && a == 2)
+            }  else if (gamepad1.a && a == 2) {
                 a = 3;
-            else if (!gamepad1.a && a == 3) {
-                //lower wobble mech
+            } else if (!gamepad1.a && a == 3) {
+                setWobbleMech(0.5,2);
                 a = 0;
             }
-            */
 
+            if (gamepad1.b && b == 0) {
+                b = 1;
+            } else if (!gamepad1.b && b == 1) {
+                setWobbleMech(0.5, 0);
+                b = 0;
+            }
         }
     }
 }

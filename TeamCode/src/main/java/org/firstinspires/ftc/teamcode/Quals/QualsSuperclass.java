@@ -8,6 +8,7 @@ import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.vuforia.Image;
 import com.vuforia.PIXEL_FORMAT;
 import com.vuforia.Vuforia;
@@ -22,8 +23,6 @@ import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackable;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackableDefaultListener;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
-import org.firstinspires.ftc.robotcore.internal.android.dex.EncodedValueReader;
-import org.firstinspires.ftc.teamcode.util.Encoder;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -42,20 +41,25 @@ public abstract class QualsSuperclass extends LinearOpMode {
     // Drivetrain
     public DcMotorEx frontLeft, frontRight, backLeft, backRight;
 
+    // Wobble Mech
+    public DcMotorEx wobbleMech;
+    public Servo wobbleClamp;
+
     // Odometry
-    public Encoder leftVertical, rightVertical, horizontal;
+    // public Encoder leftVertical, rightVertical, horizontal;
 
     // REV Sensors
     public BNO055IMU imu;
-    public Orientation orientation = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.XYZ, AngleUnit.DEGREES);
-    public float angle = orientation.thirdAngle; // temp
-    public double theta;
+    public Orientation orientation;
+    public float angle;
 
     public double temp;
     public double flpower, frpower, blpower, brpower;
 
-    // button trackers
-    public int x = 0, a = 0;
+    // Toggle Integers
+    public int x = 0, a = 0, b = 0;
+
+    /*
 
     // Vuforia
     // IMPORTANT: If you are using a USB WebCam, camera choice "BACK" and phone portrait "false"
@@ -71,20 +75,17 @@ public abstract class QualsSuperclass extends LinearOpMode {
     // Class Members
     private VuforiaLocalizer vuforia;
 
-    /**
-     * This is the webcam we are to use. As with other hardware devices such as motors and
-     * servos, this device is identified using the robot configuration tool in the FTC application.
-     */
+    // This is the webcam we are to use. As with other hardware devices such as motors and
+    // servos, this device is identified using the robot configuration tool in the FTC application.
 
     WebcamName webcamName = hardwareMap.get(WebcamName.class, "Webcam 1");
 
     private boolean targetVisible;
 
-    /*
-     * Configure Vuforia by creating a Parameter object, and passing it to the Vuforia engine.
-     * We can pass Vuforia the handle to a camera preview resource (on the RC phone);
-     * If no camera monitor is desired, use the parameter-less constructor instead (commented out below).
-     */
+    // Configure Vuforia by creating a Parameter object, and passing it to the Vuforia engine.
+    // We can pass Vuforia the handle to a camera preview resource (on the RC phone);
+    // If no camera monitor is desired, use the parameter-less constructor instead (commented out below).
+
     int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
     VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters(cameraMonitorViewId);
     // VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters();
@@ -96,14 +97,33 @@ public abstract class QualsSuperclass extends LinearOpMode {
     public Image rgbImage = null;
     public VuforiaLocalizer.CloseableFrame closeableFrame = null;
 
+     */
+
     // CONTROL CONSTANTS ---------------------------------------------------------------------------
 
+    // General Motors
+    public final double NEVEREST_ORBITAL_20_TICKS_PER_REV = 537.6;
+    public final double NEVEREST_CLASSIC_40_TICKS_PER_REV = 1120;
+    public final double NEVEREST_CLASSIC_60_TICKS_PER_REV = 1680;
+    public double[] motorTicksPerRev = {NEVEREST_ORBITAL_20_TICKS_PER_REV,
+                                        NEVEREST_CLASSIC_40_TICKS_PER_REV,
+                                        NEVEREST_CLASSIC_60_TICKS_PER_REV};
+
+    // Drivetrain
     public final double WHEEL_DIAMETER_INCHES = 4;
     public final double WHEEL_CIRCUMFERENCE_INCHES = WHEEL_DIAMETER_INCHES * Math.PI;
-    public final double DRIVE_TICKS_PER_MOTOR_REV = 0; // temp
+    public final double DRIVE_TICKS_PER_REV = motorTicksPerRev[0]; // temp
     public final double DRIVE_GEAR_REDUCTION = 0; // temp
-    public final double DRIVE_TICKS_PER_INCH = (((DRIVE_TICKS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) / WHEEL_CIRCUMFERENCE_INCHES));
+    public final double DRIVE_TICKS_PER_INCH = (((DRIVE_TICKS_PER_REV * DRIVE_GEAR_REDUCTION) / WHEEL_CIRCUMFERENCE_INCHES));
     public final double DRIVE_TICKS_PER_DEGREE = 0; // temp
+
+    // Wobble Mech
+    public final double WOBBLE_TICKS_PER_REV = motorTicksPerRev[2];
+    public final double WOBBLE_TICKS_PER_DEGREE = WOBBLE_TICKS_PER_REV/360;
+    public double[] wobbleAngles = {0, 55, 145}; // temp
+    public int wobblePosition = 0;
+    public double wobbleClampOpen = 1; // temp
+    public double wobbleClampClose = 0; // temp
 
     // METHODS -------------------------------------------------------------------------------------
 
@@ -124,6 +144,12 @@ public abstract class QualsSuperclass extends LinearOpMode {
         frontLeft.setDirection(DcMotor.Direction.REVERSE);
         backLeft.setDirection(DcMotor.Direction.REVERSE);
 
+        /*
+        // Wobble Mech
+        wobbleMech = (DcMotorEx)hardwareMap.dcMotor.get("wobbleMech");
+        wobbleClamp = hardwareMap.servo.get("wobbleClamp");
+         */
+
         // Odometry
 
         // REV Sensors
@@ -137,13 +163,13 @@ public abstract class QualsSuperclass extends LinearOpMode {
         telemetry.update();
     }
 
+    /*
     public void initializeVuforia() {
 
         parameters.vuforiaLicenseKey = VUFORIA_KEY;
 
-        /**
-         * We also indicate which camera on the RC we wish to use.
-         */
+        // We also indicate which camera on the RC we wish to use.
+
         parameters.cameraName = webcamName;
 
         // Make sure extended tracking is disabled for this example.
@@ -166,10 +192,11 @@ public abstract class QualsSuperclass extends LinearOpMode {
         VuforiaTrackable frontWallTarget = targetsUltimateGoal.get(4);
         frontWallTarget.setName("Front Wall Target");
 
-        // For convenience, gather together all the trackable objects in one easily-iterable collection */
+        // For convenience, gather together all the trackable objects in one easily-iterable collection
         allTrackables = new ArrayList<VuforiaTrackable>();
         allTrackables.addAll(targetsUltimateGoal);
     }
+     */
 
     // Drive Methods
     public void forward(double pow, double inches) {
@@ -299,6 +326,8 @@ public abstract class QualsSuperclass extends LinearOpMode {
     }
 
     // Vision Methods
+
+    /*
     public void vuforiaScanTarget() {
 
         // Note: To use the remote camera preview:
@@ -475,7 +504,6 @@ public abstract class QualsSuperclass extends LinearOpMode {
                 factor += 1.0 / 3.0;
             }
 
-            /*
             // this is a test Rbg ----------------------------------------------------------------------------------
             // this program takes the Rbg of the pixel by use arrays 
             // then it compare it to a set rbg if true it add one to a value
@@ -498,10 +526,9 @@ public abstract class QualsSuperclass extends LinearOpMode {
             }
 
             telemetry.update();
-
-             */
         }
     }
+    */
 
     // UTILITY METHODS -----------------------------------------------------------------------------
 
@@ -554,20 +581,169 @@ public abstract class QualsSuperclass extends LinearOpMode {
         backRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
     }
 
+    // Wobble Mech
+
+    public void openClamp() {
+        wobbleClamp.setPosition(wobbleClampOpen);
+    }
+
+    public void closeClamp() {
+        wobbleClamp.setPosition(wobbleClampClose);
+    }
+
     // General
 
-    public double getHeading() {
+    public void driveTeleOp() {
+        // FIELD-CENTRIC DRIVE -----------------------------------------------------------------
 
-        double robotHeading;
+        // Display rotation data
+        telemetry.addData("FC Rotation (Radians): ", getHeading(true));
+        telemetry.addData("FC Rotation (Degrees): ", getHeading(true));
+        telemetry.addData("Normal Rotation: ", getHeading(false));
+        telemetry.addData("Normal Rotation: ", getHeading(false));
 
-        // Convert -180 to 180 into 0-360
-        if (angle < 0)
-            robotHeading = angle * -1;
-        else if (angle > 0)
-            robotHeading = 360 - angle;
-        else
-            robotHeading = 0;
+        double forward = -gamepad1.left_stick_y;
+        double right = gamepad1.left_stick_x;
+        double clockwise = gamepad1.right_stick_x;
 
-        return robotHeading;
+        // Joystick deadzones
+        if (Math.abs(forward) < 0.2)
+            forward = 0;
+        if (Math.abs(right) < 0.2)
+            right = 0;
+        if (Math.abs(clockwise) < 0.2)
+            clockwise = 0;
+
+        // math
+        if (getHeading(true) <= 0) {       // If theta is measured clockwise from zero reference
+
+            temp = forward * Math.cos(-getHeading(true)) + right * Math.sin(getHeading(true));
+            right = -forward * Math.sin(-getHeading(true)) + right * Math.cos(getHeading(true));
+            forward = temp;
+        }
+
+        if (getHeading(true) > 0) {    // If theta is measured counterclockwise from zero reference
+
+            // Theta is reversed to account for IMU measurement
+            temp = forward * Math.cos(getHeading(true)) - right * Math.sin(getHeading(true));
+            right = forward * Math.sin(getHeading(true)) + right * Math.cos(getHeading(true));
+            forward = temp;
+        }
+
+        // assign calculated values to the power variables
+        flpower = forward + clockwise + right;
+        frpower = forward - clockwise - right;
+        blpower = forward + clockwise - right;
+        brpower = forward - clockwise + right;
+
+        // if you have the testing time, maybe remove this one day and see if it causes any
+        // problems?
+        // Find the maximum of the powers
+        double max = Math.max(  Math.max(Math.abs(flpower), Math.abs(frpower)),
+                Math.max(Math.abs(blpower), Math.abs(brpower))  );
+        // Use this to make sure no motor powers are above 1 (the max value the motor can accept)
+        if (max > 1) {
+
+            flpower /= max;
+            frpower /= max;
+            blpower /= max;
+            brpower /= max;
+        }
+
+        // Motor powers are set to the power of 3 so that the drivetrain motors accelerates
+        // exponentially instead of linearly
+        // Note: you may consider, in the future, moving this code block to before the
+        // max > 1 code block to see if that is better or worse performance, but I think
+        // it will be worse because it may mess up proportions
+        flpower = Math.pow(flpower, 3);
+        blpower = Math.pow(blpower, 3);
+        frpower = Math.pow(frpower, 3);
+        brpower = Math.pow(brpower, 3);
+
+        // Motor Power is decreased while the right trigger is held down to allow for more
+        // precise robot control
+        if (gamepad1.right_trigger > 0.8) {
+
+            flpower /= 3;
+            frpower /= 3;
+            blpower /= 3;
+            brpower /= 3;
+        }
+
+        // If the trigger is held down, but not pressed all the way down, motor power will
+        // slow down proportionally to how much the trigger is pressed
+        else if (gamepad1.right_trigger > 0.1) {
+
+            double driveSlow = -0.8 * gamepad1.right_trigger + 1;
+
+            flpower *= driveSlow;
+            frpower *= driveSlow;
+            blpower *= driveSlow;
+            brpower *= driveSlow;
+        }
+
+            /*
+            // Alternate version of drive slowing
+            // This version does not scale proportionally to the press, but uses a constant
+            // multiplier instead
+            // Programmers may choose to use this version of drive slowing instead due to a
+            // driver's preference
+            if (gamepad1.right_trigger > 0.5){
+
+                flpower /= 3;
+                blpower /= 3;
+                frpower /= 3;
+                brpower /= 3;
+            }
+            */
+
+        // assign power to the motors
+        frontLeft.setPower(-flpower);
+        frontRight.setPower(-frpower);
+        backLeft.setPower(-blpower);
+        backRight.setPower(brpower);
+    }
+
+    public double getHeading(boolean isFieldCentric) {
+
+        orientation = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.XYZ, AngleUnit.DEGREES);
+        angle = orientation.thirdAngle; // temp
+
+        if (isFieldCentric) {
+            return Math.toRadians(angle);
+
+        } else {
+            // Convert -180 to 180 into 0-360
+            if (angle > 0)
+                return angle;
+            else if (angle < 0)
+                return (angle + 360);
+            else
+                return 0;
+        }
+    }
+
+    public void runEncoder(DcMotor m_motor, double power, double ticks) {
+
+        int delta = (int)Math.round(ticks);
+        m_motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        m_motor.setTargetPosition(delta);
+        m_motor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+        while (m_motor.isBusy()) {
+            driveTeleOp();
+            m_motor.setPower(power);
+        }
+
+        // Stop all motion;
+        m_motor.setPower(0);
+
+        // Turn off RUN_TO_POSITION
+        m_motor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+    }
+
+    public void setWobbleMech(double power, int position) {
+        double ticks = (wobbleAngles[position] - wobbleAngles[wobblePosition]) * WOBBLE_TICKS_PER_DEGREE;
+        runEncoder(wobbleMech, 0.5, ticks);
     }
 }
