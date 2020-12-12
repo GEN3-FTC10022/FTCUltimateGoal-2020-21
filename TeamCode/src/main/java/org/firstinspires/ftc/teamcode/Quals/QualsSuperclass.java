@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.scrimmage;
+package org.firstinspires.ftc.teamcode.Quals;
 
 import android.graphics.Bitmap;
 import android.graphics.Color;
@@ -8,6 +8,8 @@ import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.vuforia.Image;
 import com.vuforia.PIXEL_FORMAT;
 import com.vuforia.Vuforia;
@@ -22,6 +24,8 @@ import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackable;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackableDefaultListener;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
+import org.firstinspires.ftc.teamcode.util.Constants;
+import org.firstinspires.ftc.teamcode.util.WobbleMech;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -31,19 +35,30 @@ import java.util.List;
 
 import static android.graphics.Bitmap.createBitmap;
 import static android.graphics.Bitmap.createScaledBitmap;
+import static org.firstinspires.ftc.robotcore.external.BlocksOpModeCompanion.hardwareMap;
 import static org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer.CameraDirection.BACK;
+import static org.firstinspires.ftc.teamcode.util.Constants.motorTicksPerRev;
 
-public abstract class ScrimmageSuperclass extends LinearOpMode {
+public abstract class QualsSuperclass extends LinearOpMode {
 
     // ROBOT OBJECTS -------------------------------------------------------------------------------
 
     // Drivetrain
     public DcMotorEx frontLeft, frontRight, backLeft, backRight;
 
+    // Wobble Mech
+    public WobbleMech wobbleMech = new WobbleMech();
+
     // REV Sensors
     public BNO055IMU imu;
-    public Orientation orientation = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.XYZ, AngleUnit.DEGREES);;
-    public float angle = orientation.thirdAngle; // temp
+    public Orientation orientation;
+    public float angle;
+
+    public double temp;
+    public double flpower, frpower, blpower, brpower;
+
+    // Toggle Integers
+    public int x = 0, a = 0, b = 0;
 
     // Vuforia
     // IMPORTANT: If you are using a USB WebCam, camera choice "BACK" and phone portrait "false"
@@ -57,25 +72,22 @@ public abstract class ScrimmageSuperclass extends LinearOpMode {
             "TmXG7Iq15ugKdyFwzgpWf6IueyoTKkwOczEiGALV2lObz+fyFLob4rq6HtpkCpL4gkh4xy";
 
     // Class Members
-    private VuforiaLocalizer vuforia;
+    public VuforiaLocalizer vuforia;
 
-    /**
-     * This is the webcam we are to use. As with other hardware devices such as motors and
-     * servos, this device is identified using the robot configuration tool in the FTC application.
-     */
+    // This is the webcam we are to use. As with other hardware devices such as motors and
+    // servos, this device is identified using the robot configuration tool in the FTC application.
 
-    WebcamName webcamName = hardwareMap.get(WebcamName.class, "Webcam 1");
+    WebcamName webcamName;
 
     private boolean targetVisible;
 
-    /*
-     * Configure Vuforia by creating a Parameter object, and passing it to the Vuforia engine.
-     * We can pass Vuforia the handle to a camera preview resource (on the RC phone);
-     * If no camera monitor is desired, use the parameter-less constructor instead (commented out below).
-     */
-    int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
-    VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters(cameraMonitorViewId);
-    // VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters();
+    // Configure Vuforia by creating a Parameter object, and passing it to the Vuforia engine.
+    // We can pass Vuforia the handle to a camera preview resource (on the RC phone);
+    // If no camera monitor is desired, use the parameter-less constructor instead (commented out below).
+
+    // int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
+    // VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters(cameraMonitorViewId);
+    VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters();
 
     VuforiaTrackables targetsUltimateGoal;
 
@@ -86,12 +98,14 @@ public abstract class ScrimmageSuperclass extends LinearOpMode {
 
     // CONTROL CONSTANTS ---------------------------------------------------------------------------
 
+    // Drivetrain
     public final double WHEEL_DIAMETER_INCHES = 4;
     public final double WHEEL_CIRCUMFERENCE_INCHES = WHEEL_DIAMETER_INCHES * Math.PI;
-    public final double DRIVE_TICKS_PER_MOTOR_REV = 0; // temp
-    public final double DRIVE_GEAR_REDUCTION = 0; // temp
-    public final double DRIVE_TICKS_PER_INCH = (((DRIVE_TICKS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) / WHEEL_CIRCUMFERENCE_INCHES));
-    public final double DRIVE_TICKS_PER_DEGREE = 0; // temp
+    public final double DRIVE_TICKS_PER_REV = motorTicksPerRev[0];
+    public final double DRIVE_GEAR_REDUCTION = 1;
+    public final double DRIVE_TICKS_PER_INCH = (((DRIVE_TICKS_PER_REV * DRIVE_GEAR_REDUCTION) / WHEEL_CIRCUMFERENCE_INCHES));
+    public final double DRIVE_TICKS_PER_DEGREE = ((double)3545.0/360.0); // temp
+    public final double DRIVE_STRAFE_CORRECTION = (double)5.0/4.25;
 
     // METHODS -------------------------------------------------------------------------------------
 
@@ -109,8 +123,16 @@ public abstract class ScrimmageSuperclass extends LinearOpMode {
         frontRight = (DcMotorEx)hardwareMap.dcMotor.get("frontRight");
         backLeft = (DcMotorEx)hardwareMap.dcMotor.get("backLeft");
         backRight = (DcMotorEx)hardwareMap.dcMotor.get("backRight");
-        frontLeft.setDirection(DcMotor.Direction.REVERSE);
-        backLeft.setDirection(DcMotor.Direction.REVERSE);
+        frontRight.setDirection(DcMotor.Direction.REVERSE);
+        backRight.setDirection(DcMotor.Direction.REVERSE);
+        setDriveZeroPowerBehavior();
+
+        // Wobble Mech
+        wobbleMech.motor = (DcMotorEx)hardwareMap.dcMotor.get("wobbleMech");
+        wobbleMech.servo = hardwareMap.servo.get("wobbleClamp");
+        wobbleMech.initialize();
+
+        // Odometry
 
         // REV Sensors
         BNO055IMU.Parameters imuParameters = new BNO055IMU.Parameters();
@@ -125,11 +147,12 @@ public abstract class ScrimmageSuperclass extends LinearOpMode {
 
     public void initializeVuforia() {
 
+        webcamName = hardwareMap.get(WebcamName.class, "Webcam");
+
         parameters.vuforiaLicenseKey = VUFORIA_KEY;
 
-        /**
-         * We also indicate which camera on the RC we wish to use.
-         */
+        // We also indicate which camera on the RC we wish to use.
+
         parameters.cameraName = webcamName;
 
         // Make sure extended tracking is disabled for this example.
@@ -152,7 +175,7 @@ public abstract class ScrimmageSuperclass extends LinearOpMode {
         VuforiaTrackable frontWallTarget = targetsUltimateGoal.get(4);
         frontWallTarget.setName("Front Wall Target");
 
-        // For convenience, gather together all the trackable objects in one easily-iterable collection */
+        // For convenience, gather together all the trackable objects in one easily-iterable collection
         allTrackables = new ArrayList<VuforiaTrackable>();
         allTrackables.addAll(targetsUltimateGoal);
     }
@@ -203,6 +226,7 @@ public abstract class ScrimmageSuperclass extends LinearOpMode {
     public void strafeRight(double pow, double inches) {
 
         double target = inches * DRIVE_TICKS_PER_INCH;
+        target *= DRIVE_STRAFE_CORRECTION;
 
         if (opModeIsActive()) {
 
@@ -224,6 +248,7 @@ public abstract class ScrimmageSuperclass extends LinearOpMode {
     public void strafeLeft(double pow, double inches) {
 
         double target = inches * DRIVE_TICKS_PER_INCH;
+        target *= DRIVE_STRAFE_CORRECTION;
 
         if (opModeIsActive()) {
 
@@ -285,6 +310,7 @@ public abstract class ScrimmageSuperclass extends LinearOpMode {
     }
 
     // Vision Methods
+
     public void vuforiaScanTarget() {
 
         // Note: To use the remote camera preview:
@@ -347,6 +373,9 @@ public abstract class ScrimmageSuperclass extends LinearOpMode {
         }
 
         if (rgbImage != null) {
+
+            telemetry.addLine("Picture taken");
+            telemetry.update();
 
             // Copy Bitmap from Vuforia Frame
             Bitmap quarry = createBitmap(rgbImage.getWidth(), rgbImage.getHeight(), Bitmap.Config.RGB_565);
@@ -426,6 +455,8 @@ public abstract class ScrimmageSuperclass extends LinearOpMode {
             // Compress bitmap to reduce scan time
             quarry = createScaledBitmap(quarry, 110, 20, true);
 
+            /*
+
             int yPos, xPos, pixel, tempColorSum;
             int bitmapWidth = quarry.getWidth();
             int bitmapHeight = quarry.getHeight();
@@ -460,6 +491,28 @@ public abstract class ScrimmageSuperclass extends LinearOpMode {
                 // updates factor so the next cycle will look at pixels on the next stone
                 factor += 1.0 / 3.0;
             }
+
+            // this is a test Rbg ----------------------------------------------------------------------------------
+            // this program takes the Rbg of the pixel by use arrays 
+            // then it compare it to a set rbg if true it add one to a value
+            // if value 3 =  one stone
+            // if value 6 = two stone
+            // if value 9 = three stone 
+            // if value 12 = 4 stone 
+            int[] Yloc = {}; // put 4 locations 
+            int[] Xloc = {}; // put 3 locations
+            int loc = 0; // this is for the arrays
+            int stonenum = 0; //this is for the stong count 
+            Color stonecolor = new Color(255,255,255);//this is the stone color it is set to white have to change that 
+            for( int i = 0; i < 12; i++){
+                pixel = quarry.getPixel(Xloc[loc], Yloc[loc]);// this is not needed 
+                Color c1 = new Color(quarry.getRGB(Xloc[loc], Yloc[loc]));// this takes the Rbg of the pixel have to test
+                if(c1.getRGB() == stonecolor.getRGB()){
+                    stonenum += 1;
+                }
+                loc += 1;
+            }
+            */
 
             telemetry.update();
         }
@@ -516,20 +569,164 @@ public abstract class ScrimmageSuperclass extends LinearOpMode {
         backRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
     }
 
+    public void setDriveZeroPowerBehavior() {
+        frontLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        frontRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        backLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        backRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+    }
+
     // General
 
-    public double getHeading() {
+    public void drive() {
 
-        double robotHeading;
+        // FIELD-CENTRIC DRIVE -----------------------------------------------------------------
 
-        // Convert -180 to 180 into 0-360
-        if (angle < 0)
-            robotHeading = angle * -1;
-        else if (angle > 0)
-            robotHeading = 360 - angle;
-        else
-            robotHeading = 0;
+        // Display rotation data
+        telemetry.addData("FC Rotation (Radians): ", getHeading(true));
+        telemetry.addData("FC Rotation (Degrees): ", Math.toDegrees(getHeading(true)));
+        telemetry.addData("Normal Rotation (Radians): ", Math.toRadians(getHeading(false)));
+        telemetry.addData("Normal Rotation (Degrees): ", getHeading(false));
 
-        return robotHeading;
+        double forward = -gamepad1.left_stick_y;
+        double right = gamepad1.left_stick_x;
+        double clockwise = gamepad1.right_stick_x;
+
+        // Joystick deadzones
+        if (Math.abs(forward) < 0.05)
+            forward = 0;
+        if (Math.abs(right) < 0.05)
+            right = 0;
+        if (Math.abs(clockwise) < 0.05)
+            clockwise = 0;
+
+        // math
+        if (getHeading(true) < 0) {       // If theta is measured clockwise from zero reference
+
+            temp = forward * Math.cos(getHeading(true)) + right * Math.sin(-getHeading(true));
+            right = -forward * Math.sin(-getHeading(true)) + right * Math.cos(getHeading(true));
+            forward = temp;
+        }
+
+        if (getHeading(true) >= 0) {    // If theta is measured counterclockwise from zero reference
+
+            temp = forward * Math.cos(getHeading(true)) - right * Math.sin(getHeading(true));
+            right = forward * Math.sin(getHeading(true)) + right * Math.cos(getHeading(true));
+            forward = temp;
+        }
+
+        // assign calculated values to the power variables
+        flpower = forward + right + clockwise;
+        frpower = forward - right - clockwise;
+        blpower = forward - right + clockwise;
+        brpower = forward + right - clockwise;
+
+        // if you have the testing time, maybe remove this one day and see if it causes any
+        // problems?
+        // Find the maximum of the powers
+        double max = Math.max(  Math.max(Math.abs(flpower), Math.abs(frpower)),
+                Math.max(Math.abs(blpower), Math.abs(brpower))  );
+        // Use this to make sure no motor powers are above 1 (the max value the motor can accept)
+        if (max > 1) {
+
+            flpower /= max;
+            frpower /= max;
+            blpower /= max;
+            brpower /= max;
+        }
+
+        // Motor powers are set to the power of 3 so that the drivetrain motors accelerates
+        // exponentially instead of linearly
+        // Note: you may consider, in the future, moving this code block to before the
+        // max > 1 code block to see if that is better or worse performance, but I think
+        // it will be worse because it may mess up proportions
+        flpower = Math.pow(flpower, 3);
+        blpower = Math.pow(blpower, 3);
+        frpower = Math.pow(frpower, 3);
+        brpower = Math.pow(brpower, 3);
+
+        // Motor Power is decreased while the right trigger is held down to allow for more
+        // precise robot control
+        if (gamepad1.right_trigger > 0.8) {
+
+            flpower /= 3;
+            frpower /= 3;
+            blpower /= 3;
+            brpower /= 3;
+        }
+
+        // If the trigger is held down, but not pressed all the way down, motor power will
+        // slow down proportionally to how much the trigger is pressed
+        else if (gamepad1.right_trigger > 0.1) {
+
+            double driveSlow = -0.8 * gamepad1.right_trigger + 1;
+
+            flpower *= driveSlow;
+            frpower *= driveSlow;
+            blpower *= driveSlow;
+            brpower *= driveSlow;
+        }
+
+            /*
+            // Alternate version of drive slowing
+            // This version does not scale proportionally to the press, but uses a constant
+            // multiplier instead
+            // Programmers may choose to use this version of drive slowing instead due to a
+            // driver's preference
+            if (gamepad1.right_trigger > 0.5){
+
+                flpower /= 3;
+                blpower /= 3;
+                frpower /= 3;
+                brpower /= 3;
+            }
+            */
+
+        frontLeft.setPower(flpower);
+        frontRight.setPower(frpower);
+        backLeft.setPower(blpower);
+        backRight.setPower(brpower);
     }
+
+    public double getHeading(boolean isFieldCentric) {
+
+        orientation = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.XYZ, AngleUnit.DEGREES);
+        angle = orientation.thirdAngle; // temp
+
+        if (isFieldCentric) {
+            return Math.toRadians(angle);
+
+        } else {
+            // Convert -180 to 180 into 0-360
+            if (angle > 0)
+                return angle;
+            else if (angle < 0)
+                return (angle + 360);
+            else
+                return 0;
+        }
+    }
+
+    /*
+
+    public void runEncoder(DcMotor m_motor, double power, double ticks) {
+
+        int delta = (int)Math.round(ticks);
+        m_motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        m_motor.setTargetPosition(delta);
+        m_motor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+        while (m_motor.isBusy()) {
+            driveTeleOp();
+            m_motor.setPower(power);
+        }
+
+        // Stop all motion;
+        m_motor.setPower(0);
+
+        // Turn off RUN_TO_POSITION
+        m_motor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+    }
+
+     */
 }
