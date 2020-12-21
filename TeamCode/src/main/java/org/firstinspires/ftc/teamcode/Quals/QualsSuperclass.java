@@ -505,7 +505,7 @@ public abstract class QualsSuperclass extends LinearOpMode {
             int locy = 0; 
             int stonenum = 0; //this is for the stong count 
             Color stonecolor = new Color(255,255,255);//this is the stone color it is set to white have to change that 
-            for( int i = 0; i < 12; i++){
+            for( int i = 0; i < 4; i++){
                 for( int t = 0; t < 3; t++){ 
                     Color c1 = new Color(quarry.getRGB(Xloc[locx], Yloc[locy]));// this takes the Rbg of the pixel have to test
                     if(c1.getRGB() == stonecolor.getRGB()){
