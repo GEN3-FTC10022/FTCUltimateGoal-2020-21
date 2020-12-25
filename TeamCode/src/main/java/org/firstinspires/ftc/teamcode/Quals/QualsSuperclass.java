@@ -501,19 +501,23 @@ public abstract class QualsSuperclass extends LinearOpMode {
             // if value 12 = 4 stone 
             int[] Yloc = {}; // put 4 locations 
             int[] Xloc = {}; // put 3 locations
-            int loc = 0; // this is for the arrays
+            int locx = 0; // this is for the arrays
+            int locy = 0; 
             int stonenum = 0; //this is for the stong count 
             Color stonecolor = new Color(255,255,255);//this is the stone color it is set to white have to change that 
-            for( int i = 0; i < 12; i++){
-                pixel = quarry.getPixel(Xloc[loc], Yloc[loc]);// this is not needed 
-                Color c1 = new Color(quarry.getRGB(Xloc[loc], Yloc[loc]));// this takes the Rbg of the pixel have to test
-                if(c1.getRGB() == stonecolor.getRGB()){
-                    stonenum += 1;
+            for( int i = 0; i < 4; i++){
+                for( int t = 0; t < 3; t++){ 
+                    Color c1 = new Color(quarry.getRGB(Xloc[locx], Yloc[locy]));// this takes the Rbg of the pixel have to test
+                    if(c1.getRGB() == stonecolor.getRGB()){
+                        stonenum += 1;
+                    }
+                    locx +=1;
                 }
-                loc += 1;
-            }
-            */
 
+                locy += 1;
+                locx = 0;
+                
+            }
             telemetry.update();
         }
     }
