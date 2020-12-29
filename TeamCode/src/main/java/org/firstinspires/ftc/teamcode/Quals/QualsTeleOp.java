@@ -43,7 +43,7 @@ public class QualsTeleOp extends QualsSuperclass {
 
         while (opModeIsActive()) {
 
-            drive();
+            drivetrain.drive(telemetry, gamepad1);
 
             if (gamepad1.a && a == 0) {
                 a = 1;
