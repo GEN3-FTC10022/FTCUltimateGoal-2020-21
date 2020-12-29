@@ -47,7 +47,7 @@ public class Drivetrain {
     public final double DRIVE_TICKS_PER_INCH = (((DRIVE_TICKS_PER_REV * DRIVE_GEAR_REDUCTION) / WHEEL_CIRCUMFERENCE_INCHES));
     public final double DRIVE_TICKS_PER_DEGREE = ((double)3545.0/360.0); // temp
     public final double DRIVE_STRAFE_CORRECTION = (double)5.0/4.25;
-    public final double DISTANCE_BTWN_WHEELS = 12; //temp
+    public final double DISTANCE_BTWN_WHEELS = 12.2047; //temp
 
     // constructor
     public Drivetrain() { }
