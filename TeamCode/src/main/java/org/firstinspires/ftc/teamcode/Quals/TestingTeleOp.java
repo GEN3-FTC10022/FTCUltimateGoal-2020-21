@@ -24,7 +24,52 @@ public class TestingTeleOp extends QualsSuperclass {
 
         waitForStart();
 
-        rotateRight(0.35, 1000);
+        // shooter.setSpeed(1);
+
+        while (opModeIsActive()) {
+
+            /*
+
+            if (gamepad1.dpad_up && up == 0) {
+                up = 1;
+            } else if (!gamepad1.dpad_up && up == 1) {
+                shooter.increaseSpeed();
+                up = 0;
+            }
+
+            if (gamepad1.dpad_down && down == 0) {
+                up = 1;
+            } else if (!gamepad1.dpad_down && down == 1) {
+                shooter.decreaseSpeed();
+                up = 0;
+            }
+
+            if (gamepad1.right_bumper && rBumper == 0) {
+                rBumper = 1;
+            } else if (!gamepad1.right_bumper && rBumper == 1) {
+                shooter.fireTrigger();
+                rBumper = 0;
+            }
+
+             */
+
+            if (gamepad1.right_bumper && rBumper == 0) {
+                rBumper = 1;
+            } else if (!gamepad1.right_bumper && rBumper == 1) {
+                shooter.pushTrigger();
+                rBumper = 2;
+            } else if (gamepad1.right_bumper && rBumper == 2) {
+                rBumper = 3;
+            } else if (!gamepad1.right_bumper && rBumper == 3) {
+                shooter.retractTrigger();
+                rBumper = 0;
+            }
+
+            telemetry.addLine("Shooter % Velocity: " + shooter.percentVelocity);
+            telemetry.addLine("Shooter Raw Velocity: " + shooter.getVelocity());
+            telemetry.addLine("Trigger Position: " + shooter.getTriggerPosition());
+            telemetry.update();
+        }
     }
 }
 

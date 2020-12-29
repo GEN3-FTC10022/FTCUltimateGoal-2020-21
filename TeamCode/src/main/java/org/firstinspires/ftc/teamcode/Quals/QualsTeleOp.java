@@ -3,6 +3,34 @@ package org.firstinspires.ftc.teamcode.Quals;
 
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
+/*
+        Controls:
+        A:
+        B:
+        X:
+        Y:
+
+        Up: Increase Shooter Speed
+        Down: Decrease Shooter Speed
+        Left:
+        Right:
+
+        Left Stick X:
+        Left Stick Y:
+        Left Stick Button:
+        Right Stick X:
+        Right Stick Y:
+        Right Stick Button:
+
+        Left Bumper:
+        Left Trigger:
+        Right Bumper: Single-Fire
+        Right Trigger:
+
+        Start:
+        Back:
+ */
+
 @TeleOp(name = "TeleOp: Quals")
 public class QualsTeleOp extends QualsSuperclass {
 

@@ -21,6 +21,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackable;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackableDefaultListener;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
+import org.firstinspires.ftc.teamcode.Subsystems.Shooter;
 import org.firstinspires.ftc.teamcode.Subsystems.WobbleMech;
 
 import java.io.File;
@@ -44,6 +45,9 @@ public abstract class QualsSuperclass extends LinearOpMode {
     // Wobble Mech
     public WobbleMech wobbleMech = new WobbleMech();
 
+    // Shooter
+    public Shooter shooter = new Shooter();
+
     // REV Sensors
     public BNO055IMU imu;
     public Orientation orientation;
@@ -53,7 +57,7 @@ public abstract class QualsSuperclass extends LinearOpMode {
     public double flpower, frpower, blpower, brpower;
 
     // Toggle Integers
-    public int x = 0, a = 0, b = 0, y = 0;
+    public int x = 0, a = 0, b = 0, y = 0, up = 0, down = 0, rBumper = 0;
 
     // Vuforia
     // IMPORTANT: If you are using a USB WebCam, camera choice "BACK" and phone portrait "false"
@@ -126,6 +130,11 @@ public abstract class QualsSuperclass extends LinearOpMode {
         wobbleMech.motor = (DcMotorEx)hardwareMap.dcMotor.get("wobbleMech");
         wobbleMech.servo = hardwareMap.servo.get("wobbleClamp");
         wobbleMech.initialize();
+
+        // Shooter
+        shooter.mShooter = (DcMotorEx)hardwareMap.dcMotor.get("mShooter");
+        shooter.sTrigger = hardwareMap.servo.get("sTrigger");
+        shooter.initialize();
 
         // Odometry
 
