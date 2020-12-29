@@ -1,15 +1,12 @@
 package org.firstinspires.ftc.teamcode.Quals;
 
 import android.graphics.Bitmap;
-import android.graphics.Color;
 import android.os.Environment;
 
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
-import com.qualcomm.robotcore.hardware.Servo;
 import com.vuforia.Image;
 import com.vuforia.PIXEL_FORMAT;
 import com.vuforia.Vuforia;
@@ -24,8 +21,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackable;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackableDefaultListener;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
-import org.firstinspires.ftc.teamcode.util.Constants;
-import org.firstinspires.ftc.teamcode.util.WobbleMech;
+import org.firstinspires.ftc.teamcode.Subsystems.WobbleMech;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -35,9 +31,8 @@ import java.util.List;
 
 import static android.graphics.Bitmap.createBitmap;
 import static android.graphics.Bitmap.createScaledBitmap;
-import static org.firstinspires.ftc.robotcore.external.BlocksOpModeCompanion.hardwareMap;
 import static org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer.CameraDirection.BACK;
-import static org.firstinspires.ftc.teamcode.util.Constants.motorTicksPerRev;
+import static org.firstinspires.ftc.teamcode.Util.Constants.motorTicksPerRev;
 
 public abstract class QualsSuperclass extends LinearOpMode {
 
@@ -58,7 +53,7 @@ public abstract class QualsSuperclass extends LinearOpMode {
     public double flpower, frpower, blpower, brpower;
 
     // Toggle Integers
-    public int x = 0, a = 0, b = 0;
+    public int x = 0, a = 0, b = 0, y = 0;
 
     // Vuforia
     // IMPORTANT: If you are using a USB WebCam, camera choice "BACK" and phone portrait "false"
@@ -457,47 +452,11 @@ public abstract class QualsSuperclass extends LinearOpMode {
 
             /*
 
-            int yPos, xPos, pixel, tempColorSum;
-            int bitmapWidth = quarry.getWidth();
-            int bitmapHeight = quarry.getHeight();
-            int maxColor = 1000;
-            double factor = 0;              // moves yPos based on which stone
-            double difference = 1.0 / 12;   // moves yPos based on the point on the stone
-
-            yPos = (int) (bitmapHeight / 5);
-
-            // cycles through the three stones furthest from the wall
-            for (int currentStone = 4; currentStone <= 6; currentStone++) {
-
-                // cycles through 3 points on the stone
-                for (int i = 1; i <= 3; i++) {
-
-                    // set yPosition
-                    xPos = (int) (bitmapWidth * (factor + difference * i));
-
-                    // gets the pixel
-                    pixel = quarry.getPixel(xPos, yPos);
-
-                    // finds the color sum of that pixel
-                    tempColorSum = Color.red(pixel) + Color.green(pixel) + Color.blue(pixel);
-
-                    // if it's the darkest pixel yet, it will set the skyStonePos to the currentStone
-                    if (tempColorSum < maxColor) {
-
-                        maxColor = tempColorSum;
-                    }
-                }
-
-                // updates factor so the next cycle will look at pixels on the next stone
-                factor += 1.0 / 3.0;
-            }
-
             // this is a test Rbg ----------------------------------------------------------------------------------
             // this program takes the Rbg of the pixel by use arrays 
             // then it compare it to a set rbg if true it add one to a value
+            // if value 0 = zero comments
             // if value 3 =  one stone
-            // if value 6 = two stone
-            // if value 9 = three stone 
             // if value 12 = 4 stone 
             int[] Yloc = {}; // put 4 locations 
             int[] Xloc = {}; // put 3 locations
@@ -518,6 +477,9 @@ public abstract class QualsSuperclass extends LinearOpMode {
                 locx = 0;
                 
             }
+
+             */
+
             telemetry.update();
         }
     }
