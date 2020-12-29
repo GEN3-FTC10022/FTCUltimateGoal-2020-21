@@ -20,13 +20,15 @@ public class QualsAuto extends QualsSuperclass {
         // facing away from the wall
 
         initialize();
-        initializeVuforia();
+        // initializeVuforia();
 
         // Scan vuforia & assign to target_zone_goal using:
         //vuforiaScanTarget();
         // or
         //vuforiaScanPixel(true);               //set to false after testing
         String target_zone_goal = "A";          // A is closest to starting position, C is farthest
+
+        rotateRight(0.3,180);
 
         // Deliver to target zone goal A, the closest one
         if (target_zone_goal == "A") {
@@ -35,13 +37,13 @@ public class QualsAuto extends QualsSuperclass {
             forward(0.3, 30);               // all of these numbers need to be adjusted
             strafeRight(0.3, 12);           // all on this line & before
 
-            //open wobble mech
+            wobbleMech.setMotorPosition(2);
+            wobbleMech.open();
+            wobbleMech.setMotorPosition(1);
 
             // return to get the next wobble
             backward(0.3, 30);
             strafeLeft(0.3, 12);
-
-            //close wobble mech on the wobble goal
 
             //deliver to zone goal A
             forward(0.3, 30);

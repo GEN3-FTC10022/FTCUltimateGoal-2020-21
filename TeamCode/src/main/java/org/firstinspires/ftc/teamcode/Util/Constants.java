@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.util;
+package org.firstinspires.ftc.teamcode.Util;
 
 public class Constants {
     public static final double NEVEREST_ORBITAL_20_TICKS_PER_REV = 537.6;
