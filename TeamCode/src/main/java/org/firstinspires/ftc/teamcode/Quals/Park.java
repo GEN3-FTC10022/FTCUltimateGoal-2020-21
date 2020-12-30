@@ -13,16 +13,6 @@ public class Park extends QualsSuperclass {
 
         initialize();
         waitForStart();
-        strafeLeft(0.3,64);
-        sleep(500);
-
-        rotateRight(0.3, 90);
-        sleep(500);
-        wobbleMech.setMotorPosition(2);
-        sleep(500);
-        wobbleMech.open();
-        sleep(500);
-        wobbleMech.setMotorPosition(0);
     }
 
 }

@@ -45,40 +45,44 @@ public class QualsTeleOp extends QualsSuperclass {
 
             drivetrain.drive(telemetry, gamepad1);
 
-            if (gamepad1.a && a == 0) {
-                a = 1;
-            } else if (!gamepad1.a && a == 1) {
-                wobbleMech.setMotorPosition(2);
-                a = 2;
-            } else if (gamepad1.a && a == 2) {
-                a = 3;
-            } else if (!gamepad1.a && a == 3) {
-                wobbleMech.setMotorPosition(1);
-                a = 0;
-            } else if (gamepad1.b && b == 0) {
-                b = 1;
-            } else if (!gamepad1.b && b == 1) {
-                wobbleMech.setMotorPosition(0);
-                a = 0;
-                b = 0;
+            /*
+
+            if (gamepad1.a && constants.a == 0) {
+                constants.a = 1;
+            } else if (!gamepad1.a && constants.a == 1) {
+                wobbleMech.setArmPosition(2);
+                constants.a = 2;
+            } else if (gamepad1.a && constants.a == 2) {
+                constants.a = 3;
+            } else if (!gamepad1.a && constants.a == 3) {
+                wobbleMech.setArmPosition(1);
+                constants.a = 0;
+            } else if (gamepad1.b && constants.b == 0) {
+                constants.b = 1;
+            } else if (!gamepad1.b && constants.b == 1) {
+                wobbleMech.setArmPosition(0);
+                constants.a = 0;
+                constants.b = 0;
             }
 
-            if (gamepad1.x && x == 0) {
-                x = 1;
-            } else if (!gamepad1.x && x == 1) {
-                wobbleMech.open();
-                x = 2;
-            } else if (gamepad1.x && x == 2) {
-                x = 3;
-            } else if (!gamepad1.x && x == 3) {
-                wobbleMech.close();
-                x = 0;
+             */
+
+            if (gamepad1.x && constants.x == 0) {
+                constants.x = 1;
+            } else if (!gamepad1.x && constants.x == 1) {
+                wobbleMech.clawOpen();
+                constants.x = 2;
+            } else if (gamepad1.x && constants.x == 2) {
+                constants.x = 3;
+            } else if (!gamepad1.x && constants.x == 3) {
+                wobbleMech.clawClose();
+                constants.x = 0;
             }
 
             telemetry.addLine("Robot Initialized");
-            telemetry.addLine("WM Motor Position: " + wobbleMech.getMotorPosition());
-            telemetry.addLine("WM Motor RunMode: " + wobbleMech.motor.getMode());
-            telemetry.addLine("WM Servo Position: " + wobbleMech.servo.getPosition());
+            telemetry.addLine("WM Motor Position: " + wobbleMech.getArmPosition());
+            telemetry.addLine("WM Motor RunMode: " + wobbleMech.arm.getMode());
+            telemetry.addLine("WM Servo Position: " + wobbleMech.lClaw.getPosition());
             telemetry.update();
         }
     }

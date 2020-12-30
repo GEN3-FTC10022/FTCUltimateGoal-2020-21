@@ -23,6 +23,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackableDefau
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
 import org.firstinspires.ftc.teamcode.Subsystems.Shooter;
 import org.firstinspires.ftc.teamcode.Subsystems.WobbleMech;
+import org.firstinspires.ftc.teamcode.Util.Constants;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -35,15 +36,19 @@ import static android.graphics.Bitmap.createScaledBitmap;
 import static org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer.CameraDirection.BACK;
 import static org.firstinspires.ftc.teamcode.Util.Constants.motorTicksPerRev;
 
+/*
+    Updated for Wobble Mech Testing
+ */
+
 public abstract class TestingSuperclass extends LinearOpMode {
 
     // ROBOT OBJECTS -------------------------------------------------------------------------------
 
-    // Shooter
-    public Shooter shooter = new Shooter();
+    // Constants
+    public Constants constants = new Constants();
 
-    // Toggle Integers
-    public int x = 0, a = 0, b = 0, y = 0, up = 0, down = 0, rBumper = 0;
+    // Shooter
+    public WobbleMech wobbleMech = new WobbleMech();
 
     // CONTROL CONSTANTS ---------------------------------------------------------------------------
 
@@ -56,12 +61,26 @@ public abstract class TestingSuperclass extends LinearOpMode {
 
         // Telemetry
         telemetry.addLine("Initializing Robot...");
+        telemetry.addLine("Load wobble goal and press 'Start'...");
         telemetry.update();
 
-        // Shooter
-        shooter.mShooter = (DcMotorEx)hardwareMap.dcMotor.get("mShooter");
-        shooter.sTrigger = hardwareMap.servo.get("sTrigger");
-        shooter.initialize();
+        // Wobble Mech
+        wobbleMech.arm = (DcMotorEx)hardwareMap.dcMotor.get("arm");
+        wobbleMech.lClaw = hardwareMap.servo.get("lClaw");
+        wobbleMech.rClaw = hardwareMap.servo.get("rClaw");
+        wobbleMech.initialize();
+
+        while (wobbleMech.initK == 0) {
+            if (gamepad1.start && constants.start == 0) {
+                constants.start = 1;
+            } else if (!gamepad1.start && constants.start == 1) {
+                wobbleMech.clawClose();
+                sleep(2000);
+                wobbleMech.setArmPosition(0, 0.2);
+                constants.start = 0;
+                wobbleMech.initK = 1;
+            }
+        }
 
         // Telemetry
         telemetry.addLine("Robot Initialized");
@@ -69,4 +88,39 @@ public abstract class TestingSuperclass extends LinearOpMode {
     }
 
     // UTILITY METHODS -----------------------------------------------------------------------------
+
+    // Wobble Goal
+
+    public void aim() {
+        wobbleMech.clawOpen();
+        sleep(750);
+        wobbleMech.setArmPosition(1, 0.4);
+    }
+
+    public void collect() {
+        wobbleMech.clawClose();
+        sleep(750);
+        wobbleMech.setArmPosition(0, 0.2);
+    }
+
+    public void release() {
+        wobbleMech.setArmPosition(1, 0.2);
+        sleep(750);
+        wobbleMech.clawOpen();
+        sleep(750);
+        reset();
+    }
+
+    public void drop() {
+        wobbleMech.setArmPosition(2, 0.2);
+        sleep(750);
+        wobbleMech.clawOpen();
+        sleep(750);
+        reset();
+    }
+
+    public void reset() {
+        wobbleMech.setArmPosition(0, 0.4);
+        wobbleMech.clawClose();
+    }
 }

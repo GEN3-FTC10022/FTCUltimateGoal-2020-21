@@ -4,71 +4,77 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.Servo;
 
+import static org.firstinspires.ftc.robotcore.external.BlocksOpModeCompanion.gamepad1;
 import static org.firstinspires.ftc.teamcode.Util.Constants.motorTicksPerRev;
+
+// Added left and right claws
+// Updated initialize and claw methods for two servos
+// Changed "motor" to "arm"
+// Added armPower constant
+// Updated arm angle positions to include vertical initialize position, removed reverse arm direction; moved tick conversion to method
+// Switched claw open and close constants
+// Added arm collect and release methods
 
 public class WobbleMech {
 
-    public DcMotorEx motor;
-    public Servo servo;
+    // Objects
+    public DcMotorEx arm;
+    public Servo lClaw, rClaw;
 
+    // Constants
     private final double WOBBLE_TICKS_PER_REV = motorTicksPerRev[2];
     private final double WOBBLE_TICKS_PER_DEGREE = WOBBLE_TICKS_PER_REV/360;
-    /*
-    private final double[] wobbleAngleTicks =
-            {115 * WOBBLE_TICKS_PER_DEGREE,
-                    0 * WOBBLE_TICKS_PER_DEGREE,
-                    -105 * WOBBLE_TICKS_PER_DEGREE}; // temp
 
-     */
+    // Arm Angle Positions
+    private final double[] wobbleAngles =
+            {-45, 90, 15, 0}; // temp
 
-    private final double[] wobbleAngleTicks =
-            {0 * WOBBLE_TICKS_PER_DEGREE,
-                    -115 * WOBBLE_TICKS_PER_DEGREE,
-                    -220 * WOBBLE_TICKS_PER_DEGREE}; // temp
+    // Claw Positions
+    private final double open = 0.0; // temp
+    private final double close = 0.5325; // temp
 
-    private final double sOpen = 0.0; // temp
-    private final double sClose = 0.45; // temp
+    // Initialization Constants
+    public double initK = 0;
 
-    public WobbleMech() {
-
-    }
+    public WobbleMech() { }
 
     public void initialize() {
-        this.motor.setDirection(DcMotor.Direction.REVERSE);
-        this.motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        this.motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        this.setMotorPosition(1);
-        this.motor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-        this.close();
+        // Arm
+        this.arm.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        this.arm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        this.setArmPosition(3, 0.4);
+        this.arm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+        // Claw
+        this.lClaw.setDirection(Servo.Direction.REVERSE);
+        this.clawOpen();
     }
 
-    public void setMotorPosition(int position) {
-        this.motor.setTargetPosition((int)Math.round(wobbleAngleTicks[position]));
-        this.setPower(0.4);
-        if (this.getMotorPosition() < 3 && this.getMotorPosition() > -3) {
-            this.motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            this.motor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        }
+    public void setArmPosition(int position, double power) {
+        this.arm.setTargetPosition((int)Math.round(wobbleAngles[position] * WOBBLE_TICKS_PER_DEGREE));
+        this.setArmPower(power);
     }
 
-    public int getMotorPosition() {
-        return this.motor.getCurrentPosition();
+    public int getArmPosition() {
+        return this.arm.getCurrentPosition();
     }
 
-    public void setPower(double power) {
-        this.motor.setPower(power);
+    public void setArmPower(double power) {
+        this.arm.setPower(power);
     }
 
-    public void open() {
-        this.servo.setPosition(sOpen);
+    public void clawOpen() {
+        this.lClaw.setPosition(open);
+        this.rClaw.setPosition(open);
     }
 
-    public void close() {
-        this.servo.setPosition(sClose);
+    public void clawClose() {
+        this.lClaw.setPosition(close);
+        this.rClaw.setPosition(close);
     }
 
-    public double getServoPosition() {
-        return this.servo.getPosition();
+    public double getClawPosition() {
+        return this.lClaw.getPosition();
     }
 }

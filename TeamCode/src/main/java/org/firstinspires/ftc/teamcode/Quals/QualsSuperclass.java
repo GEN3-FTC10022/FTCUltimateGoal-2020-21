@@ -24,6 +24,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
 import org.firstinspires.ftc.teamcode.Subsystems.Shooter;
 import org.firstinspires.ftc.teamcode.Subsystems.WobbleMech;
 import org.firstinspires.ftc.teamcode.Subsystems.Drivetrain;
+import org.firstinspires.ftc.teamcode.Util.Constants;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -40,6 +41,9 @@ public abstract class QualsSuperclass extends LinearOpMode {
 
     // ROBOT OBJECTS -------------------------------------------------------------------------------
 
+    // Constants
+    public Constants constants = new Constants();
+
     // Drivetrain
     public Drivetrain drivetrain = new Drivetrain();
 
@@ -48,9 +52,6 @@ public abstract class QualsSuperclass extends LinearOpMode {
 
     // Shooter
     public Shooter shooter = new Shooter();
-
-    // Toggle Integers
-    public int x = 0, a = 0, b = 0, y = 0, up = 0, down = 0, rBumper = 0;
 
     // Vuforia
     // IMPORTANT: If you are using a USB WebCam, camera choice "BACK" and phone portrait "false"
@@ -100,8 +101,9 @@ public abstract class QualsSuperclass extends LinearOpMode {
         telemetry.update();
 
         // Wobble Mech
-        wobbleMech.motor = (DcMotorEx)hardwareMap.dcMotor.get("wobbleMech");
-        wobbleMech.servo = hardwareMap.servo.get("wobbleClamp");
+        wobbleMech.arm = (DcMotorEx)hardwareMap.dcMotor.get("arm");
+        wobbleMech.lClaw = hardwareMap.servo.get("lClaw");
+        wobbleMech.rClaw = hardwareMap.servo.get("rClaw");
         wobbleMech.initialize();
 
         // Shooter

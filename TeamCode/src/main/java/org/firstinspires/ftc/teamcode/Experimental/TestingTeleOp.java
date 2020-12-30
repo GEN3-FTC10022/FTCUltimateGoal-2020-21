@@ -16,6 +16,10 @@ import java.io.IOException;
 
 import static android.graphics.Bitmap.createBitmap;
 
+/*
+    Updated for wobble mech testing
+ */
+
 @TeleOp(name = "Test: TeleOp")
 public class TestingTeleOp extends TestingSuperclass {
 
@@ -28,36 +32,63 @@ public class TestingTeleOp extends TestingSuperclass {
 
         while (opModeIsActive()) {
 
-            if (gamepad1.dpad_up && up == 0) {
-                up = 1;
-            } else if (!gamepad1.dpad_up && up == 1) {
-                shooter.increasePower();
-                // shooter.mShooter.setVelocity(1000);
-                up = 0;
+            if (gamepad1.a && constants.a == 0) {
+                constants.a = 1;
+
+            } else if (!gamepad1.a && constants.a == 1) { // Aim arm
+                aim();
+                constants.a = 2;
+
+            } else if (gamepad1.a && constants.a == 2) {
+                constants.a = 3;
+
+            } else if (!gamepad1.a && constants.a == 3) { // Collect wobble goal
+                collect();
+                constants.a = 4;
+
+            } else if (gamepad1.a && constants.a == 4) {
+                constants.a = 5;
+
+            } else if (gamepad1.a && constants.a == 5) { // Release wobble goal
+                drop();
+                constants.a = 0;
+
+            } else if (gamepad1.b && constants.b == 0) {
+                constants.b = 1;
+
+            } else if (!gamepad1.b && constants.b == 1) { // Reset arm
+                reset();
+                constants.a = 0;
+                constants.b = 0;
             }
 
-            if (gamepad1.dpad_down && down == 0) {
-                down = 1;
-            } else if (!gamepad1.dpad_down && down == 1) {
-                shooter.decreasePower();
-                // shooter.mShooter.setVelocity(0);
-                down = 0;
+            if (gamepad1.y && constants.y == 0) {
+                constants.y = 1;
+            } else if (!gamepad1.y && constants.y == 1) {
+                release();
+                constants.y = 0;
             }
 
-            if (gamepad1.right_bumper && rBumper == 0) {
-                rBumper = 1;
-            } else if (!gamepad1.right_bumper && rBumper == 1) {
-                shooter.pushTrigger();
-                sleep(400);
-                shooter.retractTrigger();
-                rBumper = 0;
+            /*
+
+            if (gamepad1.x && constants.x == 0) {
+                constants.x = 1;
+            } else if (!gamepad1.x && constants.x == 1) {
+                wobbleMech.clawOpen();
+                constants.x = 2;
+            } else if (gamepad1.x && constants.x == 2) {
+                constants.x = 3;
+            } else if (!gamepad1.x && constants.x == 3) {
+                wobbleMech.clawClose();
+                constants.x = 0;
             }
 
-            telemetry.addLine("Shooter % Velocity: " + shooter.percentVelocity);
-            // telemetry.addLine("Shooter Set Velocity: " + shooter.percentVelocity * shooter.SHOOTER_MAX_TICKS_PER_SEC);
-            telemetry.addLine("Shooter Raw Velocity: " + shooter.getVelocity());
-            telemetry.addLine("Trigger Position: " + shooter.getTriggerPosition());
-            telemetry.addLine("Shooter RunMode: " + shooter.mShooter.getMode());
+             */
+
+            telemetry.addLine("Robot Initialized");
+            telemetry.addLine("WM Motor Position: " + wobbleMech.getArmPosition());
+            telemetry.addLine("WM Motor RunMode: " + wobbleMech.arm.getMode());
+            telemetry.addLine("WM Servo Position: " + wobbleMech.lClaw.getPosition());
             telemetry.update();
         }
     }
