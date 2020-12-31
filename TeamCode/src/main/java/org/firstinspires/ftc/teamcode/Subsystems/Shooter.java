@@ -33,52 +33,52 @@ public class Shooter {
     public void initialize() {
 
         // Trigger
-        this.sTrigger.setDirection(Servo.Direction.REVERSE);
+        sTrigger.setDirection(Servo.Direction.REVERSE);
         retractTrigger();
 
         // Shooter
-        this.mShooter.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        this.mShooter.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        mShooter.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        mShooter.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         percentVelocity = 0;
-        this.runShooter();
+        runShooter();
     }
 
     public void pushTrigger() {
-        this.sTrigger.setPosition(sPush);
+        sTrigger.setPosition(sPush);
     }
 
     public void retractTrigger() {
-        this.sTrigger.setPosition(sRetract);
+        sTrigger.setPosition(sRetract);
     }
 
     public double getTriggerPosition() {
-        return this.sTrigger.getPosition();
+        return sTrigger.getPosition();
     }
 
     public double getVelocity() {
-        return this.mShooter.getVelocity();
+        return mShooter.getVelocity();
     }
 
     public void increasePower() {
         if (percentVelocity < 1) {
-            this.percentVelocity += percentModifier;
+            percentVelocity += percentModifier;
         }
-        this.runShooter();
+        runShooter();
     }
 
     public void decreasePower() {
         if (percentVelocity > 0) {
-            this.percentVelocity -= percentModifier;
+            percentVelocity -= percentModifier;
         }
-        this.runShooter();
+        runShooter();
     }
 
     public void setPercentVelocity(double percent) {
-        this.percentVelocity = percent;
+        percentVelocity = percent;
     }
 
     public void runShooter() {
-        this.mShooter.setPower(percentVelocity);
-        // this.mShooter.setVelocity(this.percentVelocity * this.SHOOTER_MAX_TICKS_PER_SEC);
+        mShooter.setPower(percentVelocity);
+        // mShooter.setVelocity(percentVelocity * SHOOTER_MAX_TICKS_PER_SEC);
     }
 }

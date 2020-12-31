@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.Subsystems;
 
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.Servo;
@@ -41,40 +42,40 @@ public class WobbleMech {
     public void initialize() {
 
         // Arm
-        this.arm.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        this.arm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        this.setArmPosition(3, 0.4);
-        this.arm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        arm.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        arm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        setArmPosition(3, 0.4);
+        arm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
         // Claw
-        this.lClaw.setDirection(Servo.Direction.REVERSE);
-        this.clawOpen();
+        lClaw.setDirection(Servo.Direction.REVERSE);
+        clawOpen();
     }
 
     public void setArmPosition(int position, double power) {
-        this.arm.setTargetPosition((int)Math.round(wobbleAngles[position] * WOBBLE_TICKS_PER_DEGREE));
-        this.setArmPower(power);
+        arm.setTargetPosition((int)Math.round(wobbleAngles[position] * WOBBLE_TICKS_PER_DEGREE));
+        setArmPower(power);
     }
 
     public int getArmPosition() {
-        return this.arm.getCurrentPosition();
+        return arm.getCurrentPosition();
     }
 
     public void setArmPower(double power) {
-        this.arm.setPower(power);
+        arm.setPower(power);
     }
 
     public void clawOpen() {
-        this.lClaw.setPosition(open);
-        this.rClaw.setPosition(open);
+        lClaw.setPosition(open);
+        rClaw.setPosition(open);
     }
 
     public void clawClose() {
-        this.lClaw.setPosition(close);
-        this.rClaw.setPosition(close);
+        lClaw.setPosition(close);
+        rClaw.setPosition(close);
     }
 
     public double getClawPosition() {
-        return this.lClaw.getPosition();
+        return lClaw.getPosition();
     }
 }

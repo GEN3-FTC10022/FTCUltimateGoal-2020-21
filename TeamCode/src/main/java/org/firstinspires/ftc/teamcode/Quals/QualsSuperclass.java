@@ -22,6 +22,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackable;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackableDefaultListener;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
 import org.firstinspires.ftc.teamcode.Subsystems.Shooter;
+import org.firstinspires.ftc.teamcode.Subsystems.Vision;
 import org.firstinspires.ftc.teamcode.Subsystems.WobbleMech;
 import org.firstinspires.ftc.teamcode.Subsystems.Drivetrain;
 import org.firstinspires.ftc.teamcode.Util.Constants;
@@ -39,6 +40,10 @@ import static org.firstinspires.ftc.teamcode.Util.Constants.motorTicksPerRev;
 
 public abstract class QualsSuperclass extends LinearOpMode {
 
+    public QualsSuperclass() {
+
+    }
+
     // ROBOT OBJECTS -------------------------------------------------------------------------------
 
     // Constants
@@ -53,41 +58,8 @@ public abstract class QualsSuperclass extends LinearOpMode {
     // Shooter
     public Shooter shooter = new Shooter();
 
-    // Vuforia
-    // IMPORTANT: If you are using a USB WebCam, camera choice "BACK" and phone portrait "false"
-    private static final VuforiaLocalizer.CameraDirection CAMERA_CHOICE = BACK;
-    private static final boolean PHONE_IS_PORTRAIT = false;
-
-    private static final String VUFORIA_KEY = "AaMuRa7/////AAABmeeXefeDrEfGtTjiMIEuO2djgL8Uz6M9/NrJ" +
-            "CrNousZ9V7tnau7MP3q5eACYGf+HgjNwjsOkV8ERj5yJglYfVjm3W9NBeAEAP18/1TMnFvSY6+dalmccEnnbag" +
-            "eBAPAVMBLk5OLCA35uka2sjuLb37/rdMPNJGmSqklqcthb1NuxWzpVe7BZcf2YODtUPWnTHKi5t5s6XKQA5p4T" +
-            "u6x73Mha8a6jN7hv/pnvneUoG0N5Eih6gZ1sSXKcGfpqjf1npkJUb4AcMoqYE0DE31kUk+V/N2hjNsg9mQSGw2" +
-            "TmXG7Iq15ugKdyFwzgpWf6IueyoTKkwOczEiGALV2lObz+fyFLob4rq6HtpkCpL4gkh4xy";
-
-    // Class Members
-    public VuforiaLocalizer vuforia;
-
-    // This is the webcam we are to use. As with other hardware devices such as motors and
-    // servos, this device is identified using the robot configuration tool in the FTC application.
-
-    WebcamName webcamName;
-
-    private boolean targetVisible;
-
-    // Configure Vuforia by creating a Parameter object, and passing it to the Vuforia engine.
-    // We can pass Vuforia the handle to a camera preview resource (on the RC phone);
-    // If no camera monitor is desired, use the parameter-less constructor instead (commented out below).
-
-    // int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
-    // VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters(cameraMonitorViewId);
-    VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters();
-
-    VuforiaTrackables targetsUltimateGoal;
-
-    List<VuforiaTrackable> allTrackables;
-
-    public Image rgbImage = null;
-    public VuforiaLocalizer.CloseableFrame closeableFrame = null;
+    // Vision
+    public Vision vision = new Vision();
 
     // METHODS -------------------------------------------------------------------------------------
 
@@ -111,6 +83,10 @@ public abstract class QualsSuperclass extends LinearOpMode {
         shooter.sTrigger = hardwareMap.servo.get("sTrigger");
         shooter.initialize();
 
+        // Vision
+        vision.webcamName = hardwareMap.get(WebcamName.class, "Webcam");
+        vision.initialize();
+
         // Odometry
         drivetrain.leftEncoder = hardwareMap.dcMotor.get("leftEncoder");
         drivetrain.rightEncoder = hardwareMap.dcMotor.get("rightEncoder");
@@ -121,53 +97,16 @@ public abstract class QualsSuperclass extends LinearOpMode {
         drivetrain.frontRight = (DcMotorEx)hardwareMap.dcMotor.get("frontRight");
         drivetrain.backLeft = (DcMotorEx)hardwareMap.dcMotor.get("backLeft");
         drivetrain.backRight = (DcMotorEx)hardwareMap.dcMotor.get("backRight");
-        drivetrain.initialize();
-
-        // REV Sensors
         drivetrain.imu = hardwareMap.get(BNO055IMU.class, "imu");
-        drivetrain.initializeIMU();
+        drivetrain.initialize();
 
         // Telemetry
         telemetry.addLine("Robot Initialized");
         telemetry.update();
     }
 
-    public void initializeVuforia() {
-
-        webcamName = hardwareMap.get(WebcamName.class, "Webcam");
-
-        parameters.vuforiaLicenseKey = VUFORIA_KEY;
-
-        // We also indicate which camera on the RC we wish to use.
-
-        parameters.cameraName = webcamName;
-
-        // Make sure extended tracking is disabled for this example.
-        parameters.useExtendedTracking = false;
-
-        //  Instantiate the Vuforia engine
-        vuforia = ClassFactory.getInstance().createVuforia(parameters);
-
-        // Load the data sets for the trackable objects. These particular data
-        // sets are stored in the 'assets' part of our application.
-        targetsUltimateGoal = this.vuforia.loadTrackablesFromAsset("UltimateGoal");
-        VuforiaTrackable blueTowerGoalTarget = targetsUltimateGoal.get(0);
-        blueTowerGoalTarget.setName("Blue Tower Goal Target");
-        VuforiaTrackable redTowerGoalTarget = targetsUltimateGoal.get(1);
-        redTowerGoalTarget.setName("Red Tower Goal Target");
-        VuforiaTrackable redAllianceTarget = targetsUltimateGoal.get(2);
-        redAllianceTarget.setName("Red Alliance Target");
-        VuforiaTrackable blueAllianceTarget = targetsUltimateGoal.get(3);
-        blueAllianceTarget.setName("Blue Alliance Target");
-        VuforiaTrackable frontWallTarget = targetsUltimateGoal.get(4);
-        frontWallTarget.setName("Front Wall Target");
-
-        // For convenience, gather together all the trackable objects in one easily-iterable collection
-        allTrackables = new ArrayList<VuforiaTrackable>();
-        allTrackables.addAll(targetsUltimateGoal);
-    }
-
     // Drive Methods
+
     public void forward(double pow, double inches) {
 
         double target = inches * drivetrain.DRIVE_TICKS_PER_INCH;
@@ -296,6 +235,116 @@ public abstract class QualsSuperclass extends LinearOpMode {
         }
     }
 
+    public void drive() {
+
+        // FIELD-CENTRIC DRIVE -----------------------------------------------------------------
+
+        // Display rotation data
+        telemetry.addData("FC Rotation (Radians): ", drivetrain.getHeading(true));
+        telemetry.addData("FC Rotation (Degrees): ", Math.toDegrees(drivetrain.getHeading(true)));
+        telemetry.addData("Normal Rotation (Radians): ", Math.toRadians(drivetrain.getHeading(false)));
+        telemetry.addData("Normal Rotation (Degrees): ", drivetrain.getHeading(false));
+
+        double forward = -gamepad1.left_stick_y;
+        double right = gamepad1.left_stick_x;
+        double clockwise = gamepad1.right_stick_x;
+
+        // Joystick deadzones
+        if (Math.abs(forward) < 0.05)
+            forward = 0;
+        if (Math.abs(right) < 0.05)
+            right = 0;
+        if (Math.abs(clockwise) < 0.05)
+            clockwise = 0;
+
+        // math
+        if (drivetrain.getHeading(true) < 0) {       // If theta is measured clockwise from zero reference
+
+            drivetrain.temp = forward * Math.cos(drivetrain.getHeading(true)) + right * Math.sin(-drivetrain.getHeading(true));
+            right = -forward * Math.sin(-drivetrain.getHeading(true)) + right * Math.cos(drivetrain.getHeading(true));
+            forward = drivetrain.temp;
+        }
+
+        if (drivetrain.getHeading(true) >= 0) {    // If theta is measured counterclockwise from zero reference
+
+            drivetrain.temp = forward * Math.cos(drivetrain.getHeading(true)) - right * Math.sin(drivetrain.getHeading(true));
+            right = forward * Math.sin(drivetrain.getHeading(true)) + right * Math.cos(drivetrain.getHeading(true));
+            forward = drivetrain.temp;
+        }
+
+        // assign calculated values to the power variables
+        drivetrain.flpower = forward + right + clockwise;
+        drivetrain.frpower = forward - right - clockwise;
+        drivetrain.blpower = forward - right + clockwise;
+        drivetrain.brpower = forward + right - clockwise;
+
+        // if you have the testing time, maybe remove this one day and see if it causes any
+        // problems?
+        // Find the maximum of the powers
+        double max = Math.max(  Math.max(Math.abs(drivetrain.flpower), Math.abs(drivetrain.frpower)),
+                Math.max(Math.abs(drivetrain.blpower), Math.abs(drivetrain.brpower))  );
+        // Use this to make sure no motor powers are above 1 (the max value the motor can accept)
+        if (max > 1) {
+
+            drivetrain.flpower /= max;
+            drivetrain.frpower /= max;
+            drivetrain.blpower /= max;
+            drivetrain.brpower /= max;
+        }
+
+        // Motor powers are set to the power of 3 so that the drivetrain motors accelerates
+        // exponentially instead of linearly
+        // Note: you may consider, in the future, moving this code block to before the
+        // max > 1 code block to see if that is better or worse performance, but I think
+        // it will be worse because it may mess up proportions
+        drivetrain.flpower = Math.pow(drivetrain.flpower, 3);
+        drivetrain.blpower = Math.pow(drivetrain.blpower, 3);
+        drivetrain.frpower = Math.pow(drivetrain.frpower, 3);
+        drivetrain.brpower = Math.pow(drivetrain.brpower, 3);
+
+        // Motor Power is decreased while the right trigger is held down to allow for more
+        // precise robot control
+        if (gamepad1.right_trigger > 0.8) {
+
+            drivetrain.flpower /= 3;
+            drivetrain.frpower /= 3;
+            drivetrain.blpower /= 3;
+            drivetrain.brpower /= 3;
+        }
+
+        // If the trigger is held down, but not pressed all the way down, motor power will
+        // slow down proportionally to how much the trigger is pressed
+        else if (gamepad1.right_trigger > 0.1) {
+
+            double driveSlow = -0.8 * gamepad1.right_trigger + 1;
+
+            drivetrain.flpower *= driveSlow;
+            drivetrain.frpower *= driveSlow;
+            drivetrain.blpower *= driveSlow;
+            drivetrain.brpower *= driveSlow;
+        }
+
+            /*
+            // Alternate version of drive slowing
+            // This version does not scale proportionally to the press, but uses a constant
+            // multiplier instead
+            // Programmers may choose to use this version of drive slowing instead due to a
+            // driver's preference
+            if (gamepad1.right_trigger > 0.5){
+
+                flpower /= 3;
+                blpower /= 3;
+                frpower /= 3;
+                brpower /= 3;
+            }
+            */
+
+        drivetrain.setPowerAll(drivetrain.flpower, drivetrain.frpower, drivetrain.blpower, drivetrain.brpower);
+
+        //odo and print info
+        drivetrain.updatePosition(telemetry);
+    }
+
     // Vision Methods
 
     public void vuforiaScanTarget() {
@@ -304,48 +353,47 @@ public abstract class QualsSuperclass extends LinearOpMode {
         // AFTER you hit Init on the Driver Station, use the "options menu" to select "Camera Stream"
         // Tap the preview window to receive a fresh image.
 
-        targetsUltimateGoal.activate();
+        vision.targetsUltimateGoal.activate();
 
         // Change condition to something else later
         while (!isStopRequested()) {
 
             // check all the trackable targets to see which one (if any) is visible.
-            targetVisible = false;
-            for (VuforiaTrackable trackable : allTrackables) {
+            vision.targetVisible = false;
+            for (VuforiaTrackable trackable : vision.allTrackables) {
                 if (((VuforiaTrackableDefaultListener)trackable.getListener()).isVisible()) {
                     telemetry.addData("Visible Target", trackable.getName());
-                    targetVisible = true;
+                    vision.targetVisible = true;
                     break;
                 }
             }
-
             telemetry.update();
         }
 
         // Disable Tracking when we are done;
-        targetsUltimateGoal.deactivate();
+        vision.targetsUltimateGoal.deactivate();
     }
 
     public void vuforiaScanPixel(boolean saveBitmap) {
 
         Vuforia.setFrameFormat(PIXEL_FORMAT.RGB565, true); // Enables RGB565 format for image
-        vuforia.setFrameQueueCapacity(1); // Store only one frame at a time
+        vision.vuforia.setFrameQueueCapacity(1); // Store only one frame at a time
 
         // Capture Vuforia Frame
-        while (rgbImage == null) {
+        while (vision.rgbImage == null) {
 
             try {
 
-                closeableFrame = vuforia.getFrameQueue().take();
-                long numImages = closeableFrame.getNumImages();
+                vision.closeableFrame = vision.vuforia.getFrameQueue().take();
+                long numImages = vision.closeableFrame.getNumImages();
 
                 for (int i = 0; i < numImages; i++) {
 
-                    if (closeableFrame.getImage(i).getFormat() == PIXEL_FORMAT.RGB565) {
+                    if (vision.closeableFrame.getImage(i).getFormat() == PIXEL_FORMAT.RGB565) {
 
-                        rgbImage = closeableFrame.getImage(i);
+                        vision.rgbImage = vision.closeableFrame.getImage(i);
 
-                        if (rgbImage != null)
+                        if (vision.rgbImage != null)
                             break;
                     }
                 }
@@ -354,19 +402,19 @@ public abstract class QualsSuperclass extends LinearOpMode {
 
             } finally {
 
-                if (closeableFrame != null)
-                    closeableFrame.close();
+                if (vision.closeableFrame != null)
+                    vision.closeableFrame.close();
             }
         }
 
-        if (rgbImage != null) {
+        if (vision.rgbImage != null) {
 
             telemetry.addLine("Picture taken");
             telemetry.update();
 
             // Copy Bitmap from Vuforia Frame
-            Bitmap quarry = createBitmap(rgbImage.getWidth(), rgbImage.getHeight(), Bitmap.Config.RGB_565);
-            quarry.copyPixelsFromBuffer(rgbImage.getPixels());
+            Bitmap stack = createBitmap(vision.rgbImage.getWidth(), vision.rgbImage.getHeight(), Bitmap.Config.RGB_565);
+            stack.copyPixelsFromBuffer(vision.rgbImage.getPixels());
 
             // Find Directory
             String path = Environment.getExternalStorageDirectory().toString();
@@ -378,7 +426,7 @@ public abstract class QualsSuperclass extends LinearOpMode {
 
                     File file = new File(path, "Bitmap.png");
                     out = new FileOutputStream(file);
-                    quarry.compress(Bitmap.CompressFormat.PNG, 100, out);
+                    stack.compress(Bitmap.CompressFormat.PNG, 100, out);
 
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -397,23 +445,14 @@ public abstract class QualsSuperclass extends LinearOpMode {
             }
 
             // Crop Bitmap
-            // (0,0) is the top-left corner of the bitmap
-            int cropStartX;
-            int cropStartY;
-            int cropWidth;
-            int cropHeight;
-
-            int quarryWidth, quarryHeight;
-            quarryWidth = quarry.getWidth();
-            quarryHeight = quarry.getHeight();
-
-            cropStartX = (int) (quarryWidth * 20.0 / 69.5);     // x initial | max: 31.5 original 26.0 / 69.5
-            cropStartY = (int) (quarryHeight * 13.0 / 39.0);    // y initial | max: 33.0 original 13.0 / 39.0
-            cropWidth = (int) (quarryWidth * 38.0 / 69.5);      // delta x
-            cropHeight = (int) (quarryHeight * 6.0 / 39.0);     // delta y
+            int stackWidth = stack.getWidth(), stackHeight = stack.getHeight();
+            int cropStartX = (int) (stackWidth * vision.pXInitial);
+            int cropStartY = (int) (stackHeight * vision.pYInitial);
+            int cropWidth = (int) (stackWidth * vision.pWidth);
+            int cropHeight = (int) (stackHeight * vision.pHeight);
 
             // Create cropped bitmap to show only stones
-            quarry = createBitmap(quarry, cropStartX, cropStartY, cropWidth, cropHeight);
+            stack = createBitmap(stack, cropStartX, cropStartY, cropWidth, cropHeight);
 
             // Save cropped bitmap to file
             if (saveBitmap) {
@@ -421,7 +460,7 @@ public abstract class QualsSuperclass extends LinearOpMode {
 
                     File file = new File(path, "CroppedBitmap.png");
                     out = new FileOutputStream(file);
-                    quarry.compress(Bitmap.CompressFormat.PNG, 100, out);
+                    stack.compress(Bitmap.CompressFormat.PNG, 100, out);
 
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -440,24 +479,24 @@ public abstract class QualsSuperclass extends LinearOpMode {
             }
 
             // Compress bitmap to reduce scan time
-            quarry = createScaledBitmap(quarry, 110, 20, true);
+            stack = createScaledBitmap(stack, 110, 20, true);
 
             /*
 
             // this is a test Rbg ----------------------------------------------------------------------------------
-            // this program takes the Rbg of the pixel by use arrays 
+            // this program takes the Rbg of the pixel by use arrays
             // then it compare it to a set rbg if true it add one to a value
-            // if value 0 = zero comments
+            // if value 0 = zero stones
             // if value 3 =  one stone
-            // if value 12 = 4 stone 
-            int[] Yloc = {}; // put 4 locations 
+            // if value 12 = 4 stones
+            int[] Yloc = {}; // put 4 locations
             int[] Xloc = {}; // put 3 locations
             int locx = 0; // this is for the arrays
-            int locy = 0; 
-            int stonenum = 0; //this is for the stong count 
-            Color stonecolor = new Color(255,255,255);//this is the stone color it is set to white have to change that 
+            int locy = 0;
+            int stonenum = 0; //this is for the stong count
+            Color stonecolor = new Color(255,255,255);//this is the stone color it is set to white have to change that
             for( int i = 0; i < 4; i++){
-                for( int t = 0; t < 3; t++){ 
+                for( int t = 0; t < 3; t++){
                     Color c1 = new Color(quarry.getRGB(Xloc[locx], Yloc[locy]));// this takes the Rbg of the pixel have to test
                     if(c1.getRGB() == stonecolor.getRGB()){
                         stonenum += 1;
@@ -467,35 +506,11 @@ public abstract class QualsSuperclass extends LinearOpMode {
 
                 locy += 1;
                 locx = 0;
-                
+
             }
 
              */
-
             telemetry.update();
         }
     }
-
-    /*
-
-    public void runEncoder(DcMotor m_motor, double power, double ticks) {
-
-        int delta = (int)Math.round(ticks);
-        m_motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        m_motor.setTargetPosition(delta);
-        m_motor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-        while (m_motor.isBusy()) {
-            driveTeleOp();
-            m_motor.setPower(power);
-        }
-
-        // Stop all motion;
-        m_motor.setPower(0);
-
-        // Turn off RUN_TO_POSITION
-        m_motor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-    }
-
-     */
 }
