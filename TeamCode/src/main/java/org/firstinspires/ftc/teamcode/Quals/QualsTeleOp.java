@@ -5,20 +5,20 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 /*
         Controls:
-        A:
-        B:
+        A: Activate Wobble Mech && Pre-load Confirm
+        B: Restart Wobble Mech && Pre-load Cancel
         X:
-        Y:
+        Y: Zero Wobble Mech
 
         Up: Increase Shooter Speed
         Down: Decrease Shooter Speed
         Left:
         Right:
 
-        Left Stick X:
-        Left Stick Y:
+        Left Stick X: Left/Right Strafe
+        Left Stick Y: Forward/Reverse
         Left Stick Button:
-        Right Stick X:
+        Right Stick X: Rotate
         Right Stick Y:
         Right Stick Button:
 
@@ -43,47 +43,65 @@ public class QualsTeleOp extends QualsSuperclass {
 
         while (opModeIsActive()) {
 
-            drive();
+            // Telemetry
+            telemetry.addData("FC Heading (Deg)", Math.toDegrees(drivetrain.getHeading(true)));
+            telemetry.addData("Heading (Deg)", drivetrain.getHeading(false));
+            telemetry.addLine();
 
             /*
+            telemetry.addData("L-Encoder", drivetrain.getLeftTicks());
+            telemetry.addData("R-Encoder", drivetrain.getRightTicks());
+            telemetry.addData("H-Encoder", drivetrain.getHorzTicks());
+            telemetry.addLine();
+
+            telemetry.addData("X Pos", drivetrain.x);
+            telemetry.addData("Y Pos", drivetrain.y);
+            telemetry.addData("OdoAngle", drivetrain.odoAngle);
+            telemetry.addLine();
+             */
+
+            telemetry.addLine("Wobble Mech:");
+            telemetry.addData("Arm Position", wobbleMech.getArmPosition());
+            telemetry.addData("Arm RunMode", wobbleMech.arm.getMode());
+            telemetry.addData("Claw Position", wobbleMech.clawPosition);
+            telemetry.update();
 
             if (gamepad1.a && constants.a == 0) {
                 constants.a = 1;
-            } else if (!gamepad1.a && constants.a == 1) {
-                wobbleMech.setArmPosition(2);
+
+            } else if (!gamepad1.a && constants.a == 1) { // Aim arm
+                aim();
                 constants.a = 2;
+
             } else if (gamepad1.a && constants.a == 2) {
                 constants.a = 3;
-            } else if (!gamepad1.a && constants.a == 3) {
-                wobbleMech.setArmPosition(1);
+
+            } else if (!gamepad1.a && constants.a == 3) { // Collect wobble goal
+                collect();
+                constants.a = 4;
+
+            } else if (gamepad1.a && constants.a == 4) {
+                constants.a = 5;
+
+            } else if (gamepad1.a && constants.a == 5) { // Release wobble goal
+                drop();
                 constants.a = 0;
+
             } else if (gamepad1.b && constants.b == 0) {
                 constants.b = 1;
-            } else if (!gamepad1.b && constants.b == 1) {
-                wobbleMech.setArmPosition(0);
+
+            } else if (!gamepad1.b && constants.b == 1) { // Reset arm
+                resetWobbleMech();
                 constants.a = 0;
                 constants.b = 0;
             }
 
-             */
-
-            if (gamepad1.x && constants.x == 0) {
-                constants.x = 1;
-            } else if (!gamepad1.x && constants.x == 1) {
-                wobbleMech.clawOpen();
-                constants.x = 2;
-            } else if (gamepad1.x && constants.x == 2) {
-                constants.x = 3;
-            } else if (!gamepad1.x && constants.x == 3) {
-                wobbleMech.clawClose();
-                constants.x = 0;
+            if (gamepad1.y && constants.y == 0) {
+                constants.y = 1;
+            } else if (!gamepad1.y && constants.y == 1) {
+                zeroWobbleMech();
+                constants.y = 0;
             }
-
-            telemetry.addLine("Robot Initialized");
-            telemetry.addLine("WM Motor Position: " + wobbleMech.getArmPosition());
-            telemetry.addLine("WM Motor RunMode: " + wobbleMech.arm.getMode());
-            telemetry.addLine("WM Servo Position: " + wobbleMech.lClaw.getPosition());
-            telemetry.update();
         }
     }
 }

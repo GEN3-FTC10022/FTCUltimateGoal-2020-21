@@ -49,7 +49,6 @@ public abstract class TestingSuperclass extends LinearOpMode {
 
     // Shooter
     public WobbleMech wobbleMech = new WobbleMech();
-    public WobbleMech newWobbleMech = new WobbleMech();
 
     // CONTROL CONSTANTS ---------------------------------------------------------------------------
 

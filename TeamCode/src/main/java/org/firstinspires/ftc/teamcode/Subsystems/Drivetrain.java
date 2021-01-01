@@ -52,9 +52,11 @@ public class Drivetrain {
     public void initialize(){
 
         // Drive
+        /*
         frontRight.setDirection(DcMotor.Direction.REVERSE);
         backRight.setDirection(DcMotor.Direction.REVERSE);
         setDriveZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+         */
 
         // IMU
         BNO055IMU.Parameters imuParameters = new BNO055IMU.Parameters();
@@ -63,7 +65,7 @@ public class Drivetrain {
         imu.initialize(imuParameters);
 
         // Odometry
-        resetTicks();
+        // resetTicks();
     }
 
     public void updatePosition(Telemetry telemetry) {
@@ -82,17 +84,6 @@ public class Drivetrain {
         */
 
         resetTicks();
-
-        // telemetry
-        telemetry.addData("Left encoder ticks", getLeftTicks());
-        telemetry.addData("Right encoder ticks", getRightTicks());
-        telemetry.addData("Horizontal encoder ticks", getHorzTicks());
-
-        telemetry.addData("X Pos", x);
-        telemetry.addData("Y Pos", y);
-
-        telemetry.addData("Theta", odoAngle);
-        telemetry.update();
     }
 
     public void resetDriveEncoders() {

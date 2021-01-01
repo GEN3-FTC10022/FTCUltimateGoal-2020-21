@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.Quals;
 
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.os.Environment;
 
 import com.qualcomm.hardware.bosch.BNO055IMU;
@@ -40,10 +41,6 @@ import static org.firstinspires.ftc.teamcode.Util.Constants.motorTicksPerRev;
 
 public abstract class QualsSuperclass extends LinearOpMode {
 
-    public QualsSuperclass() {
-
-    }
-
     // ROBOT OBJECTS -------------------------------------------------------------------------------
 
     // Constants
@@ -56,10 +53,10 @@ public abstract class QualsSuperclass extends LinearOpMode {
     public WobbleMech wobbleMech = new WobbleMech();
 
     // Shooter
-    public Shooter shooter = new Shooter();
+    // public Shooter shooter = new Shooter();
 
     // Vision
-    public Vision vision = new Vision();
+    // public Vision vision = new Vision();
 
     // METHODS -------------------------------------------------------------------------------------
 
@@ -69,8 +66,56 @@ public abstract class QualsSuperclass extends LinearOpMode {
         // Device Initialization
 
         // Telemetry
+        telemetry.setAutoClear(false);
         telemetry.addLine("Initializing Robot...");
         telemetry.update();
+        sleep(500);
+
+        /*
+        // Vision
+        vision.webcamName = hardwareMap.get(WebcamName.class, "Webcam");
+        vision.initialize();
+         */
+
+        telemetry.addLine("Vision initialized");
+        telemetry.update();
+        sleep(500);
+
+        /*
+        // Drivetrain
+        drivetrain.frontLeft = (DcMotorEx)hardwareMap.dcMotor.get("frontLeft");
+        drivetrain.frontRight = (DcMotorEx)hardwareMap.dcMotor.get("frontRight");
+        drivetrain.backLeft = (DcMotorEx)hardwareMap.dcMotor.get("backLeft");
+        drivetrain.backRight = (DcMotorEx)hardwareMap.dcMotor.get("backRight");
+         */
+        drivetrain.imu = hardwareMap.get(BNO055IMU.class, "imu");
+        drivetrain.initialize();
+
+        telemetry.addLine("Drivetrain initialized");
+        telemetry.update();
+        sleep(500);
+
+        /*
+        // Odometry
+        drivetrain.leftEncoder = hardwareMap.dcMotor.get("leftEncoder");
+        drivetrain.rightEncoder = hardwareMap.dcMotor.get("rightEncoder");
+        drivetrain.horzEncoder = hardwareMap.dcMotor.get("horzEncoder");
+         */
+
+        telemetry.addLine("Odometry initialized");
+        telemetry.update();
+        sleep(500);
+
+        /*
+        // Shooter
+        shooter.mShooter = (DcMotorEx)hardwareMap.dcMotor.get("mShooter");
+        shooter.sTrigger = hardwareMap.servo.get("sTrigger");
+        shooter.initialize();
+         */
+
+        telemetry.addLine("Shooter initialized");
+        telemetry.update();
+        sleep(500);
 
         // Wobble Mech
         wobbleMech.arm = (DcMotorEx)hardwareMap.dcMotor.get("arm");
@@ -78,34 +123,70 @@ public abstract class QualsSuperclass extends LinearOpMode {
         wobbleMech.rClaw = hardwareMap.servo.get("rClaw");
         wobbleMech.initialize();
 
-        // Shooter
-        shooter.mShooter = (DcMotorEx)hardwareMap.dcMotor.get("mShooter");
-        shooter.sTrigger = hardwareMap.servo.get("sTrigger");
-        shooter.initialize();
+        telemetry.addLine("Wobble Mech initialized");
+        telemetry.addLine("Load wobble goal and press 'Start'...");
+        telemetry.update();
 
-        // Vision
-        vision.webcamName = hardwareMap.get(WebcamName.class, "Webcam");
-        vision.initialize();
+        // Wait for controller input for wobble goal pre-load
+        while (wobbleMech.initK == 0) {
 
-        // Odometry
-        drivetrain.leftEncoder = hardwareMap.dcMotor.get("leftEncoder");
-        drivetrain.rightEncoder = hardwareMap.dcMotor.get("rightEncoder");
-        drivetrain.horzEncoder = hardwareMap.dcMotor.get("horzEncoder");
+            if (gamepad1.a && constants.a == 0) {
+                constants.a = 1;
+            } else if (!gamepad1.a && constants.a == 1) {
 
-        // Drivetrain
-        drivetrain.frontLeft = (DcMotorEx)hardwareMap.dcMotor.get("frontLeft");
-        drivetrain.frontRight = (DcMotorEx)hardwareMap.dcMotor.get("frontRight");
-        drivetrain.backLeft = (DcMotorEx)hardwareMap.dcMotor.get("backLeft");
-        drivetrain.backRight = (DcMotorEx)hardwareMap.dcMotor.get("backRight");
-        drivetrain.imu = hardwareMap.get(BNO055IMU.class, "imu");
-        drivetrain.initialize();
+                // Set wobble goal to pre-loaded position
+                wobbleMech.clawClose();
+                sleep(2000);
+                wobbleMech.setArmPosition(0, 0.2);
+
+                telemetry.addLine("Wobble goal loaded");
+                telemetry.update();
+
+                constants.a = 0;
+                wobbleMech.initK = 1;
+                sleep(500);
+            }
+
+            // Cancel wobble goal pre-load
+            if (gamepad1.b && constants.b == 0) {
+                constants.b = 1;
+
+            } else if (!gamepad1.b && constants.b == 1) {
+
+                // Reset wobble mech
+                resetWobbleMech();
+
+                telemetry.addLine("Wobble goal not loaded");
+                telemetry.update();
+
+                constants.b = 0;
+                wobbleMech.initK = 2;
+                sleep(500);
+            }
+
+            // Break out of loop if initialization is stopped to prevent forced restart
+            if (isStopRequested()) {
+                break;
+            }
+        }
 
         // Telemetry
         telemetry.addLine("Robot Initialized");
         telemetry.update();
+        telemetry.setAutoClear(true);
+
+        while(!isStarted()) {
+
+            // Display rotation data
+            telemetry.addData("FC Heading (Deg)", Math.toDegrees(drivetrain.getHeading(true)));
+            telemetry.addData("Heading (Deg)", drivetrain.getHeading(false));
+            telemetry.update();
+        }
     }
 
     // Drive Methods
+
+    /*
 
     public void forward(double pow, double inches) {
 
@@ -235,15 +316,9 @@ public abstract class QualsSuperclass extends LinearOpMode {
         }
     }
 
-    public void drive() {
+    public void drive(boolean isFieldCentric) {
 
         // FIELD-CENTRIC DRIVE -----------------------------------------------------------------
-
-        // Display rotation data
-        telemetry.addData("FC Rotation (Radians): ", drivetrain.getHeading(true));
-        telemetry.addData("FC Rotation (Degrees): ", Math.toDegrees(drivetrain.getHeading(true)));
-        telemetry.addData("Normal Rotation (Radians): ", Math.toRadians(drivetrain.getHeading(false)));
-        telemetry.addData("Normal Rotation (Degrees): ", drivetrain.getHeading(false));
 
         double forward = -gamepad1.left_stick_y;
         double right = gamepad1.left_stick_x;
@@ -257,22 +332,25 @@ public abstract class QualsSuperclass extends LinearOpMode {
         if (Math.abs(clockwise) < 0.05)
             clockwise = 0;
 
-        // math
-        if (drivetrain.getHeading(true) < 0) {       // If theta is measured clockwise from zero reference
+        if (isFieldCentric) {
 
-            drivetrain.temp = forward * Math.cos(drivetrain.getHeading(true)) + right * Math.sin(-drivetrain.getHeading(true));
-            right = -forward * Math.sin(-drivetrain.getHeading(true)) + right * Math.cos(drivetrain.getHeading(true));
-            forward = drivetrain.temp;
+            // Math
+            if (drivetrain.getHeading(true) < 0) {       // If theta is measured clockwise from zero reference
+
+                drivetrain.temp = forward * Math.cos(drivetrain.getHeading(true)) + right * Math.sin(-drivetrain.getHeading(true));
+                right = -forward * Math.sin(-drivetrain.getHeading(true)) + right * Math.cos(drivetrain.getHeading(true));
+                forward = drivetrain.temp;
+            }
+
+            if (drivetrain.getHeading(true) >= 0) {    // If theta is measured counterclockwise from zero reference
+
+                drivetrain.temp = forward * Math.cos(drivetrain.getHeading(true)) - right * Math.sin(drivetrain.getHeading(true));
+                right = forward * Math.sin(drivetrain.getHeading(true)) + right * Math.cos(drivetrain.getHeading(true));
+                forward = drivetrain.temp;
+            }
         }
 
-        if (drivetrain.getHeading(true) >= 0) {    // If theta is measured counterclockwise from zero reference
-
-            drivetrain.temp = forward * Math.cos(drivetrain.getHeading(true)) - right * Math.sin(drivetrain.getHeading(true));
-            right = forward * Math.sin(drivetrain.getHeading(true)) + right * Math.cos(drivetrain.getHeading(true));
-            forward = drivetrain.temp;
-        }
-
-        // assign calculated values to the power variables
+        // Assign calculated values to the power variables
         drivetrain.flpower = forward + right + clockwise;
         drivetrain.frpower = forward - right - clockwise;
         drivetrain.blpower = forward - right + clockwise;
@@ -324,20 +402,18 @@ public abstract class QualsSuperclass extends LinearOpMode {
             drivetrain.brpower *= driveSlow;
         }
 
-            /*
             // Alternate version of drive slowing
             // This version does not scale proportionally to the press, but uses a constant
             // multiplier instead
             // Programmers may choose to use this version of drive slowing instead due to a
             // driver's preference
-            if (gamepad1.right_trigger > 0.5){
+            // if (gamepad1.right_trigger > 0.5){
 
-                flpower /= 3;
-                blpower /= 3;
-                frpower /= 3;
-                brpower /= 3;
-            }
-            */
+                // flpower /= 3;
+                // blpower /= 3;
+                // frpower /= 3;
+                // brpower /= 3;
+            // }
 
         drivetrain.setPowerAll(drivetrain.flpower, drivetrain.frpower, drivetrain.blpower, drivetrain.brpower);
 
@@ -345,7 +421,11 @@ public abstract class QualsSuperclass extends LinearOpMode {
         drivetrain.updatePosition(telemetry);
     }
 
+     */
+
     // Vision Methods
+
+    /*
 
     public void vuforiaScanTarget() {
 
@@ -481,36 +561,75 @@ public abstract class QualsSuperclass extends LinearOpMode {
             // Compress bitmap to reduce scan time
             stack = createScaledBitmap(stack, 110, 20, true);
 
-            /*
-
             // this is a test Rbg ----------------------------------------------------------------------------------
             // this program takes the Rbg of the pixel by use arrays
             // then it compare it to a set rbg if true it add one to a value
             // if value 0 = zero stones
             // if value 3 =  one stone
             // if value 12 = 4 stones
-            int[] Yloc = {}; // put 4 locations
-            int[] Xloc = {}; // put 3 locations
-            int locx = 0; // this is for the arrays
-            int locy = 0;
-            int stonenum = 0; //this is for the stong count
-            Color stonecolor = new Color(255,255,255);//this is the stone color it is set to white have to change that
-            for( int i = 0; i < 4; i++){
-                for( int t = 0; t < 3; t++){
-                    Color c1 = new Color(quarry.getRGB(Xloc[locx], Yloc[locy]));// this takes the Rbg of the pixel have to test
-                    if(c1.getRGB() == stonecolor.getRGB()){
-                        stonenum += 1;
-                    }
-                    locx +=1;
-                }
+            // int[] Yloc = {}; // put 4 locations
+            // int[] Xloc = {}; // put 3 locations
+            // int locx = 0; // this is for the arrays
+            // int locy = 0;
+            // int stonenum = 0; //this is for the stong count
+            // Color stonecolor = new Color(255,255,255);//this is the stone color it is set to white have to change that
+            // for( int i = 0; i < 4; i++){
+                // for( int t = 0; t < 3; t++){
+                    // Color c1 = new Color(quarry.getRGB(Xloc[locx], Yloc[locy]));// this takes the Rbg of the pixel have to test
+                    // if(c1.getRGB() == stonecolor.getRGB()){
+                        // stonenum += 1;
+                    // }
+                    // locx +=1;
+                // }
 
-                locy += 1;
-                locx = 0;
+                // locy += 1;
+                // locx = 0;
 
-            }
-
-             */
-            telemetry.update();
+            // }
+            //
+            // telemetry.update();
         }
+    }
+
+     */
+
+    // Wobble Mech Methods
+
+    public void aim() {
+        wobbleMech.clawOpen();
+        sleep(750);
+        wobbleMech.setArmPosition(1, 0.4);
+    }
+
+    public void collect() {
+        wobbleMech.clawClose();
+        sleep(750);
+        wobbleMech.setArmPosition(0, 0.2);
+    }
+
+    public void release() {
+        wobbleMech.setArmPosition(1, 0.2);
+        sleep(750);
+        wobbleMech.clawOpen();
+        sleep(750);
+        resetWobbleMech();
+    }
+
+    public void drop() {
+        wobbleMech.setArmPosition(2, 0.2);
+        sleep(750);
+        wobbleMech.clawOpen();
+        sleep(750);
+        resetWobbleMech();
+    }
+
+    public void resetWobbleMech() {
+        wobbleMech.setArmPosition(0, 0.4);
+        wobbleMech.clawClose();
+    }
+
+    public void zeroWobbleMech(){
+        wobbleMech.setArmPosition(3, 0.4);
+        wobbleMech.clawClose();
     }
 }
