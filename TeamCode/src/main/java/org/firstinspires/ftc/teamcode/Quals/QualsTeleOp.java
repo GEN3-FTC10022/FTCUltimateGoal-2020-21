@@ -58,13 +58,16 @@ public class QualsTeleOp extends QualsSuperclass {
             telemetry.addData("Y Pos", drivetrain.y);
             telemetry.addData("OdoAngle", drivetrain.odoAngle);
             telemetry.addLine();
-             */
 
             telemetry.addLine("Wobble Mech:");
-            telemetry.addData("Arm Position", wobbleMech.getArmPosition());
+            telemetry.addData("Arm Position", wobbleMech.armPosition);
             telemetry.addData("Arm RunMode", wobbleMech.arm.getMode());
             telemetry.addData("Claw Position", wobbleMech.clawPosition);
+             */
+
             telemetry.update();
+
+            /*
 
             if (gamepad1.a && constants.a == 0) {
                 constants.a = 1;
@@ -102,6 +105,8 @@ public class QualsTeleOp extends QualsSuperclass {
                 zeroWobbleMech();
                 constants.y = 0;
             }
+
+             */
         }
     }
 }

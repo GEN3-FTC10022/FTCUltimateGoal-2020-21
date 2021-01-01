@@ -21,7 +21,9 @@ import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackable;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackableDefaultListener;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
+import org.firstinspires.ftc.teamcode.Subsystems.Drivetrain;
 import org.firstinspires.ftc.teamcode.Subsystems.Shooter;
+import org.firstinspires.ftc.teamcode.Subsystems.Vision;
 import org.firstinspires.ftc.teamcode.Subsystems.WobbleMech;
 import org.firstinspires.ftc.teamcode.Util.Constants;
 
@@ -37,7 +39,7 @@ import static org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocaliz
 import static org.firstinspires.ftc.teamcode.Util.Constants.motorTicksPerRev;
 
 /*
-    Updated for Wobble Mech Testing
+    Updated for Vision Testing
  */
 
 public abstract class TestingSuperclass extends LinearOpMode {
@@ -47,10 +49,11 @@ public abstract class TestingSuperclass extends LinearOpMode {
     // Constants
     public Constants constants = new Constants();
 
-    // Shooter
-    public WobbleMech wobbleMech = new WobbleMech();
+    // Drivetrain
+    public Drivetrain drivetrain = new Drivetrain();
 
-    // CONTROL CONSTANTS ---------------------------------------------------------------------------
+    // Vision
+    public Vision vision = new Vision();
 
     // METHODS -------------------------------------------------------------------------------------
 
@@ -60,67 +63,24 @@ public abstract class TestingSuperclass extends LinearOpMode {
         // Device Initialization
 
         // Telemetry
+        telemetry.setAutoClear(false);
         telemetry.addLine("Initializing Robot...");
-        telemetry.addLine("Load wobble goal and press 'Start'...");
         telemetry.update();
+        sleep(500);
 
-        // Wobble Mech
-        wobbleMech.arm = (DcMotorEx)hardwareMap.dcMotor.get("arm");
-        wobbleMech.lClaw = hardwareMap.servo.get("lClaw");
-        wobbleMech.rClaw = hardwareMap.servo.get("rClaw");
-        wobbleMech.initialize();
+        // Vision
+        vision.webcamName = hardwareMap.get(WebcamName.class, "Webcam");
+        vision.initialize();
 
-        while (wobbleMech.initK == 0) {
-            if (gamepad1.start && constants.start == 0) {
-                constants.start = 1;
-            } else if (!gamepad1.start && constants.start == 1) {
-                wobbleMech.clawClose();
-                sleep(2000);
-                wobbleMech.setArmPosition(0, 0.2);
-                constants.start = 0;
-                wobbleMech.initK = 1;
-            }
-        }
+        telemetry.addLine("Vision initialized");
+        telemetry.update();
+        sleep(500);
 
         // Telemetry
         telemetry.addLine("Robot Initialized");
         telemetry.update();
-    }
+        sleep(500);
 
-    // UTILITY METHODS -----------------------------------------------------------------------------
-
-    // Wobble Goal
-
-    public void aim() {
-        wobbleMech.clawOpen();
-        sleep(750);
-        wobbleMech.setArmPosition(1, 0.4);
-    }
-
-    public void collect() {
-        wobbleMech.clawClose();
-        sleep(750);
-        wobbleMech.setArmPosition(0, 0.2);
-    }
-
-    public void release() {
-        wobbleMech.setArmPosition(1, 0.2);
-        sleep(750);
-        wobbleMech.clawOpen();
-        sleep(750);
-        reset();
-    }
-
-    public void drop() {
-        wobbleMech.setArmPosition(2, 0.2);
-        sleep(750);
-        wobbleMech.clawOpen();
-        sleep(750);
-        reset();
-    }
-
-    public void reset() {
-        wobbleMech.setArmPosition(0, 0.4);
-        wobbleMech.clawClose();
+        telemetry.setAutoClear(true);
     }
 }

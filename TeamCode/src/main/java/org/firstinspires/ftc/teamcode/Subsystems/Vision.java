@@ -51,11 +51,10 @@ public class Vision {
     public Image rgbImage = null;
     public VuforiaLocalizer.CloseableFrame closeableFrame = null;
 
-    // Cropped Bitmap Multipliers
-    public double pXInitial = 0;
-    public double pYInitial = 0;
-    public double pWidth = 1;
-    public double pHeight = 1;
+    // Detection Constants
+    public int check = 0;
+    public int ringsDetected = 0;
+    public int stackHeight = 0;
 
     public Vision() { }
 
@@ -90,5 +89,20 @@ public class Vision {
         // For convenience, gather together all the trackable objects in one easily-iterable collection
         allTrackables = new ArrayList<VuforiaTrackable>();
         allTrackables.addAll(targetsUltimateGoal);
+    }
+
+    public int getStackHeight() {
+        switch(ringsDetected) {
+            case 0:
+                stackHeight = 0;
+                break;
+            case 1:
+                stackHeight = 1;
+                break;
+            case 2:
+                stackHeight = 4;
+                break;
+        }
+        return stackHeight;
     }
 }

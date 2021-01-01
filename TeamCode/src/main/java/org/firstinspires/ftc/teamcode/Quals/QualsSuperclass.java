@@ -50,13 +50,13 @@ public abstract class QualsSuperclass extends LinearOpMode {
     public Drivetrain drivetrain = new Drivetrain();
 
     // Wobble Mech
-    public WobbleMech wobbleMech = new WobbleMech();
+    // public WobbleMech wobbleMech = new WobbleMech();
 
     // Shooter
     // public Shooter shooter = new Shooter();
 
     // Vision
-    // public Vision vision = new Vision();
+    public Vision vision = new Vision();
 
     // METHODS -------------------------------------------------------------------------------------
 
@@ -71,11 +71,9 @@ public abstract class QualsSuperclass extends LinearOpMode {
         telemetry.update();
         sleep(500);
 
-        /*
         // Vision
         vision.webcamName = hardwareMap.get(WebcamName.class, "Webcam");
         vision.initialize();
-         */
 
         telemetry.addLine("Vision initialized");
         telemetry.update();
@@ -88,6 +86,7 @@ public abstract class QualsSuperclass extends LinearOpMode {
         drivetrain.backLeft = (DcMotorEx)hardwareMap.dcMotor.get("backLeft");
         drivetrain.backRight = (DcMotorEx)hardwareMap.dcMotor.get("backRight");
          */
+
         drivetrain.imu = hardwareMap.get(BNO055IMU.class, "imu");
         drivetrain.initialize();
 
@@ -117,16 +116,19 @@ public abstract class QualsSuperclass extends LinearOpMode {
         telemetry.update();
         sleep(500);
 
+        /*
         // Wobble Mech
         wobbleMech.arm = (DcMotorEx)hardwareMap.dcMotor.get("arm");
         wobbleMech.lClaw = hardwareMap.servo.get("lClaw");
         wobbleMech.rClaw = hardwareMap.servo.get("rClaw");
         wobbleMech.initialize();
+         */
 
         telemetry.addLine("Wobble Mech initialized");
-        telemetry.addLine("Load wobble goal and press 'Start'...");
+        // telemetry.addLine("Load wobble goal and press 'Start'...");
         telemetry.update();
 
+        /*
         // Wait for controller input for wobble goal pre-load
         while (wobbleMech.initK == 0) {
 
@@ -169,10 +171,13 @@ public abstract class QualsSuperclass extends LinearOpMode {
                 break;
             }
         }
+         */
 
         // Telemetry
         telemetry.addLine("Robot Initialized");
         telemetry.update();
+        sleep(500);
+
         telemetry.setAutoClear(true);
 
         while(!isStarted()) {
@@ -425,8 +430,6 @@ public abstract class QualsSuperclass extends LinearOpMode {
 
     // Vision Methods
 
-    /*
-
     public void vuforiaScanTarget() {
 
         // Note: To use the remote camera preview:
@@ -489,9 +492,6 @@ public abstract class QualsSuperclass extends LinearOpMode {
 
         if (vision.rgbImage != null) {
 
-            telemetry.addLine("Picture taken");
-            telemetry.update();
-
             // Copy Bitmap from Vuforia Frame
             Bitmap stack = createBitmap(vision.rgbImage.getWidth(), vision.rgbImage.getHeight(), Bitmap.Config.RGB_565);
             stack.copyPixelsFromBuffer(vision.rgbImage.getPixels());
@@ -526,10 +526,10 @@ public abstract class QualsSuperclass extends LinearOpMode {
 
             // Crop Bitmap
             int stackWidth = stack.getWidth(), stackHeight = stack.getHeight();
-            int cropStartX = (int) (stackWidth * vision.pXInitial);
-            int cropStartY = (int) (stackHeight * vision.pYInitial);
-            int cropWidth = (int) (stackWidth * vision.pWidth);
-            int cropHeight = (int) (stackHeight * vision.pHeight);
+            int cropStartX = 370;
+            int cropStartY = 186;
+            int cropWidth = 82;
+            int cropHeight = 52;
 
             // Create cropped bitmap to show only stones
             stack = createBitmap(stack, cropStartX, cropStartY, cropWidth, cropHeight);
@@ -561,37 +561,31 @@ public abstract class QualsSuperclass extends LinearOpMode {
             // Compress bitmap to reduce scan time
             stack = createScaledBitmap(stack, 110, 20, true);
 
-            // this is a test Rbg ----------------------------------------------------------------------------------
-            // this program takes the Rbg of the pixel by use arrays
-            // then it compare it to a set rbg if true it add one to a value
-            // if value 0 = zero stones
-            // if value 3 =  one stone
-            // if value 12 = 4 stones
-            // int[] Yloc = {}; // put 4 locations
-            // int[] Xloc = {}; // put 3 locations
-            // int locx = 0; // this is for the arrays
-            // int locy = 0;
-            // int stonenum = 0; //this is for the stong count
-            // Color stonecolor = new Color(255,255,255);//this is the stone color it is set to white have to change that
-            // for( int i = 0; i < 4; i++){
-                // for( int t = 0; t < 3; t++){
-                    // Color c1 = new Color(quarry.getRGB(Xloc[locx], Yloc[locy]));// this takes the Rbg of the pixel have to test
-                    // if(c1.getRGB() == stonecolor.getRGB()){
-                        // stonenum += 1;
-                    // }
-                    // locx +=1;
-                // }
+            /*
+            int[] Yloc = {}; // put 4 locations
+            int[] Xloc = {}; // put 3 locations
+            int locx = 0; // this is for the arrays
+            int locy = 0;
+            int stonenum = 0; //this is for the stong count
+            Color stonecolor = new Color(255,255,255);//this is the stone color it is set to white have to change that
+            for( int i = 0; i < 4; i++){
+                for( int t = 0; t < 3; t++){
+                    Color c1 = new Color(quarry.getRGB(Xloc[locx], Yloc[locy]));// this takes the Rbg of the pixel have to test
+                    if(c1.getRGB() == stonecolor.getRGB()){
+                        stonenum += 1;
+                    }
+                    locx +=1;
+                }
 
-                // locy += 1;
-                // locx = 0;
+                locy += 1;
+                locx = 0;
 
-            // }
-            //
-            // telemetry.update();
+            }
+             */
         }
     }
 
-     */
+    /*
 
     // Wobble Mech Methods
 
@@ -632,4 +626,6 @@ public abstract class QualsSuperclass extends LinearOpMode {
         wobbleMech.setArmPosition(3, 0.4);
         wobbleMech.clawClose();
     }
+
+     */
 }
