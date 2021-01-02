@@ -19,7 +19,7 @@ import static android.graphics.Bitmap.createBitmap;
 import static android.graphics.Bitmap.createScaledBitmap;
 
 /*
-    Updated for vision testing
+    Updated for drive testing
  */
 
 @TeleOp(name = "Test: TeleOp")
@@ -30,40 +30,23 @@ public class TestingTeleOp extends TestingSuperclass {
 
         initialize();
 
-        telemetry.setAutoClear(false);
-
-        Vuforia.setFrameFormat(PIXEL_FORMAT.RGB565, true); // Enables RGB565 format for image
-        vision.vuforia.setFrameQueueCapacity(1); // Store only one frame at a time
+        telemetry.setAutoClear(true);
 
         waitForStart();
 
         while (opModeIsActive()) {
 
-            // Capture Vuforia Frame
-            if (gamepad1.a && constants.a == 0) {
-                constants.a = 1;
+            driveTest(false);
 
-            } else if (!gamepad1.a && constants.a == 1) {
-                vision.captureFrame();
-                constants.a = 0;
-            }
+            // Telemetry
 
-            if (vision.rgbImage != null) {
+            telemetry.addData("Heading (Deg)", drivetrain.getHeading(false));
+            telemetry.addLine();
 
-                // Transpose frame into bitmaps
-                vision.setBitmaps();
+            telemetry.addLine("FL: " + drivetrain.flpower + "\t\t" + "FR: " + drivetrain.frpower);
+            telemetry.addLine("BL: " + drivetrain.blpower + "\t\t" + "BR: " + drivetrain.brpower);
 
-                // Save bitmaps
-                vision.saveBitmap("Bitmap", vision.bitmap);
-                vision.saveBitmap("CroppedBitmap", vision.croppedBitmap);
-
-                // Find stack height
-                scanBitmap();
-
-                telemetry.addLine();
-                telemetry.addData("Stack Height", vision.getStackHeight());
-                telemetry.update();
-            }
+            telemetry.update();
         }
     }
 }

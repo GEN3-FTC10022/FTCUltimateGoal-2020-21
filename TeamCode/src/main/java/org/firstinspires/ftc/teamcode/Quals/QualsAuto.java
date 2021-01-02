@@ -17,6 +17,14 @@ public class QualsAuto extends QualsSuperclass {
     public void runOpMode() {
 
         initialize();
+
+        waitForStart();
+
+        vuforiaScanStack(true);
+
+        sleep(60000);
+
+        stop();
     }
 
 }

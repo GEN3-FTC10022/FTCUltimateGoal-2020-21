@@ -52,11 +52,9 @@ public class Drivetrain {
     public void initialize(){
 
         // Drive
-        /*
         frontRight.setDirection(DcMotor.Direction.REVERSE);
         backRight.setDirection(DcMotor.Direction.REVERSE);
         setDriveZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-         */
 
         // IMU
         BNO055IMU.Parameters imuParameters = new BNO055IMU.Parameters();

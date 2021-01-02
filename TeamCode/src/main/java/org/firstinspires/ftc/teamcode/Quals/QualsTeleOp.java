@@ -39,6 +39,8 @@ public class QualsTeleOp extends QualsSuperclass {
 
         initialize();
 
+        telemetry.setAutoClear(true);
+
         waitForStart();
 
         while (opModeIsActive()) {
@@ -67,46 +69,7 @@ public class QualsTeleOp extends QualsSuperclass {
 
             telemetry.update();
 
-            /*
-
-            if (gamepad1.a && constants.a == 0) {
-                constants.a = 1;
-
-            } else if (!gamepad1.a && constants.a == 1) { // Aim arm
-                aim();
-                constants.a = 2;
-
-            } else if (gamepad1.a && constants.a == 2) {
-                constants.a = 3;
-
-            } else if (!gamepad1.a && constants.a == 3) { // Collect wobble goal
-                collect();
-                constants.a = 4;
-
-            } else if (gamepad1.a && constants.a == 4) {
-                constants.a = 5;
-
-            } else if (gamepad1.a && constants.a == 5) { // Release wobble goal
-                drop();
-                constants.a = 0;
-
-            } else if (gamepad1.b && constants.b == 0) {
-                constants.b = 1;
-
-            } else if (!gamepad1.b && constants.b == 1) { // Reset arm
-                resetWobbleMech();
-                constants.a = 0;
-                constants.b = 0;
-            }
-
-            if (gamepad1.y && constants.y == 0) {
-                constants.y = 1;
-            } else if (!gamepad1.y && constants.y == 1) {
-                zeroWobbleMech();
-                constants.y = 0;
-            }
-
-             */
+            drive(true);
         }
     }
 }
