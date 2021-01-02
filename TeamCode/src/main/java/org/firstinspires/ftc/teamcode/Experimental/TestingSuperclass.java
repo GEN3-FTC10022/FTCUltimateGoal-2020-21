@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.Experimental;
 
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.os.Environment;
 
 import com.qualcomm.hardware.bosch.BNO055IMU;
@@ -80,7 +81,66 @@ public abstract class TestingSuperclass extends LinearOpMode {
         telemetry.addLine("Robot Initialized");
         telemetry.update();
         sleep(500);
+    }
 
-        telemetry.setAutoClear(true);
+    public void scanBitmap() {
+
+        int[] yPos = {vision.croppedBitmap.getHeight()-vision.ringHeight/2,vision.ringHeight/2}; // Bottom to Top
+        int[] xPos = {(vision.croppedBitmap.getWidth()/2)-20,vision.croppedBitmap.getWidth()/2,(vision.croppedBitmap.getWidth()/2)+20}; // Left to Right
+        int pixel, r, g, b;
+
+        for (int i = 0; i < yPos.length; i++) {
+
+            for (int j = 0; j < xPos.length; j++) {
+
+                pixel = vision.croppedBitmap.getPixel(xPos[j],yPos[i]);
+                r = Color.red(pixel);
+                g = Color.green(pixel);
+                b = Color.blue(pixel);
+
+                if ((17.5/100.0)*(r+g) > b) {
+                    vision.check++;
+                }
+            }
+
+            if (vision.check >= 2) {
+                vision.ringsDetected++;
+            }
+
+            vision.check = 0;
+        }
+    }
+
+    public void scanStarterStack(boolean saveBitmaps) {
+
+        // Capture frame from camera
+        vision.captureFrame();
+        telemetry.addLine("Frame captured");
+        telemetry.update();
+
+        if (vision.rgbImage != null) {
+
+            // Transpose frame into bitmaps
+            vision.setBitmaps();
+            telemetry.addLine("Frame converted to Bitmaps");
+            telemetry.update();
+
+            // Save bitmaps to .png files
+            if (saveBitmaps) {
+                vision.saveBitmap("Bitmap", vision.bitmap);
+                vision.saveBitmap("CroppedBitmap", vision.croppedBitmap);
+                telemetry.addLine("Frame converted to Bitmaps");
+                telemetry.update();
+            }
+
+            // Scan bitmap for starter stack height
+            scanBitmap();
+            telemetry.addLine("Bitmaps scanned");
+            telemetry.update();
+
+            telemetry.addLine();
+            telemetry.addData("Stack Height", vision.getStackHeight());
+            telemetry.update();
+        }
     }
 }

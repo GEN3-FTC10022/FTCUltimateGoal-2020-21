@@ -43,6 +43,9 @@ public abstract class QualsSuperclass extends LinearOpMode {
 
     // ROBOT OBJECTS -------------------------------------------------------------------------------
 
+    public int initCurrent = 0;
+    public final int initTotal = 4;
+
     // Constants
     public Constants constants = new Constants();
 
@@ -63,19 +66,20 @@ public abstract class QualsSuperclass extends LinearOpMode {
     // Robot Initialization
     public void initialize() {
 
-        // Device Initialization
-
         // Telemetry
         telemetry.setAutoClear(false);
         telemetry.addLine("Initializing Robot...");
         telemetry.update();
         sleep(500);
 
+        // Device Initialization
+
         // Vision
         vision.webcamName = hardwareMap.get(WebcamName.class, "Webcam");
         vision.initialize();
+        initCurrent++;
 
-        telemetry.addLine("Vision initialized");
+        telemetry.addLine("Vision initialized" + "(" + initCurrent + "/" + initTotal + ")");
         telemetry.update();
         sleep(500);
 
@@ -85,23 +89,17 @@ public abstract class QualsSuperclass extends LinearOpMode {
         drivetrain.frontRight = (DcMotorEx)hardwareMap.dcMotor.get("frontRight");
         drivetrain.backLeft = (DcMotorEx)hardwareMap.dcMotor.get("backLeft");
         drivetrain.backRight = (DcMotorEx)hardwareMap.dcMotor.get("backRight");
-         */
 
         drivetrain.imu = hardwareMap.get(BNO055IMU.class, "imu");
-        drivetrain.initialize();
-
-        telemetry.addLine("Drivetrain initialized");
-        telemetry.update();
-        sleep(500);
-
-        /*
-        // Odometry
         drivetrain.leftEncoder = hardwareMap.dcMotor.get("leftEncoder");
         drivetrain.rightEncoder = hardwareMap.dcMotor.get("rightEncoder");
         drivetrain.horzEncoder = hardwareMap.dcMotor.get("horzEncoder");
+
+        drivetrain.initialize();
+        initCurrent++;
          */
 
-        telemetry.addLine("Odometry initialized");
+        telemetry.addLine("Drivetrain initialized" + "(" + initCurrent + "/" + initTotal + ")");
         telemetry.update();
         sleep(500);
 
@@ -110,9 +108,10 @@ public abstract class QualsSuperclass extends LinearOpMode {
         shooter.mShooter = (DcMotorEx)hardwareMap.dcMotor.get("mShooter");
         shooter.sTrigger = hardwareMap.servo.get("sTrigger");
         shooter.initialize();
+        initCurrent++;
          */
 
-        telemetry.addLine("Shooter initialized");
+        telemetry.addLine("Shooter initialized" + "(" + initCurrent + "/" + initTotal + ")");
         telemetry.update();
         sleep(500);
 
@@ -122,11 +121,20 @@ public abstract class QualsSuperclass extends LinearOpMode {
         wobbleMech.lClaw = hardwareMap.servo.get("lClaw");
         wobbleMech.rClaw = hardwareMap.servo.get("rClaw");
         wobbleMech.initialize();
+        initCurrent++;
          */
 
-        telemetry.addLine("Wobble Mech initialized");
-        // telemetry.addLine("Load wobble goal and press 'Start'...");
+        telemetry.addLine("Wobble Mech initialized" + "(" + initCurrent + "/" + initTotal + ")");
         telemetry.update();
+        sleep(500);
+
+        // Telemetry
+        telemetry.addLine("Initialization Finished" + "(" + initCurrent + "/" + initTotal + ")");
+        telemetry.update();
+        sleep(500);
+
+        // telemetry.addLine("Load wobble goal and press 'Start'...");
+        // telemetry.update();
 
         /*
         // Wait for controller input for wobble goal pre-load
@@ -173,16 +181,9 @@ public abstract class QualsSuperclass extends LinearOpMode {
         }
          */
 
-        // Telemetry
-        telemetry.addLine("Robot Initialized");
-        telemetry.update();
-        sleep(500);
-
+        // Display robot rotation
         telemetry.setAutoClear(true);
-
         while(!isStarted()) {
-
-            // Display rotation data
             telemetry.addData("FC Heading (Deg)", Math.toDegrees(drivetrain.getHeading(true)));
             telemetry.addData("Heading (Deg)", drivetrain.getHeading(false));
             telemetry.update();
@@ -430,7 +431,68 @@ public abstract class QualsSuperclass extends LinearOpMode {
 
     // Vision Methods
 
-    public void vuforiaScanTarget() {
+    public void vuforiaScanStack(boolean saveBitmaps) {
+
+        // Capture frame from camera
+        vision.captureFrame();
+        telemetry.addLine("Frame captured");
+        telemetry.update();
+
+        if (vision.rgbImage != null) {
+
+            // Transpose frame into bitmaps
+            vision.setBitmaps();
+            telemetry.addLine("Frame converted to Bitmaps");
+            telemetry.update();
+
+            // Save bitmaps to .png files
+            if (saveBitmaps) {
+                vision.saveBitmap("Bitmap", vision.bitmap);
+                vision.saveBitmap("CroppedBitmap", vision.croppedBitmap);
+                telemetry.addLine("Frame converted to Bitmaps");
+                telemetry.update();
+            }
+
+            // Scan bitmap for starter stack height
+            scanBitmap();
+            telemetry.addLine("Bitmaps scanned");
+            telemetry.update();
+
+            telemetry.addLine();
+            telemetry.addData("Stack Height", vision.getStackHeight());
+            telemetry.update();
+        }
+    }
+
+    public void scanBitmap() {
+
+        int[] yPos = {vision.croppedBitmap.getHeight()-vision.ringHeight/2,vision.ringHeight/2}; // Bottom to Top
+        int[] xPos = {(vision.croppedBitmap.getWidth()/2)-20,vision.croppedBitmap.getWidth()/2,(vision.croppedBitmap.getWidth()/2)+20}; // Left to Right
+        int pixel, r, g, b;
+
+        for (int i = 0; i < yPos.length; i++) {
+
+            for (int j = 0; j < xPos.length; j++) {
+
+                pixel = vision.croppedBitmap.getPixel(xPos[j],yPos[i]);
+                r = Color.red(pixel);
+                g = Color.green(pixel);
+                b = Color.blue(pixel);
+
+                if ((17.5/100.0)*(r+g) > b) {
+                    vision.check++;
+                }
+            }
+
+            if (vision.check >= 2) {
+                vision.ringsDetected++;
+            }
+
+            vision.check = 0;
+        }
+    }
+
+    public void vuforiaScanTrackable() {
 
         // Note: To use the remote camera preview:
         // AFTER you hit Init on the Driver Station, use the "options menu" to select "Camera Stream"
@@ -455,134 +517,6 @@ public abstract class QualsSuperclass extends LinearOpMode {
 
         // Disable Tracking when we are done;
         vision.targetsUltimateGoal.deactivate();
-    }
-
-    public void vuforiaScanPixel(boolean saveBitmap) {
-
-        Vuforia.setFrameFormat(PIXEL_FORMAT.RGB565, true); // Enables RGB565 format for image
-        vision.vuforia.setFrameQueueCapacity(1); // Store only one frame at a time
-
-        // Capture Vuforia Frame
-        while (vision.rgbImage == null) {
-
-            try {
-
-                vision.closeableFrame = vision.vuforia.getFrameQueue().take();
-                long numImages = vision.closeableFrame.getNumImages();
-
-                for (int i = 0; i < numImages; i++) {
-
-                    if (vision.closeableFrame.getImage(i).getFormat() == PIXEL_FORMAT.RGB565) {
-
-                        vision.rgbImage = vision.closeableFrame.getImage(i);
-
-                        if (vision.rgbImage != null)
-                            break;
-                    }
-                }
-
-            } catch (InterruptedException exc) {
-
-            } finally {
-
-                if (vision.closeableFrame != null)
-                    vision.closeableFrame.close();
-            }
-        }
-
-        if (vision.rgbImage != null) {
-
-            // Copy Bitmap from Vuforia Frame
-            Bitmap stack = createBitmap(vision.rgbImage.getWidth(), vision.rgbImage.getHeight(), Bitmap.Config.RGB_565);
-            stack.copyPixelsFromBuffer(vision.rgbImage.getPixels());
-
-            // Find Directory
-            String path = Environment.getExternalStorageDirectory().toString();
-            FileOutputStream out = null;
-
-            // Save Bitmap to file
-            if (saveBitmap) {
-                try {
-
-                    File file = new File(path, "Bitmap.png");
-                    out = new FileOutputStream(file);
-                    stack.compress(Bitmap.CompressFormat.PNG, 100, out);
-
-                } catch (Exception e) {
-                    e.printStackTrace();
-
-                } finally {
-
-                    try {
-                        if (out != null) {
-                            out.flush();
-                            out.close();
-                        }
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-
-            // Crop Bitmap
-            int stackWidth = stack.getWidth(), stackHeight = stack.getHeight();
-            int cropStartX = 370;
-            int cropStartY = 186;
-            int cropWidth = 82;
-            int cropHeight = 52;
-
-            // Create cropped bitmap to show only stones
-            stack = createBitmap(stack, cropStartX, cropStartY, cropWidth, cropHeight);
-
-            // Save cropped bitmap to file
-            if (saveBitmap) {
-                try {
-
-                    File file = new File(path, "CroppedBitmap.png");
-                    out = new FileOutputStream(file);
-                    stack.compress(Bitmap.CompressFormat.PNG, 100, out);
-
-                } catch (Exception e) {
-                    e.printStackTrace();
-
-                } finally {
-
-                    try {
-                        if (out != null) {
-                            out.flush();
-                            out.close();
-                        }
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-
-            // Compress bitmap to reduce scan time
-            stack = createScaledBitmap(stack, 110, 20, true);
-
-            /*
-            int[] Yloc = {}; // put 4 locations
-            int[] Xloc = {}; // put 3 locations
-            int locx = 0; // this is for the arrays
-            int locy = 0;
-            int stonenum = 0; //this is for the stong count
-            Color stonecolor = new Color(255,255,255);//this is the stone color it is set to white have to change that
-            for( int i = 0; i < 4; i++){
-                for( int t = 0; t < 3; t++){
-                    Color c1 = new Color(quarry.getRGB(Xloc[locx], Yloc[locy]));// this takes the Rbg of the pixel have to test
-                    if(c1.getRGB() == stonecolor.getRGB()){
-                        stonenum += 1;
-                    }
-                    locx +=1;
-                }
-
-                locy += 1;
-                locx = 0;
-
-            }
-             */
-        }
     }
 
     /*

@@ -1,6 +1,12 @@
 package org.firstinspires.ftc.teamcode.Subsystems;
 
+import android.graphics.Bitmap;
+import android.graphics.Color;
+import android.os.Environment;
+
 import com.vuforia.Image;
+import com.vuforia.PIXEL_FORMAT;
+import com.vuforia.Vuforia;
 
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
@@ -8,9 +14,13 @@ import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackable;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import static android.graphics.Bitmap.createBitmap;
 import static org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer.CameraDirection.BACK;
 
 public class Vision {
@@ -50,6 +60,8 @@ public class Vision {
 
     public Image rgbImage = null;
     public VuforiaLocalizer.CloseableFrame closeableFrame = null;
+    public Bitmap bitmap = null;
+    public Bitmap croppedBitmap = null;
 
     // Crop Variables
     public final int cropInitialX = 356;
@@ -114,5 +126,73 @@ public class Vision {
                 break;
         }
         return stackHeight;
+    }
+
+    public void captureFrame() {
+
+        Vuforia.setFrameFormat(PIXEL_FORMAT.RGB565, true); // Enables RGB565 format for image
+        vuforia.setFrameQueueCapacity(1); // Store only one frame at a time
+
+        while (rgbImage == null) {
+            try {
+                closeableFrame = vuforia.getFrameQueue().take();
+                long numImages = closeableFrame.getNumImages();
+
+                for (int i = 0; i < numImages; i++) {
+
+                    if (closeableFrame.getImage(i).getFormat() == PIXEL_FORMAT.RGB565) {
+                        rgbImage = closeableFrame.getImage(i);
+                        if (rgbImage != null)
+                            break;
+                    }
+                }
+
+            } catch (InterruptedException exc) {
+
+            } finally {
+                if (closeableFrame != null)
+                    closeableFrame.close();
+            }
+        }
+    }
+
+    public void setBitmaps() {
+
+        // Create bitmap based on image dimensions
+        bitmap = createBitmap(rgbImage.getWidth(), rgbImage.getHeight(), Bitmap.Config.RGB_565);
+
+        // Copy pixels to bitmap
+        rgbImage.getPixels().rewind();
+        bitmap.copyPixelsFromBuffer(rgbImage.getPixels());
+
+        // Create cropped bitmap to focus
+        croppedBitmap = createBitmap(bitmap, cropInitialX, cropInitialY, cropWidth, cropHeight);
+    }
+
+    public void saveBitmap(String name, Bitmap bMap) {
+
+        // Find directory
+        String path = Environment.getExternalStorageDirectory().toString();
+        FileOutputStream out = null;
+
+        // Save bitmap to .png file
+        try {
+            File file = new File(path, name+".png");
+            out = new FileOutputStream(file);
+            bMap.compress(Bitmap.CompressFormat.PNG, 100, out);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+
+        } finally {
+            try {
+                if (out != null) {
+                    out.flush();
+                    out.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 }
