@@ -51,6 +51,16 @@ public class Vision {
     public Image rgbImage = null;
     public VuforiaLocalizer.CloseableFrame closeableFrame = null;
 
+    // Crop Variables
+    public final int cropInitialX = 356;
+    public final int cropInitialY = 212;
+    public final int cropFinalX = 436;
+    public final int cropFinalY = 264;
+    public final int cropWidth = cropFinalX-cropInitialX;
+    public final int cropHeight = cropFinalY-cropInitialY;
+    public final int ringWidth = cropWidth;
+    public final int ringHeight = cropHeight/4;
+
     // Detection Constants
     public int check = 0;
     public int ringsDetected = 0;

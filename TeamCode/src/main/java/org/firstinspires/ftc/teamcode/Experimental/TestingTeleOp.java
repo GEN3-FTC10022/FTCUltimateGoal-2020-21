@@ -19,7 +19,7 @@ import static android.graphics.Bitmap.createBitmap;
 import static android.graphics.Bitmap.createScaledBitmap;
 
 /*
-    Updated for wobble mech testing
+    Updated for vision testing
  */
 
 @TeleOp(name = "Test: TeleOp")
@@ -29,6 +29,8 @@ public class TestingTeleOp extends TestingSuperclass {
     public void runOpMode() {
 
         initialize();
+
+        telemetry.setAutoClear(false);
 
         Vuforia.setFrameFormat(PIXEL_FORMAT.RGB565, true); // Enables RGB565 format for image
         vision.vuforia.setFrameQueueCapacity(1); // Store only one frame at a time
@@ -94,18 +96,8 @@ public class TestingTeleOp extends TestingSuperclass {
                     }
                 }
 
-                int pixelX = (int)((stack.getWidth()/2.0-1));
-                int pixelY = (int)((stack.getHeight()/2.0-1));
-                int pixel = stack.getPixel(pixelX,pixelY);
-
-                int stackWidth = stack.getWidth(), stackHeight = stack.getHeight();
-                int cropStartX = 370;
-                int cropStartY = 186;
-                int cropWidth = 82;
-                int cropHeight = 52;
-
                 // Create cropped bitmap to show only stones
-                Bitmap croppedStack = createBitmap(stack, cropStartX, cropStartY, cropWidth, cropHeight);
+                Bitmap croppedStack = createBitmap(stack, vision.cropInitialX, vision.cropInitialY, vision.cropWidth, vision.cropHeight);
 
                 // Save cropped bitmap to file
                 try {
@@ -127,8 +119,8 @@ public class TestingTeleOp extends TestingSuperclass {
                     }
                 }
 
-                int[] yPos = {47,8}; // Bottom to Top
-                int[] xPos = {14,41,68}; // Left to Right
+                int[] yPos = {croppedStack.getHeight()-vision.ringHeight/2,vision.ringHeight/2}; // Bottom to Top
+                int[] xPos = {(croppedStack.getWidth()/2)-20,croppedStack.getWidth()/2,(croppedStack.getWidth()/2)+20}; // Left to Right
                 int cPixel, r, g, b;
 
                 for (int i = 0; i < yPos.length; i++) {
@@ -140,20 +132,9 @@ public class TestingTeleOp extends TestingSuperclass {
                         g = Color.green(cPixel);
                         b = Color.blue(cPixel);
 
-                        if (r-90 > b) {
+                        if ((17.5/100.0)*(r+g) > b) {
                             vision.check++;
                         }
-
-                        /*
-                        telemetry.addData("j", j);
-                        telemetry.addData("Pixel Red", Color.red(cPixel));
-                        telemetry.addData("Pixel Green", Color.green(cPixel));
-                        telemetry.addData("Pixel Blue", Color.blue(cPixel));
-                        telemetry.addData("Boolean", (r-90 > b));
-                        telemetry.addData("Check Count", vision.check);
-                        telemetry.addLine();
-                        telemetry.update();
-                         */
                     }
 
                     if (vision.check >= 2) {
@@ -166,13 +147,11 @@ public class TestingTeleOp extends TestingSuperclass {
                 telemetry.addLine();
                 telemetry.addData("Stack Height", vision.getStackHeight());
                 telemetry.update();
-
                 break;
             }
         }
 
-        sleep(15000);
+        sleep(60000);
         stop();
     }
 }
-
