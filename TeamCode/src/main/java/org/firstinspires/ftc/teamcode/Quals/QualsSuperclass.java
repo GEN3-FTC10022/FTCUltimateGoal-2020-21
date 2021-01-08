@@ -22,6 +22,8 @@ import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackable;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackableDefaultListener;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
+import org.firstinspires.ftc.robotcore.internal.system.Deadline;
+import org.firstinspires.ftc.teamcode.Subsystems.Intake;
 import org.firstinspires.ftc.teamcode.Subsystems.Shooter;
 import org.firstinspires.ftc.teamcode.Subsystems.Vision;
 import org.firstinspires.ftc.teamcode.Subsystems.WobbleMech;
@@ -33,6 +35,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static android.graphics.Bitmap.createBitmap;
 import static android.graphics.Bitmap.createScaledBitmap;
@@ -44,95 +47,94 @@ public abstract class QualsSuperclass extends LinearOpMode {
     // ROBOT OBJECTS -------------------------------------------------------------------------------
 
     public int initCurrent = 0;
-    public final int initTotal = 4;
-
-    // Constants
-    public Constants constants = new Constants();
+    public final int initTotal = 5;
 
     // Drivetrain
     public Drivetrain drivetrain = new Drivetrain();
+    double forward, right, clockwise;
+    double max, kSlow;
 
     // Wobble Mech
-    // public WobbleMech wobbleMech = new WobbleMech();
+    public WobbleMech wobbleMech = new WobbleMech();
+
+    // Intake
+    public Intake intake = new Intake();
 
     // Shooter
-    // public Shooter shooter = new Shooter();
+    public Shooter shooter = new Shooter();
 
     // Vision
-    // public Vision vision = new Vision();
+    public Vision vision = new Vision();
+
+    // Controller
+    public Deadline gamepadRateLimit = new Deadline(Constants.GAMEPAD_LOCKOUT, TimeUnit.MILLISECONDS);
 
     // METHODS -------------------------------------------------------------------------------------
 
-    // Robot Initialization
+    // General Robot Methods =======================================================================
+
     public void initialize() {
 
-        // Telemetry
+        // Telemetry ===============================================================================
         telemetry.setAutoClear(false);
         telemetry.addLine("Initializing Robot...");
         telemetry.update();
         sleep(500);
 
-        // Device Initialization
-
-        /*
-        // Vision
+        // Vision ==================================================================================
         vision.webcamName = hardwareMap.get(WebcamName.class, "Webcam");
         vision.initialize();
         initCurrent++;
-         */
-
-        telemetry.addLine("Vision initialized" + "(" + initCurrent + "/" + initTotal + ")");
+        telemetry.addLine("Vision initialized " + "(" + initCurrent + "/" + initTotal + ")");
         telemetry.update();
         sleep(500);
 
-        // Drivetrain
+        // Drivetrain ==============================================================================
         drivetrain.imu = hardwareMap.get(BNO055IMU.class, "imu");
-
         drivetrain.frontLeft = (DcMotorEx)hardwareMap.dcMotor.get("frontLeft");
         drivetrain.frontRight = (DcMotorEx)hardwareMap.dcMotor.get("frontRight");
         drivetrain.backLeft = (DcMotorEx)hardwareMap.dcMotor.get("backLeft");
         drivetrain.backRight = (DcMotorEx)hardwareMap.dcMotor.get("backRight");
-
         /*
         drivetrain.leftEncoder = hardwareMap.dcMotor.get("leftEncoder");
         drivetrain.rightEncoder = hardwareMap.dcMotor.get("rightEncoder");
         drivetrain.horzEncoder = hardwareMap.dcMotor.get("horzEncoder");
          */
-
         drivetrain.initialize();
         initCurrent++;
-
-        telemetry.addLine("Drivetrain initialized" + "(" + initCurrent + "/" + initTotal + ")");
+        telemetry.addLine("Drivetrain initialized " + "(" + initCurrent + "/" + initTotal + ")");
         telemetry.update();
         sleep(500);
 
-        /*
-        // Shooter
+        // Shooter =================================================================================
         shooter.mShooter = (DcMotorEx)hardwareMap.dcMotor.get("mShooter");
         shooter.sTrigger = hardwareMap.servo.get("sTrigger");
         shooter.initialize();
         initCurrent++;
-         */
-
-        telemetry.addLine("Shooter initialized" + "(" + initCurrent + "/" + initTotal + ")");
+        telemetry.addLine("Shooter initialized " + "(" + initCurrent + "/" + initTotal + ")");
         telemetry.update();
         sleep(500);
 
-        /*
-        // Wobble Mech
+        // Wobble Mech =============================================================================
         wobbleMech.arm = (DcMotorEx)hardwareMap.dcMotor.get("arm");
         wobbleMech.lClaw = hardwareMap.servo.get("lClaw");
         wobbleMech.rClaw = hardwareMap.servo.get("rClaw");
         wobbleMech.initialize();
         initCurrent++;
-         */
-
-        telemetry.addLine("Wobble Mech initialized" + "(" + initCurrent + "/" + initTotal + ")");
+        telemetry.addLine("Wobble Mech initialized " + "(" + initCurrent + "/" + initTotal + ")");
         telemetry.update();
         sleep(500);
 
-        // Telemetry
-        telemetry.addLine("Initialization Finished" + "(" + initCurrent + "/" + initTotal + ")");
+        // Intake ==================================================================================
+        intake.rollers = (DcMotorEx)hardwareMap.dcMotor.get("rollers");
+        intake.initialize();
+        initCurrent++;
+        telemetry.addLine("Intake initialized " + "(" + initCurrent + "/" + initTotal + ")");
+        telemetry.update();
+        sleep(500);
+
+        // Telemetry ===============================================================================
+        telemetry.addLine("Initialization Finished " + "(" + initCurrent + "/" + initTotal + ")");
         telemetry.update();
         sleep(500);
 
@@ -188,21 +190,20 @@ public abstract class QualsSuperclass extends LinearOpMode {
         telemetry.setAutoClear(true);
 
         while(!isStarted()) {
-            telemetry.addData("FC Heading (Deg)", Math.toDegrees(drivetrain.getHeading(true)));
             telemetry.addData("Heading (Deg)", drivetrain.getHeading(false));
             telemetry.update();
         }
     }
 
-    // Drive Methods
+    // Drive Methods ===============================================================================
 
-    public void drive(boolean isFieldCentric) {
+    public void drive() {
 
         // FIELD-CENTRIC DRIVE -----------------------------------------------------------------
 
-        double forward = -gamepad1.left_stick_y;
-        double right = gamepad1.left_stick_x;
-        double clockwise = gamepad1.right_stick_x;
+        forward = -gamepad1.left_stick_y;
+        right = gamepad1.left_stick_x * drivetrain.DRIVE_STRAFE_CORRECTION; // Correction to counteract imperfect strafing
+        clockwise = gamepad1.right_stick_x;
 
         // Joystick deadzones
         if (Math.abs(forward) < 0.05)
@@ -212,7 +213,7 @@ public abstract class QualsSuperclass extends LinearOpMode {
         if (Math.abs(clockwise) < 0.05)
             clockwise = 0;
 
-        if (isFieldCentric) {
+        if (drivetrain.driveMode == Drivetrain.DriveMode.FIELD_CENTRIC) {
 
             // Math
             if (drivetrain.getHeading(true) < 0) {       // If theta is measured clockwise from zero reference
@@ -236,20 +237,16 @@ public abstract class QualsSuperclass extends LinearOpMode {
         drivetrain.blpower = forward - right + clockwise;
         drivetrain.brpower = forward + right - clockwise;
 
-        // if you have the testing time, maybe remove this one day and see if it causes any
-        // problems?
-        // Find the maximum of the powers
-        double max = Math.max(  Math.max(Math.abs(drivetrain.flpower), Math.abs(drivetrain.frpower)),
-                Math.max(Math.abs(drivetrain.blpower), Math.abs(drivetrain.brpower))  );
-        // Use this to make sure no motor powers are above 1 (the max value the motor can accept)
-        if (max > 1) {
+        // Find the greatest motor power
+        max = Math.max(Math.max(Math.abs(drivetrain.flpower), Math.abs(drivetrain.frpower)),
+                              Math.max(Math.abs(drivetrain.blpower), Math.abs(drivetrain.brpower)));
+        // Scale motor powers with the greatest motor power
+        drivetrain.flpower /= max;
+        drivetrain.frpower /= max;
+        drivetrain.blpower /= max;
+        drivetrain.brpower /= max;
 
-            drivetrain.flpower /= max;
-            drivetrain.frpower /= max;
-            drivetrain.blpower /= max;
-            drivetrain.brpower /= max;
-        }
-
+        /*
         // Motor powers are set to the power of 3 so that the drivetrain motors accelerates
         // exponentially instead of linearly
         // Note: you may consider, in the future, moving this code block to before the
@@ -259,39 +256,26 @@ public abstract class QualsSuperclass extends LinearOpMode {
         drivetrain.blpower = Math.pow(drivetrain.blpower, 3);
         drivetrain.frpower = Math.pow(drivetrain.frpower, 3);
         drivetrain.brpower = Math.pow(drivetrain.brpower, 3);
+         */
 
-        // Motor Power is decreased while the right trigger is held down to allow for more
-        // precise robot control
-        if (gamepad1.right_trigger > 0.8) {
+        // Motor power is decreased proportional to the right trigger value to allow for more
+        // precise robot control.
+        kSlow = -2.0/3.0 * gamepad1.right_trigger + 1;
+        drivetrain.flpower *= kSlow;
+        drivetrain.frpower *= kSlow;
+        drivetrain.blpower *= kSlow;
+        drivetrain.brpower *= kSlow;
 
-            drivetrain.flpower /= 3;
-            drivetrain.frpower /= 3;
-            drivetrain.blpower /= 3;
-            drivetrain.brpower /= 3;
-        }
-
-        // If the trigger is held down, but not pressed all the way down, motor power will
-        // slow down proportionally to how much the trigger is pressed
-        else if (gamepad1.right_trigger > 0.1) {
-
-            double driveSlow = -0.8 * gamepad1.right_trigger + 1;
-
-            drivetrain.flpower *= driveSlow;
-            drivetrain.frpower *= driveSlow;
-            drivetrain.blpower *= driveSlow;
-            drivetrain.brpower *= driveSlow;
-        }
-
-        drivetrain.setPowerAll(drivetrain.flpower, drivetrain.frpower, drivetrain.blpower, drivetrain.brpower);
+        drivetrain.setDrivePower(drivetrain.flpower, drivetrain.frpower, drivetrain.blpower, drivetrain.brpower);
     }
 
-    public void driveTest(boolean isFieldCentric) {
+    public void driveTest() {
 
         // FIELD-CENTRIC DRIVE -----------------------------------------------------------------
 
-        double forward = -gamepad1.left_stick_y;
-        double right = gamepad1.left_stick_x;
-        double clockwise = gamepad1.right_stick_x;
+        forward = -gamepad1.left_stick_y;
+        right = gamepad1.left_stick_x * drivetrain.DRIVE_STRAFE_CORRECTION; // Correction to counteract imperfect strafing
+        clockwise = gamepad1.right_stick_x;
 
         // Joystick deadzones
         if (Math.abs(forward) < 0.05)
@@ -301,7 +285,7 @@ public abstract class QualsSuperclass extends LinearOpMode {
         if (Math.abs(clockwise) < 0.05)
             clockwise = 0;
 
-        if (isFieldCentric) {
+        if (drivetrain.driveMode == Drivetrain.DriveMode.FIELD_CENTRIC) {
 
             // Math
             if (drivetrain.getHeading(true) < 0) {       // If theta is measured clockwise from zero reference
@@ -325,51 +309,14 @@ public abstract class QualsSuperclass extends LinearOpMode {
         drivetrain.blpower = forward - right + clockwise;
         drivetrain.brpower = forward + right - clockwise;
 
-        // if you have the testing time, maybe remove this one day and see if it causes any
-        // problems?
-        // Find the maximum of the powers
-        double max = Math.max(  Math.max(Math.abs(drivetrain.flpower), Math.abs(drivetrain.frpower)),
-                Math.max(Math.abs(drivetrain.blpower), Math.abs(drivetrain.brpower))  );
-        // Use this to make sure no motor powers are above 1 (the max value the motor can accept)
-        if (max > 1) {
-
-            drivetrain.flpower /= max;
-            drivetrain.frpower /= max;
-            drivetrain.blpower /= max;
-            drivetrain.brpower /= max;
-        }
-
-        // Motor powers are set to the power of 3 so that the drivetrain motors accelerates
-        // exponentially instead of linearly
-        // Note: you may consider, in the future, moving this code block to before the
-        // max > 1 code block to see if that is better or worse performance, but I think
-        // it will be worse because it may mess up proportions
-        drivetrain.flpower = Math.pow(drivetrain.flpower, 3);
-        drivetrain.blpower = Math.pow(drivetrain.blpower, 3);
-        drivetrain.frpower = Math.pow(drivetrain.frpower, 3);
-        drivetrain.brpower = Math.pow(drivetrain.brpower, 3);
-
-        // Motor Power is decreased while the right trigger is held down to allow for more
-        // precise robot control
-        if (gamepad1.right_trigger > 0.8) {
-
-            drivetrain.flpower /= 3;
-            drivetrain.frpower /= 3;
-            drivetrain.blpower /= 3;
-            drivetrain.brpower /= 3;
-        }
-
-        // If the trigger is held down, but not pressed all the way down, motor power will
-        // slow down proportionally to how much the trigger is pressed
-        else if (gamepad1.right_trigger > 0.1) {
-
-            double driveSlow = -0.8 * gamepad1.right_trigger + 1;
-
-            drivetrain.flpower *= driveSlow;
-            drivetrain.frpower *= driveSlow;
-            drivetrain.blpower *= driveSlow;
-            drivetrain.brpower *= driveSlow;
-        }
+        // Find the greatest motor power
+        max = Math.max(Math.max(Math.abs(drivetrain.flpower), Math.abs(drivetrain.frpower)),
+                Math.max(Math.abs(drivetrain.blpower), Math.abs(drivetrain.brpower)));
+        // Scale motor powers with the greatest motor power
+        drivetrain.flpower /= max;
+        drivetrain.frpower /= max;
+        drivetrain.blpower /= max;
+        drivetrain.brpower /= max;
 
         // Round powers for testing
         if (drivetrain.flpower >= 0.5) {
@@ -405,9 +352,7 @@ public abstract class QualsSuperclass extends LinearOpMode {
         }
     }
 
-    /*
-
-    public void forward(double pow, double inches) {
+    public void forward(double power, double inches) {
 
         double target = inches * drivetrain.DRIVE_TICKS_PER_INCH;
 
@@ -417,10 +362,10 @@ public abstract class QualsSuperclass extends LinearOpMode {
             drivetrain.setDriveTarget(target,
                     1, 1,
                     1, 1);
-            drivetrain.setDriveMode();
+            drivetrain.setDriveRunMode();
 
             while (opModeIsActive() && drivetrain.driveIsBusy()) {
-                drivetrain.setDrivePower(pow);
+                drivetrain.setDrivePower(power);
             }
 
             drivetrain.setDrivePower(0);
@@ -428,7 +373,7 @@ public abstract class QualsSuperclass extends LinearOpMode {
         }
     }
 
-    public void backward(double pow, double inches) {
+    public void backward(double power, double inches) {
 
         double target = inches * drivetrain.DRIVE_TICKS_PER_INCH;
 
@@ -438,10 +383,10 @@ public abstract class QualsSuperclass extends LinearOpMode {
             drivetrain.setDriveTarget(target,
                     -1, -1,
                     -1, -1);
-            drivetrain.setDriveMode();
+            drivetrain.setDriveRunMode();
 
             while (opModeIsActive() && drivetrain.driveIsBusy()) {
-                drivetrain.setDrivePower(pow);
+                drivetrain.setDrivePower(power);
             }
 
             drivetrain.setDrivePower(0);
@@ -449,7 +394,7 @@ public abstract class QualsSuperclass extends LinearOpMode {
         }
     }
 
-    public void strafeRight(double pow, double inches) {
+    public void strafeRight(double power, double inches) {
 
         double target = inches * drivetrain.DRIVE_TICKS_PER_INCH;
         target *= drivetrain.DRIVE_STRAFE_CORRECTION;
@@ -460,10 +405,10 @@ public abstract class QualsSuperclass extends LinearOpMode {
             drivetrain.setDriveTarget(target,
                     1, -1,
                     -1, 1);
-            drivetrain.setDriveMode();
+            drivetrain.setDriveRunMode();
 
             while (opModeIsActive() && drivetrain.driveIsBusy()) {
-                drivetrain.setDrivePower(pow);
+                drivetrain.setDrivePower(power);
             }
 
             drivetrain.setDrivePower(0);
@@ -471,7 +416,7 @@ public abstract class QualsSuperclass extends LinearOpMode {
         }
     }
 
-    public void strafeLeft(double pow, double inches) {
+    public void strafeLeft(double power, double inches) {
 
         double target = inches * drivetrain.DRIVE_TICKS_PER_INCH;
         target *= drivetrain.DRIVE_STRAFE_CORRECTION;
@@ -482,10 +427,10 @@ public abstract class QualsSuperclass extends LinearOpMode {
             drivetrain.setDriveTarget(target,
                     -1, 1,
                     1, -1);
-            drivetrain.setDriveMode();
+            drivetrain.setDriveRunMode();
 
             while (opModeIsActive() && drivetrain.driveIsBusy()) {
-                drivetrain.setDrivePower(pow);
+                drivetrain.setDrivePower(power);
             }
 
             drivetrain.setDrivePower(0);
@@ -493,9 +438,9 @@ public abstract class QualsSuperclass extends LinearOpMode {
         }
     }
 
-    public void rotateRight(double pow, double angle) {
+    public void rotateRight(double power, double deltaAngle) {
 
-        double target = angle * drivetrain.DRIVE_TICKS_PER_DEGREE;
+        double target = deltaAngle * drivetrain.DRIVE_TICKS_PER_DEGREE;
 
         if (opModeIsActive()) {
 
@@ -503,10 +448,10 @@ public abstract class QualsSuperclass extends LinearOpMode {
             drivetrain.setDriveTarget(target,
                     1, -1,
                     1, -1);
-            drivetrain.setDriveMode();
+            drivetrain.setDriveRunMode();
 
             while (opModeIsActive() && drivetrain.driveIsBusy()) {
-                drivetrain.setDrivePower(pow);
+                drivetrain.setDrivePower(power);
             }
 
             drivetrain.setDrivePower(0);
@@ -514,9 +459,9 @@ public abstract class QualsSuperclass extends LinearOpMode {
         }
     }
 
-    public void rotateLeft(double pow, double angle) {
+    public void rotateLeft(double power, double deltaAngle) {
 
-        double target = angle * drivetrain.DRIVE_TICKS_PER_DEGREE;
+        double target = deltaAngle * drivetrain.DRIVE_TICKS_PER_DEGREE;
 
         if (opModeIsActive()) {
 
@@ -524,10 +469,10 @@ public abstract class QualsSuperclass extends LinearOpMode {
             drivetrain.setDriveTarget(target,
                     -1, 1,
                     -1, 1);
-            drivetrain.setDriveMode();
+            drivetrain.setDriveRunMode();
 
             while (opModeIsActive() && drivetrain.driveIsBusy()) {
-                drivetrain.setDrivePower(pow);
+                drivetrain.setDrivePower(power);
             }
 
             drivetrain.setDrivePower(0);
@@ -535,11 +480,17 @@ public abstract class QualsSuperclass extends LinearOpMode {
         }
     }
 
-     */
+    public void rotateToAngle(double power, double targetAngle) {
 
-    /*
+        double initialAngle = drivetrain.getHeading(false);
+        double deltaAngle = targetAngle - initialAngle;
+        if (Math.abs(deltaAngle) > 180) {
+            deltaAngle = 360 - Math.abs(deltaAngle);
+        }
+        rotateRight(deltaAngle,power);
+    }
 
-    // Vision Methods
+    // Vision Methods ==============================================================================
 
     public void vuforiaScanStack(boolean saveBitmaps) {
 
@@ -631,11 +582,7 @@ public abstract class QualsSuperclass extends LinearOpMode {
         vision.targetsUltimateGoal.deactivate();
     }
 
-     */
-
-    /*
-
-    // Wobble Mech Methods
+    // Wobble Mech Methods =========================================================================
 
     public void aim() {
         wobbleMech.clawOpen();
@@ -674,6 +621,4 @@ public abstract class QualsSuperclass extends LinearOpMode {
         wobbleMech.setArmPosition(3, 0.4);
         wobbleMech.clawClose();
     }
-
-     */
 }

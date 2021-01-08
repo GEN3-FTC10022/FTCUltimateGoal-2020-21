@@ -26,9 +26,7 @@ public class Shooter {
     public final double percentModifier = 0.05;
     public double percentVelocity;
 
-    public Shooter() {
-
-    }
+    public Shooter() { }
 
     public void initialize() {
 

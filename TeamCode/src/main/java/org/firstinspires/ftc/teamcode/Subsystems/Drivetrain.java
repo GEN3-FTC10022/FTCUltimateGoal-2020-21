@@ -21,6 +21,7 @@ public class Drivetrain {
     // Objects
     public DcMotorEx frontLeft, frontRight, backLeft, backRight;
     public DcMotor leftEncoder, rightEncoder, horzEncoder;
+    public DriveMode driveMode;
 
     // REV IMU
     public BNO055IMU imu;
@@ -31,13 +32,13 @@ public class Drivetrain {
     public double temp;
     public double flpower, frpower, blpower, brpower;
 
+    // Odometry variables
     public int leftPos = 0, rightPos = 0, horzPos = 0;
     public double leftChange = 0, rightChange = 0, horzChange = 0;
     public double x = 0, y = 0;
     public double odoAngle = 0;
 
-    // CONTROL CONSTANTS
-
+    // CONSTANTS
     public final double WHEEL_DIAMETER_INCHES = 4;
     public final double WHEEL_CIRCUMFERENCE_INCHES = WHEEL_DIAMETER_INCHES * Math.PI;
     public final double DRIVE_TICKS_PER_REV = motorTicksPerRev[0];
@@ -48,6 +49,11 @@ public class Drivetrain {
     public final double DRIVE_TRACK_WIDTH = 12.2047; //temp
 
     public Drivetrain() { }
+
+    public enum DriveMode {
+        FIELD_CENTRIC,
+        ROBOT_CENTRIC
+    }
 
     public void initialize(){
 
@@ -61,6 +67,9 @@ public class Drivetrain {
         imuParameters.angleUnit = BNO055IMU.AngleUnit.DEGREES;
         imuParameters.accelUnit = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
         imu.initialize(imuParameters);
+
+        // Mode
+        driveMode = DriveMode.FIELD_CENTRIC;
 
         // Odometry
         // resetTicks();
@@ -106,7 +115,7 @@ public class Drivetrain {
         backRight.setTargetPosition((int) (br * dist));
     }
 
-    public void setDriveMode() {
+    public void setDriveRunMode() {
         frontLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         backLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         frontRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
@@ -119,14 +128,6 @@ public class Drivetrain {
             return true;
         else
             return false;
-    }
-
-    public void setDrivePower(double pow) {
-
-        frontLeft.setPower(pow);
-        backLeft.setPower(pow);
-        frontRight.setPower(pow);
-        backRight.setPower(pow);
     }
 
     public void resetDriveMode() {
@@ -148,12 +149,18 @@ public class Drivetrain {
      * Sets each motor to its given power (fl, fr, bl, br) on the interval [-0.1, 0.1]
      */
 
-    public void setPowerAll(double flpower, double frpower, double blpower, double brpower) {
-
+    public void setDrivePower(double flpower, double frpower, double blpower, double brpower) {
         frontLeft.setPower(flpower);
         frontRight.setPower(frpower);
         backLeft.setPower(blpower);
         backRight.setPower(brpower);
+    }
+
+    public void setDrivePower(double pow) {
+        frontLeft.setPower(pow);
+        backLeft.setPower(pow);
+        frontRight.setPower(pow);
+        backRight.setPower(pow);
     }
 
     public double getLeftTicks(){
@@ -168,22 +175,26 @@ public class Drivetrain {
         return horzEncoder.getCurrentPosition() - horzPos;
     }
 
-    public double getHeading(boolean isFieldCentric) {
-
-        orientation = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.XYZ, AngleUnit.DEGREES);
+    /**
+     * The REV Hub IMU measures heading in euler angles [-180,180) or [-π,π).
+     * @param inRadian If true, returns the robot heading in radians [-π,π). Else, returns the
+     *                 robot heading in degrees [-180,180).
+     * @return Robot heading
+     */
+    public double getHeading(boolean inRadian) {
+        if (inRadian)
+            orientation = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.XYZ, AngleUnit.RADIANS);
+        else
+            orientation = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.XYZ, AngleUnit.DEGREES);
         angle = orientation.thirdAngle; // temp
+        return angle;
+    }
 
-        if (isFieldCentric) {
-            return Math.toRadians(angle);
-
-        } else {
-            // Convert -180 to 180 into 0-360
-            if (angle > 0)
-                return angle;
-            else if (angle < 0)
-                return (angle + 360);
-            else
-                return 0;
-        }
+    /**
+     * Sets the active drive mode of the robot
+     * @param driveMode
+     */
+    public void setMode(DriveMode driveMode) {
+        this.driveMode = driveMode;
     }
 }

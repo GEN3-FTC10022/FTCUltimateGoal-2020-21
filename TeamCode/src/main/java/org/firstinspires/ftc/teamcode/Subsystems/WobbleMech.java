@@ -8,14 +8,6 @@ import com.qualcomm.robotcore.hardware.Servo;
 import static org.firstinspires.ftc.robotcore.external.BlocksOpModeCompanion.gamepad1;
 import static org.firstinspires.ftc.teamcode.Util.Constants.motorTicksPerRev;
 
-// Added left and right claws
-// Updated initialize and claw methods for two servos
-// Changed "motor" to "arm"
-// Added armPower constant
-// Updated arm angle positions to include vertical initialize position, removed reverse arm direction; moved tick conversion to method
-// Switched claw open and close constants
-// Added arm collect and release methods
-
 public class WobbleMech {
 
     // Objects
@@ -28,16 +20,13 @@ public class WobbleMech {
 
     // Arm Angle Positions
     private final double[] wobbleAngles =
-            {-45, 90, 15, 0}; // temp
+            {0, 135, 60}; // temp
     public double armPosition;
 
     // Claw Positions
     private final double open = 0.0; // temp
     private final double close = 0.5325; // temp
     public String clawPosition;
-
-    // Initialization Constants
-    public double initK = 0;
 
     public WobbleMech() { }
 
@@ -46,7 +35,7 @@ public class WobbleMech {
         // Arm
         arm.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         arm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        setArmPosition(3, 0.4);
+        setArmPosition(0, 0.4);
         arm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
         // Claw

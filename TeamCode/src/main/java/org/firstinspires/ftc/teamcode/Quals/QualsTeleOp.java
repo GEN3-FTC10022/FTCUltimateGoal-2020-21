@@ -3,6 +3,13 @@ package org.firstinspires.ftc.teamcode.Quals;
 
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
+import org.firstinspires.ftc.robotcore.internal.system.Deadline;
+import org.firstinspires.ftc.teamcode.Subsystems.Drivetrain;
+import org.firstinspires.ftc.teamcode.Subsystems.Intake;
+import org.firstinspires.ftc.teamcode.Util.Constants;
+
+import java.util.concurrent.TimeUnit;
+
 /*
         Controls:
         A: Activate Wobble Mech && Pre-load Confirm
@@ -28,7 +35,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
         Right Trigger:
 
         Start:
-        Back:
+        Back: Toggle Drive Mode
  */
 
 @TeleOp(name = "TeleOp: Quals")
@@ -46,8 +53,13 @@ public class QualsTeleOp extends QualsSuperclass {
         while (opModeIsActive()) {
 
             // Telemetry
-            telemetry.addData("FC Heading (Deg)", Math.toDegrees(drivetrain.getHeading(true)));
             telemetry.addData("Heading (Deg)", drivetrain.getHeading(false));
+            telemetry.addLine();
+
+            telemetry.addLine("Wobble Mech:");
+            telemetry.addData("Arm Position", wobbleMech.armPosition);
+            telemetry.addData("Arm RunMode", wobbleMech.arm.getMode());
+            telemetry.addData("Claw Position", wobbleMech.clawPosition);
             telemetry.addLine();
 
             /*
@@ -60,16 +72,49 @@ public class QualsTeleOp extends QualsSuperclass {
             telemetry.addData("Y Pos", drivetrain.y);
             telemetry.addData("OdoAngle", drivetrain.odoAngle);
             telemetry.addLine();
-
-            telemetry.addLine("Wobble Mech:");
-            telemetry.addData("Arm Position", wobbleMech.armPosition);
-            telemetry.addData("Arm RunMode", wobbleMech.arm.getMode());
-            telemetry.addData("Claw Position", wobbleMech.clawPosition);
              */
 
             telemetry.update();
 
-            drive(true);
+            drive();
+
+            handleToggles();
+        }
+    }
+
+    // Gamepad
+    protected void handleToggles() {
+
+        if (!gamepadRateLimit.hasExpired())
+            return;
+
+        // Intake ----------------------------------------------------------------------------------
+
+        if (gamepad1.a) {
+            if (intake.status == Intake.Status.IN)
+                intake.off();
+            else
+                intake.in();
+            gamepadRateLimit.reset();
+        }
+
+        if (gamepad1.b) {
+            if (intake.status == Intake.Status.OUT)
+                intake.off();
+            else
+                intake.out();
+            gamepadRateLimit.reset();
+        }
+
+        // Drive -----------------------------------------------------------------------------------
+
+        if (gamepad1.back) {
+            if (drivetrain.driveMode == Drivetrain.DriveMode.FIELD_CENTRIC) {
+                drivetrain.setMode(Drivetrain.DriveMode.ROBOT_CENTRIC);
+            } else {
+                drivetrain.setMode(Drivetrain.DriveMode.FIELD_CENTRIC);
+            }
+            gamepadRateLimit.reset();
         }
     }
 }
