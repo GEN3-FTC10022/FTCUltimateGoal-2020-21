@@ -18,11 +18,7 @@ import java.io.IOException;
 import static android.graphics.Bitmap.createBitmap;
 import static android.graphics.Bitmap.createScaledBitmap;
 
-/*
-    Updated for drive testing
- */
-
-@TeleOp(name = "Test: TeleOp")
+@TeleOp(name = "TeleOp: Test")
 public class TestingTeleOp extends TestingSuperclass {
 
     @Override
@@ -36,17 +32,6 @@ public class TestingTeleOp extends TestingSuperclass {
 
         while (opModeIsActive()) {
 
-            driveTest(false);
-
-            // Telemetry
-
-            telemetry.addData("Heading (Deg)", drivetrain.getHeading(false));
-            telemetry.addLine();
-
-            telemetry.addLine("FL: " + drivetrain.flpower + "\t\t" + "FR: " + drivetrain.frpower);
-            telemetry.addLine("BL: " + drivetrain.blpower + "\t\t" + "BR: " + drivetrain.brpower);
-
-            telemetry.update();
         }
     }
 }

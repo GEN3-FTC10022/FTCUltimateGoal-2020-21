@@ -12,7 +12,7 @@ import static org.firstinspires.ftc.teamcode.Util.Constants.motorTicksPerRev;
 public class Intake {
 
     // Objects
-    public DcMotorEx rollers;
+    public DcMotorEx topRoller, bottomRoller;
 
     // Constants
     public Status status;
@@ -28,24 +28,28 @@ public class Intake {
     public void initialize() {
 
         // Arm
-        rollers.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        rollers.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        // motor.setDirection(DcMotorSimple.Direction.REVERSE);
+        topRoller.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        bottomRoller.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        topRoller.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        bottomRoller.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         off();
     }
 
     public void in() {
-        rollers.setPower(1);
+        topRoller.setPower(1);
+        bottomRoller.setPower(1);
         status = Status.IN;
     }
 
     public void out() {
-        rollers.setPower(-1);
+        topRoller.setPower(-1);
+        bottomRoller.setPower(-1);
         status = Status.OUT;
     }
 
     public void off() {
-        rollers.setPower(0);
+        topRoller.setPower(0);
+        bottomRoller.setPower(0);
         status = Status.OFF;
     }
 }

@@ -12,10 +12,10 @@ import java.util.concurrent.TimeUnit;
 
 /*
         Controls:
-        A: Activate Wobble Mech && Pre-load Confirm
-        B: Restart Wobble Mech && Pre-load Cancel
-        X:
-        Y: Zero Wobble Mech
+        A: Intake In/Off
+        B: Intake Out/Off
+        X: Reset Wobble Mech
+        Y: Advance Wobble Mech
 
         Up: Increase Shooter Speed
         Down: Decrease Shooter Speed
@@ -32,13 +32,13 @@ import java.util.concurrent.TimeUnit;
         Left Bumper:
         Left Trigger:
         Right Bumper: Single-Fire
-        Right Trigger:
+        Right Trigger: Drive Speed Modifier
 
         Start:
         Back: Toggle Drive Mode
  */
 
-@TeleOp(name = "TeleOp: Quals")
+@TeleOp(name = "TeleOp: Qual 2")
 public class QualsTeleOp extends QualsSuperclass {
 
     @Override

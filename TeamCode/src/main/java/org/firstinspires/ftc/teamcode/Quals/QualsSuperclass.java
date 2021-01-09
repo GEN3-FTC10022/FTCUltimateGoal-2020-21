@@ -126,7 +126,8 @@ public abstract class QualsSuperclass extends LinearOpMode {
         sleep(500);
 
         // Intake ==================================================================================
-        intake.rollers = (DcMotorEx)hardwareMap.dcMotor.get("rollers");
+        intake.topRoller = (DcMotorEx)hardwareMap.dcMotor.get("topRoller");
+        intake.bottomRoller = (DcMotorEx)hardwareMap.dcMotor.get("bottomRoller");
         intake.initialize();
         initCurrent++;
         telemetry.addLine("Intake initialized " + "(" + initCurrent + "/" + initTotal + ")");
@@ -492,66 +493,109 @@ public abstract class QualsSuperclass extends LinearOpMode {
 
     // Vision Methods ==============================================================================
 
-    public void vuforiaScanStack(boolean saveBitmaps) {
+    public void scanBitmap(boolean showPixelData) {
+
+        int heightMid = (int)(vision.cropHeight/2.0);
+        int[] yPos = {heightMid-9,heightMid-6,heightMid-3,heightMid,heightMid+3,heightMid+6,heightMid+9}; // 7 pixels top to bottom
+        int[] xPos = {vision.cropWidth-1,0}; // Ring 1 (Rightmost pixel), Ring 4 (Leftmost pixel)
+        int pixel, r, g, b, total;
+
+        for (int i = 0; i < xPos.length; i++) {
+
+            for (int j = 0; j < yPos.length; j++) {
+
+                pixel = vision.croppedBitmap.getPixel(xPos[i],yPos[j]);
+                r = Color.red(pixel);
+                g = Color.green(pixel);
+                b = Color.blue(pixel);
+                total = r + g + b;
+
+                // Print per pixel RGB to telemetry
+                if (showPixelData) {
+                    telemetry.addData("Red", r);
+                    telemetry.addData("Green", g);
+                    telemetry.addData("Blue", b);
+                    telemetry.addData("Total", total);
+                    telemetry.update();
+                }
+
+                // If lighting is too bright, increment check if r > g > b with noticeable difference
+                // Else if under normal lighting, check if b < 17.5% of r+g
+                // Else fail check (too dark)
+                if (total > 375) {
+                    if (r > g+40 && g > b && b > 70) {
+                        telemetry.addLine("(" + i + "," + j + "): " + "*Bright Check Successful*");
+                        telemetry.addLine();
+                        telemetry.update();
+                        vision.check++;
+                    } else {
+                        telemetry.addLine("(" + i + "," + j + "): " + "~Bright Check Failed~");
+                        telemetry.addLine();
+                        telemetry.update();
+                    }
+                } else if (total > 50) {
+                    if ((17.5/100.0)*(r+g) > b) {
+                        telemetry.addLine("(" + i + "," + j + "): " + "*Normal Check Successful*");
+                        telemetry.addLine();
+                        telemetry.update();
+                        vision.check++;
+                    } else {
+                        telemetry.addLine("(" + i + "," + j + "): " + "~Normal Check Failed~");
+                        telemetry.addLine();
+                        telemetry.update();
+                    }
+                } else {
+                    telemetry.addLine("(" + i + "," + j + "): " + "~Too Dark, Check Failed~");
+                    telemetry.addLine();
+                    telemetry.update();
+                }
+            }
+
+            telemetry.addLine();
+            telemetry.addData("Ring " + (i+1) + " Check Count",vision.check + "/7");
+            telemetry.addLine();
+            telemetry.update();
+
+            if (vision.check >= 5) {
+                vision.ringsDetected++;
+            }
+
+            vision.check = 0;
+        }
+    }
+
+    public void vuforiaScanStack(boolean saveBitmaps, boolean showPixelData) {
 
         telemetry.setAutoClear(false);
 
         // Capture frame from camera
         vision.captureFrame();
         telemetry.addLine("Frame captured");
+        telemetry.addLine();
         telemetry.update();
 
         if (vision.rgbImage != null) {
 
             // Transpose frame into bitmaps
             vision.setBitmaps();
-            telemetry.addLine("Frame converted to Bitmaps");
+            telemetry.addLine("Frame converted to bitmaps");
+            telemetry.addLine();
             telemetry.update();
 
             // Save bitmaps to .png files
             if (saveBitmaps) {
                 vision.saveBitmap("Bitmap", vision.bitmap);
                 vision.saveBitmap("CroppedBitmap", vision.croppedBitmap);
-                telemetry.addLine("Frame converted to Bitmaps");
+                telemetry.addLine("Bitmaps saved to device");
+                telemetry.addLine();
                 telemetry.update();
             }
 
             // Scan bitmap for starter stack height
-            scanBitmap();
-            telemetry.addLine("Bitmaps scanned");
-            telemetry.update();
-
-            telemetry.addLine();
+            scanBitmap(showPixelData);
+            telemetry.addLine("Bitmap scan finished");
             telemetry.addData("Stack Height", vision.getStackHeight());
             telemetry.update();
-        }
-    }
-
-    public void scanBitmap() {
-
-        int[] yPos = {vision.croppedBitmap.getHeight()-vision.ringHeight/2,vision.ringHeight/2}; // Bottom to Top
-        int[] xPos = {(vision.croppedBitmap.getWidth()/2)-20,vision.croppedBitmap.getWidth()/2,(vision.croppedBitmap.getWidth()/2)+20}; // Left to Right
-        int pixel, r, g, b;
-
-        for (int i = 0; i < yPos.length; i++) {
-
-            for (int j = 0; j < xPos.length; j++) {
-
-                pixel = vision.croppedBitmap.getPixel(xPos[j],yPos[i]);
-                r = Color.red(pixel);
-                g = Color.green(pixel);
-                b = Color.blue(pixel);
-
-                if ((17.5/100.0)*(r+g) > b) {
-                    vision.check++;
-                }
-            }
-
-            if (vision.check >= 2) {
-                vision.ringsDetected++;
-            }
-
-            vision.check = 0;
         }
     }
 

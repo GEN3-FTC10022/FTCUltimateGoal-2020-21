@@ -21,7 +21,7 @@ public class WobbleMech {
     // Arm Angle Positions
     private final double[] wobbleAngles =
             {0, 135, 60}; // temp
-    public double armPosition;
+    public ArmPosition armPosition;
 
     // Claw Positions
     private final double open = 0.0; // temp
@@ -29,6 +29,12 @@ public class WobbleMech {
     public String clawPosition;
 
     public WobbleMech() { }
+
+    public enum ArmPosition {
+        REST,
+        DROP,
+        GROUND;
+    }
 
     public void initialize() {
 
@@ -46,7 +52,7 @@ public class WobbleMech {
     public void setArmPosition(int position, double power) {
         arm.setTargetPosition((int)Math.round(wobbleAngles[position] * WOBBLE_TICKS_PER_DEGREE));
         setArmPower(power);
-        armPosition = position;
+        this.armPosition = armPosition;
     }
 
     public int getArmPosition() {

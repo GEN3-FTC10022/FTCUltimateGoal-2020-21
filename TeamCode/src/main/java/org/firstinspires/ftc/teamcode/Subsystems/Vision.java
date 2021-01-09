@@ -64,14 +64,12 @@ public class Vision {
     public Bitmap croppedBitmap = null;
 
     // Crop Variables
-    public final int cropInitialX = 356;
-    public final int cropInitialY = 212;
-    public final int cropFinalX = 436;
-    public final int cropFinalY = 264;
-    public final int cropWidth = cropFinalX-cropInitialX;
-    public final int cropHeight = cropFinalY-cropInitialY;
-    public final int ringWidth = cropWidth;
-    public final int ringHeight = cropHeight/4;
+    public final int cropInitialX = 308;
+    public final int cropInitialY = 250;
+    public final int cropFinalX = 361;
+    public final int cropFinalY = 290;
+    public final int cropWidth = cropFinalX-cropInitialX; // Tested with 53p width
+    public final int cropHeight = cropFinalY-cropInitialY; // Tested with 40p height
 
     // Detection Constants
     public int check = 0;

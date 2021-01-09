@@ -4,7 +4,7 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
 import org.firstinspires.ftc.teamcode.Quals.QualsSuperclass;
 
-@Autonomous (name = "Test: Auto")
+@Autonomous (name = "Auto: Test")
 
 public class TestingAuto extends TestingSuperclass {
 
@@ -14,6 +14,12 @@ public class TestingAuto extends TestingSuperclass {
         initialize();
 
         waitForStart();
+
+        vuforiaScanStack(false,false);
+
+        sleep(60000);
+
+        stop();
     }
 
 }

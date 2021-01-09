@@ -4,7 +4,7 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
 import org.firstinspires.ftc.teamcode.Quals.QualsSuperclass;
 
-@Autonomous (name = "Park")
+@Autonomous (name = "Auto: Park")
 
 public class Park extends QualsSuperclass {
 
