@@ -75,6 +75,23 @@ public class Drivetrain {
         // resetTicks();
     }
 
+    public void applyFieldCentricConversion(double vertical, double horizontal, double rotation) {
+        // Math
+        if (getHeading(true) < 0) {       // If theta is measured clockwise from zero reference
+
+            temp = vertical * Math.cos(getHeading(true)) + horizontal * Math.sin(-getHeading(true));
+            horizontal= -vertical * Math.sin(-getHeading(true)) + horizontal * Math.cos(getHeading(true));
+            vertical = temp;
+        }
+
+        if (getHeading(true) >= 0) {    // If theta is measured counterclockwise from zero reference
+
+            temp = vertical * Math.cos(getHeading(true)) - horizontal * Math.sin(getHeading(true));
+            horizontal= vertical * Math.sin(getHeading(true)) + horizontal * Math.cos(getHeading(true));
+            vertical = temp;
+        }
+    }
+
     public void updatePosition(Telemetry telemetry) {
 
         leftChange = getLeftTicks() / DRIVE_TICKS_PER_INCH;

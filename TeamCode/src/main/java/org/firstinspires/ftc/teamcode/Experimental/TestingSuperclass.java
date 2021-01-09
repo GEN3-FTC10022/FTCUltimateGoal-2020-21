@@ -8,11 +8,13 @@ import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.vuforia.Image;
 import com.vuforia.PIXEL_FORMAT;
 import com.vuforia.Vuforia;
 
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
+import org.firstinspires.ftc.robotcore.external.Const;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
@@ -22,6 +24,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackable;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackableDefaultListener;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
+import org.firstinspires.ftc.robotcore.internal.system.Deadline;
 import org.firstinspires.ftc.teamcode.Subsystems.Drivetrain;
 import org.firstinspires.ftc.teamcode.Subsystems.Shooter;
 import org.firstinspires.ftc.teamcode.Subsystems.Vision;
@@ -33,6 +36,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static android.graphics.Bitmap.createBitmap;
 import static android.graphics.Bitmap.createScaledBitmap;
@@ -43,126 +47,100 @@ public abstract class TestingSuperclass extends LinearOpMode {
 
     // ROBOT OBJECTS -------------------------------------------------------------------------------
 
+    // Constants
+    public Constants constants = new Constants();
+
     // Vision
-    public Vision vision = new Vision();
+    public WobbleMech wobbleMech = new WobbleMech();
+
+    // Controller
+    public Deadline gamepadRateLimit = new Deadline(Constants.GAMEPAD_LOCKOUT, TimeUnit.MILLISECONDS);
 
     // METHODS -------------------------------------------------------------------------------------
 
     // Robot Initialization
     public void initialize() {
 
-        vision.webcamName = hardwareMap.get(WebcamName.class, "Webcam");
-        vision.initialize();
-        telemetry.addLine("Vision initialized");
+        wobbleMech.arm = (DcMotorEx)hardwareMap.dcMotor.get("arm");
+        wobbleMech.lClaw = hardwareMap.servo.get("lClaw");
+        wobbleMech.rClaw = hardwareMap.servo.get("rClaw");
+        wobbleMech.initialize();
+        telemetry.addLine("Wobble Mech initialized");
+        telemetry.addLine();
+
+        // telemetry.addLine("Load wobble goal and press 'A' or press 'B' to cancel load");
+        // telemetry.addLine();
         telemetry.update();
         sleep(500);
-    }
 
-    // Vision
+        /*
+        while (wobbleMech.initK == 0) {
 
-    public void scanBitmap(boolean showPixelData) {
+            if (gamepad1.a) {
+                // Set wobble goal to pre-loaded position
+                wobbleMech.clawClose();
+                sleep(2000);
+                wobbleMech.setArmPosition(WobbleMech.ArmPosition.REST, 0.2);
 
-        int heightMid = (int)(vision.cropHeight/2.0);
-        int[] yPos = {heightMid-9,heightMid-6,heightMid-3,heightMid,heightMid+3,heightMid+6,heightMid+9}; // 7 pixels top to bottom
-        int[] xPos = {vision.cropWidth-1,0}; // Ring 1 (Rightmost pixel), Ring 4 (Leftmost pixel)
-        int pixel, r, g, b, total;
-
-        for (int i = 0; i < xPos.length; i++) {
-
-            for (int j = 0; j < yPos.length; j++) {
-
-                pixel = vision.croppedBitmap.getPixel(xPos[i],yPos[j]);
-                r = Color.red(pixel);
-                g = Color.green(pixel);
-                b = Color.blue(pixel);
-                total = r + g + b;
-
-                // Print per pixel RGB to telemetry
-                if (showPixelData) {
-                    telemetry.addData("Red", r);
-                    telemetry.addData("Green", g);
-                    telemetry.addData("Blue", b);
-                    telemetry.addData("Total", total);
-                    telemetry.update();
-                }
-
-                // If lighting is too bright, increment check if r > g > b with noticeable difference
-                // Else if under normal lighting, check if b < 17.5% of r+g
-                // Else fail check (too dark)
-                if (total > 375) {
-                    if (r > g+40 && g > b && b > 70) {
-                        telemetry.addLine("(" + i + "," + j + "): " + "*Bright Check Successful*");
-                        telemetry.addLine();
-                        telemetry.update();
-                        vision.check++;
-                    } else {
-                        telemetry.addLine("(" + i + "," + j + "): " + "~Bright Check Failed~");
-                        telemetry.addLine();
-                        telemetry.update();
-                    }
-                } else if (total > 50) {
-                    if ((17.5/100.0)*(r+g) > b) {
-                        telemetry.addLine("(" + i + "," + j + "): " + "*Normal Check Successful*");
-                        telemetry.addLine();
-                        telemetry.update();
-                        vision.check++;
-                    } else {
-                        telemetry.addLine("(" + i + "," + j + "): " + "~Normal Check Failed~");
-                        telemetry.addLine();
-                        telemetry.update();
-                    }
-                } else {
-                    telemetry.addLine("(" + i + "," + j + "): " + "~Too Dark, Check Failed~");
-                    telemetry.addLine();
-                    telemetry.update();
-                }
-            }
-
-            telemetry.addLine();
-            telemetry.addData("Ring " + (i+1) + " Check Count",vision.check + "/7");
-            telemetry.addLine();
-            telemetry.update();
-
-            if (vision.check >= 5) {
-                vision.ringsDetected++;
-            }
-
-            vision.check = 0;
-        }
-    }
-
-    public void vuforiaScanStack(boolean saveBitmaps, boolean showPixelData) {
-
-        telemetry.setAutoClear(false);
-
-        // Capture frame from camera
-        vision.captureFrame();
-        telemetry.addLine("Frame captured");
-        telemetry.addLine();
-        telemetry.update();
-
-        if (vision.rgbImage != null) {
-
-            // Transpose frame into bitmaps
-            vision.setBitmaps();
-            telemetry.addLine("Frame converted to bitmaps");
-            telemetry.addLine();
-            telemetry.update();
-
-            // Save bitmaps to .png files
-            if (saveBitmaps) {
-                vision.saveBitmap("Bitmap", vision.bitmap);
-                vision.saveBitmap("CroppedBitmap", vision.croppedBitmap);
-                telemetry.addLine("Bitmaps saved to device");
-                telemetry.addLine();
+                telemetry.addLine("Wobble goal loaded");
                 telemetry.update();
+
+                wobbleMech.initK = 1;
+                sleep(500);
             }
 
-            // Scan bitmap for starter stack height
-            scanBitmap(showPixelData);
-            telemetry.addLine("Bitmap scan finished");
-            telemetry.addData("Stack Height", vision.getStackHeight());
-            telemetry.update();
+            // Cancel wobble goal pre-load
+            if (gamepad1.b) {
+                // Reset wobble mech
+                resetWobbleMech();
+
+                telemetry.addLine("Wobble goal not loaded");
+                telemetry.update();
+
+                wobbleMech.initK = 1;
+                sleep(500);
+            }
+
+            // Break out of loop if initialization is stopped to prevent forced restart
+            if (isStopRequested()) {
+                break;
+            }
         }
+         */
+    }
+
+    // Wobble Mech Methods =========================================================================
+
+    public void aim() {
+        wobbleMech.clawOpen();
+        sleep(750);
+        wobbleMech.setArmPosition(WobbleMech.ArmPosition.LOW, 0.3);
+    }
+
+    public void collect() {
+        wobbleMech.clawClose();
+        sleep(750);
+        wobbleMech.setArmPosition(WobbleMech.ArmPosition.REST, 0.2);
+    }
+
+    public void release() {
+        wobbleMech.setArmPosition(WobbleMech.ArmPosition.LOW, 0.2);
+        sleep(750);
+        wobbleMech.clawOpen();
+        sleep(750);
+        resetWobbleMech();
+    }
+
+    public void drop() {
+        wobbleMech.setArmPosition(WobbleMech.ArmPosition.HIGH, 0.2);
+        sleep(750);
+        wobbleMech.clawOpen();
+        sleep(750);
+        resetWobbleMech();
+    }
+
+    public void resetWobbleMech() {
+        wobbleMech.setArmPosition(WobbleMech.ArmPosition.REST, 0.3);
+        wobbleMech.clawClose();
     }
 }

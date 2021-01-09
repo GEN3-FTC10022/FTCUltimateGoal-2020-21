@@ -46,12 +46,14 @@ public abstract class QualsSuperclass extends LinearOpMode {
 
     // ROBOT OBJECTS -------------------------------------------------------------------------------
 
+    // Constants
+    public Constants constants = new Constants();
     public int initCurrent = 0;
     public final int initTotal = 5;
 
     // Drivetrain
     public Drivetrain drivetrain = new Drivetrain();
-    double forward, right, clockwise;
+    double vertical, horizontal, rotation;
     double max, kSlow;
 
     // Wobble Mech
@@ -107,11 +109,20 @@ public abstract class QualsSuperclass extends LinearOpMode {
         sleep(500);
 
         // Shooter =================================================================================
-        shooter.mShooter = (DcMotorEx)hardwareMap.dcMotor.get("mShooter");
-        shooter.sTrigger = hardwareMap.servo.get("sTrigger");
+        shooter.launcher = (DcMotorEx)hardwareMap.dcMotor.get("launcher");
+        shooter.trigger = hardwareMap.servo.get("trigger");
         shooter.initialize();
         initCurrent++;
         telemetry.addLine("Shooter initialized " + "(" + initCurrent + "/" + initTotal + ")");
+        telemetry.update();
+        sleep(500);
+
+        // Intake ==================================================================================
+        intake.topRoller = (DcMotorEx)hardwareMap.dcMotor.get("topRoller");
+        intake.bottomRoller = (DcMotorEx)hardwareMap.dcMotor.get("bottomRoller");
+        intake.initialize();
+        initCurrent++;
+        telemetry.addLine("Intake initialized " + "(" + initCurrent + "/" + initTotal + ")");
         telemetry.update();
         sleep(500);
 
@@ -125,58 +136,39 @@ public abstract class QualsSuperclass extends LinearOpMode {
         telemetry.update();
         sleep(500);
 
-        // Intake ==================================================================================
-        intake.topRoller = (DcMotorEx)hardwareMap.dcMotor.get("topRoller");
-        intake.bottomRoller = (DcMotorEx)hardwareMap.dcMotor.get("bottomRoller");
-        intake.initialize();
-        initCurrent++;
-        telemetry.addLine("Intake initialized " + "(" + initCurrent + "/" + initTotal + ")");
-        telemetry.update();
-        sleep(500);
-
         // Telemetry ===============================================================================
         telemetry.addLine("Initialization Finished " + "(" + initCurrent + "/" + initTotal + ")");
         telemetry.update();
         sleep(500);
 
-        // telemetry.addLine("Load wobble goal and press 'Start'...");
-        // telemetry.update();
+        telemetry.addLine();
+        telemetry.addLine("Load wobble goal and press 'Start'...");
+        telemetry.update();
 
-        /*
-        // Wait for controller input for wobble goal pre-load
         while (wobbleMech.initK == 0) {
 
-            if (gamepad1.a && constants.a == 0) {
-                constants.a = 1;
-            } else if (!gamepad1.a && constants.a == 1) {
-
+            if (gamepad1.a) {
                 // Set wobble goal to pre-loaded position
                 wobbleMech.clawClose();
                 sleep(2000);
-                wobbleMech.setArmPosition(0, 0.2);
+                wobbleMech.setArmPosition(WobbleMech.ArmPosition.REST, 0.2);
 
                 telemetry.addLine("Wobble goal loaded");
                 telemetry.update();
 
-                constants.a = 0;
                 wobbleMech.initK = 1;
                 sleep(500);
             }
 
             // Cancel wobble goal pre-load
-            if (gamepad1.b && constants.b == 0) {
-                constants.b = 1;
-
-            } else if (!gamepad1.b && constants.b == 1) {
-
+            if (gamepad1.b) {
                 // Reset wobble mech
                 resetWobbleMech();
 
                 telemetry.addLine("Wobble goal not loaded");
                 telemetry.update();
 
-                constants.b = 0;
-                wobbleMech.initK = 2;
+                wobbleMech.initK = 1;
                 sleep(500);
             }
 
@@ -185,15 +177,27 @@ public abstract class QualsSuperclass extends LinearOpMode {
                 break;
             }
         }
-         */
 
         // Display robot rotation
         telemetry.setAutoClear(true);
 
-        while(!isStarted()) {
-            telemetry.addData("Heading (Deg)", drivetrain.getHeading(false));
-            telemetry.update();
-        }
+        while(!isStarted())
+            displayTeleOpTelemetry();
+    }
+
+    // Telemetry ===================================================================================
+
+    public void displayTeleOpTelemetry() {
+        // Telemetry
+        telemetry.addData("Heading (Deg)", drivetrain.getHeading(false));
+        telemetry.addLine();
+
+        telemetry.addLine("Wobble Mech:");
+        telemetry.addData("Arm Position", wobbleMech.getArmPosition());
+        telemetry.addData("Claw Position", wobbleMech.getClawPosition());
+        telemetry.addLine();
+
+        telemetry.update();
     }
 
     // Drive Methods ===============================================================================
@@ -202,41 +206,26 @@ public abstract class QualsSuperclass extends LinearOpMode {
 
         // FIELD-CENTRIC DRIVE -----------------------------------------------------------------
 
-        forward = -gamepad1.left_stick_y;
-        right = gamepad1.left_stick_x * drivetrain.DRIVE_STRAFE_CORRECTION; // Correction to counteract imperfect strafing
-        clockwise = gamepad1.right_stick_x;
+        vertical = -gamepad1.left_stick_y;
+         horizontal= gamepad1.left_stick_x * drivetrain.DRIVE_STRAFE_CORRECTION; // Correction to counteract imperfect strafing
+        rotation = gamepad1.right_stick_x;
 
         // Joystick deadzones
-        if (Math.abs(forward) < 0.05)
-            forward = 0;
-        if (Math.abs(right) < 0.05)
-            right = 0;
-        if (Math.abs(clockwise) < 0.05)
-            clockwise = 0;
+        if (Math.abs(vertical) < 0.05)
+            vertical = 0;
+        if (Math.abs(horizontal) < 0.05)
+             horizontal= 0;
+        if (Math.abs(rotation) < 0.05)
+            rotation = 0;
 
-        if (drivetrain.driveMode == Drivetrain.DriveMode.FIELD_CENTRIC) {
-
-            // Math
-            if (drivetrain.getHeading(true) < 0) {       // If theta is measured clockwise from zero reference
-
-                drivetrain.temp = forward * Math.cos(drivetrain.getHeading(true)) + right * Math.sin(-drivetrain.getHeading(true));
-                right = -forward * Math.sin(-drivetrain.getHeading(true)) + right * Math.cos(drivetrain.getHeading(true));
-                forward = drivetrain.temp;
-            }
-
-            if (drivetrain.getHeading(true) >= 0) {    // If theta is measured counterclockwise from zero reference
-
-                drivetrain.temp = forward * Math.cos(drivetrain.getHeading(true)) - right * Math.sin(drivetrain.getHeading(true));
-                right = forward * Math.sin(drivetrain.getHeading(true)) + right * Math.cos(drivetrain.getHeading(true));
-                forward = drivetrain.temp;
-            }
-        }
+        if (drivetrain.driveMode == Drivetrain.DriveMode.FIELD_CENTRIC)
+            drivetrain.applyFieldCentricConversion(vertical,horizontal,rotation);
 
         // Assign calculated values to the power variables
-        drivetrain.flpower = forward + right + clockwise;
-        drivetrain.frpower = forward - right - clockwise;
-        drivetrain.blpower = forward - right + clockwise;
-        drivetrain.brpower = forward + right - clockwise;
+        drivetrain.flpower = vertical + horizontal + rotation;
+        drivetrain.frpower = vertical - horizontal - rotation;
+        drivetrain.blpower = vertical - horizontal + rotation;
+        drivetrain.brpower = vertical + horizontal - rotation;
 
         // Find the greatest motor power
         max = Math.max(Math.max(Math.abs(drivetrain.flpower), Math.abs(drivetrain.frpower)),
@@ -259,7 +248,7 @@ public abstract class QualsSuperclass extends LinearOpMode {
         drivetrain.brpower = Math.pow(drivetrain.brpower, 3);
          */
 
-        // Motor power is decreased proportional to the right trigger value to allow for more
+        // Motor power is decreased proportional to the horizontal trigger value to allow for more
         // precise robot control.
         kSlow = -2.0/3.0 * gamepad1.right_trigger + 1;
         drivetrain.flpower *= kSlow;
@@ -274,41 +263,26 @@ public abstract class QualsSuperclass extends LinearOpMode {
 
         // FIELD-CENTRIC DRIVE -----------------------------------------------------------------
 
-        forward = -gamepad1.left_stick_y;
-        right = gamepad1.left_stick_x * drivetrain.DRIVE_STRAFE_CORRECTION; // Correction to counteract imperfect strafing
-        clockwise = gamepad1.right_stick_x;
+        vertical = -gamepad1.left_stick_y;
+         horizontal= gamepad1.left_stick_x * drivetrain.DRIVE_STRAFE_CORRECTION; // Correction to counteract imperfect strafing
+        rotation = gamepad1.right_stick_x;
 
         // Joystick deadzones
-        if (Math.abs(forward) < 0.05)
-            forward = 0;
-        if (Math.abs(right) < 0.05)
-            right = 0;
-        if (Math.abs(clockwise) < 0.05)
-            clockwise = 0;
+        if (Math.abs(vertical) < 0.05)
+            vertical = 0;
+        if (Math.abs(horizontal) < 0.05)
+             horizontal= 0;
+        if (Math.abs(rotation) < 0.05)
+            rotation = 0;
 
-        if (drivetrain.driveMode == Drivetrain.DriveMode.FIELD_CENTRIC) {
-
-            // Math
-            if (drivetrain.getHeading(true) < 0) {       // If theta is measured clockwise from zero reference
-
-                drivetrain.temp = forward * Math.cos(drivetrain.getHeading(true)) + right * Math.sin(-drivetrain.getHeading(true));
-                right = -forward * Math.sin(-drivetrain.getHeading(true)) + right * Math.cos(drivetrain.getHeading(true));
-                forward = drivetrain.temp;
-            }
-
-            if (drivetrain.getHeading(true) >= 0) {    // If theta is measured counterclockwise from zero reference
-
-                drivetrain.temp = forward * Math.cos(drivetrain.getHeading(true)) - right * Math.sin(drivetrain.getHeading(true));
-                right = forward * Math.sin(drivetrain.getHeading(true)) + right * Math.cos(drivetrain.getHeading(true));
-                forward = drivetrain.temp;
-            }
-        }
+        if (drivetrain.driveMode == Drivetrain.DriveMode.FIELD_CENTRIC)
+            drivetrain.applyFieldCentricConversion(vertical,horizontal,rotation);
 
         // Assign calculated values to the power variables
-        drivetrain.flpower = forward + right + clockwise;
-        drivetrain.frpower = forward - right - clockwise;
-        drivetrain.blpower = forward - right + clockwise;
-        drivetrain.brpower = forward + right - clockwise;
+        drivetrain.flpower = vertical + horizontal + rotation;
+        drivetrain.frpower = vertical - horizontal - rotation;
+        drivetrain.blpower = vertical - horizontal + rotation;
+        drivetrain.brpower = vertical + horizontal - rotation;
 
         // Find the greatest motor power
         max = Math.max(Math.max(Math.abs(drivetrain.flpower), Math.abs(drivetrain.frpower)),
@@ -631,17 +605,17 @@ public abstract class QualsSuperclass extends LinearOpMode {
     public void aim() {
         wobbleMech.clawOpen();
         sleep(750);
-        wobbleMech.setArmPosition(1, 0.4);
+        wobbleMech.setArmPosition(WobbleMech.ArmPosition.LOW, 0.3);
     }
 
     public void collect() {
         wobbleMech.clawClose();
         sleep(750);
-        wobbleMech.setArmPosition(0, 0.2);
+        wobbleMech.setArmPosition(WobbleMech.ArmPosition.REST, 0.2);
     }
 
     public void release() {
-        wobbleMech.setArmPosition(1, 0.2);
+        wobbleMech.setArmPosition(WobbleMech.ArmPosition.LOW, 0.2);
         sleep(750);
         wobbleMech.clawOpen();
         sleep(750);
@@ -649,7 +623,7 @@ public abstract class QualsSuperclass extends LinearOpMode {
     }
 
     public void drop() {
-        wobbleMech.setArmPosition(2, 0.2);
+        wobbleMech.setArmPosition(WobbleMech.ArmPosition.HIGH, 0.2);
         sleep(750);
         wobbleMech.clawOpen();
         sleep(750);
@@ -657,12 +631,7 @@ public abstract class QualsSuperclass extends LinearOpMode {
     }
 
     public void resetWobbleMech() {
-        wobbleMech.setArmPosition(0, 0.4);
-        wobbleMech.clawClose();
-    }
-
-    public void zeroWobbleMech(){
-        wobbleMech.setArmPosition(3, 0.4);
+        wobbleMech.setArmPosition(WobbleMech.ArmPosition.REST, 0.3);
         wobbleMech.clawClose();
     }
 }

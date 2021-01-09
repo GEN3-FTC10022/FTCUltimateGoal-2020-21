@@ -11,8 +11,8 @@ import static org.firstinspires.ftc.teamcode.Util.Constants.motorTicksPerRev;
 public class Shooter {
 
     // Shooter Objects
-    public DcMotorEx mShooter;
-    public Servo sTrigger;
+    public DcMotorEx launcher;
+    public Servo trigger;
 
     // Servo Constants
     public final double sRetract = 0.0; // temp
@@ -31,30 +31,30 @@ public class Shooter {
     public void initialize() {
 
         // Trigger
-        sTrigger.setDirection(Servo.Direction.REVERSE);
+        trigger.setDirection(Servo.Direction.REVERSE);
         retractTrigger();
 
         // Shooter
-        mShooter.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        mShooter.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        launcher.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        launcher.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         percentVelocity = 0;
         runShooter();
     }
 
     public void pushTrigger() {
-        sTrigger.setPosition(sPush);
+        trigger.setPosition(sPush);
     }
 
     public void retractTrigger() {
-        sTrigger.setPosition(sRetract);
+        trigger.setPosition(sRetract);
     }
 
     public double getTriggerPosition() {
-        return sTrigger.getPosition();
+        return trigger.getPosition();
     }
 
     public double getVelocity() {
-        return mShooter.getVelocity();
+        return launcher.getVelocity();
     }
 
     public void increasePower() {
@@ -76,7 +76,7 @@ public class Shooter {
     }
 
     public void runShooter() {
-        mShooter.setPower(percentVelocity);
-        // mShooter.setVelocity(percentVelocity * SHOOTER_MAX_TICKS_PER_SEC);
+        launcher.setPower(percentVelocity);
+        // launcher.setVelocity(percentVelocity * SHOOTER_MAX_TICKS_PER_SEC);
     }
 }

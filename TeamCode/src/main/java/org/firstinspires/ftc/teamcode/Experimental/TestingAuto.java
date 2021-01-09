@@ -15,8 +15,6 @@ public class TestingAuto extends TestingSuperclass {
 
         waitForStart();
 
-        vuforiaScanStack(false,false);
-
         sleep(60000);
 
         stop();

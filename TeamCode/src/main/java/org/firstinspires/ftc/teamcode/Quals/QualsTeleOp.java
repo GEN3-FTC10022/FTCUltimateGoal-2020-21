@@ -6,6 +6,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import org.firstinspires.ftc.robotcore.internal.system.Deadline;
 import org.firstinspires.ftc.teamcode.Subsystems.Drivetrain;
 import org.firstinspires.ftc.teamcode.Subsystems.Intake;
+import org.firstinspires.ftc.teamcode.Subsystems.WobbleMech;
 import org.firstinspires.ftc.teamcode.Util.Constants;
 
 import java.util.concurrent.TimeUnit;
@@ -29,7 +30,7 @@ import java.util.concurrent.TimeUnit;
         Right Stick Y:
         Right Stick Button:
 
-        Left Bumper:
+        Left Bumper: Claw Toggle
         Left Trigger:
         Right Bumper: Single-Fire
         Right Trigger: Drive Speed Modifier
@@ -46,39 +47,38 @@ public class QualsTeleOp extends QualsSuperclass {
 
         initialize();
 
-        telemetry.setAutoClear(true);
-
         waitForStart();
 
         while (opModeIsActive()) {
 
-            // Telemetry
-            telemetry.addData("Heading (Deg)", drivetrain.getHeading(false));
-            telemetry.addLine();
-
-            telemetry.addLine("Wobble Mech:");
-            telemetry.addData("Arm Position", wobbleMech.armPosition);
-            telemetry.addData("Arm RunMode", wobbleMech.arm.getMode());
-            telemetry.addData("Claw Position", wobbleMech.clawPosition);
-            telemetry.addLine();
-
-            /*
-            telemetry.addData("L-Encoder", drivetrain.getLeftTicks());
-            telemetry.addData("R-Encoder", drivetrain.getRightTicks());
-            telemetry.addData("H-Encoder", drivetrain.getHorzTicks());
-            telemetry.addLine();
-
-            telemetry.addData("X Pos", drivetrain.x);
-            telemetry.addData("Y Pos", drivetrain.y);
-            telemetry.addData("OdoAngle", drivetrain.odoAngle);
-            telemetry.addLine();
-             */
-
-            telemetry.update();
-
+            displayTeleOpTelemetry();
             drive();
-
             handleToggles();
+
+            // Wobble Mech =========================================================================
+
+            if (gamepad1.y && constants.y == 0) {
+                constants.y = 1;
+            } else if (!gamepad1.y && constants.y == 1) { // Aim wobble mech
+                aim();
+                constants.y = 2;
+            } else if (gamepad1.y && constants.y == 2) {
+                constants.y = 3;
+            } else if (!gamepad1.y && constants.y == 3) { // Collect wobble goal
+                collect();
+                constants.y = 4;
+            } else if (gamepad1.y && constants.y == 4) {
+                constants.y = 5;
+            } else if (gamepad1.y && constants.y == 5) { // Drop wobble goal
+                drop();
+                constants.y = 0;
+            } else if (gamepad1.x && constants.x == 0) {
+                constants.x = 1;
+            } else if (!gamepad1.x && constants.x == 1) { // Reset wobble mech
+                resetWobbleMech();
+                constants.y = 0;
+                constants.x = 0;
+            }
         }
     }
 
@@ -88,7 +88,7 @@ public class QualsTeleOp extends QualsSuperclass {
         if (!gamepadRateLimit.hasExpired())
             return;
 
-        // Intake ----------------------------------------------------------------------------------
+        // Intake ==================================================================================
 
         if (gamepad1.a) {
             if (intake.status == Intake.Status.IN)
@@ -106,7 +106,17 @@ public class QualsTeleOp extends QualsSuperclass {
             gamepadRateLimit.reset();
         }
 
-        // Drive -----------------------------------------------------------------------------------
+        // Wobble Mech =============================================================================
+
+        if (gamepad1.left_bumper) {
+            if (wobbleMech.getClawPosition() == WobbleMech.ClawPosition.CLOSE)
+                wobbleMech.clawOpen();
+            else
+                wobbleMech.clawClose();
+            gamepadRateLimit.reset();
+        }
+
+        // Drive ===================================================================================
 
         if (gamepad1.back) {
             if (drivetrain.driveMode == Drivetrain.DriveMode.FIELD_CENTRIC) {

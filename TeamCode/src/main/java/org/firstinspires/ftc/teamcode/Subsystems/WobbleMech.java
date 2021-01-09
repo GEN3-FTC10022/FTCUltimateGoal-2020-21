@@ -17,23 +17,29 @@ public class WobbleMech {
     // Constants
     private final double WOBBLE_TICKS_PER_REV = motorTicksPerRev[2];
     private final double WOBBLE_TICKS_PER_DEGREE = WOBBLE_TICKS_PER_REV/360;
+    public int initK;
 
     // Arm Angle Positions
     private final double[] wobbleAngles =
-            {0, 135, 60}; // temp
-    public ArmPosition armPosition;
+            {0, 60, 135}; // temp
+    private ArmPosition armPosition;
 
     // Claw Positions
     private final double open = 0.0; // temp
-    private final double close = 0.5325; // temp
-    public String clawPosition;
+    private final double close = 0.5225; // temp
+    private ClawPosition clawPosition;
 
     public WobbleMech() { }
 
     public enum ArmPosition {
         REST,
-        DROP,
-        GROUND;
+        HIGH,
+        LOW;
+    }
+
+    public enum ClawPosition {
+        OPEN,
+        CLOSE;
     }
 
     public void initialize() {
@@ -41,22 +47,36 @@ public class WobbleMech {
         // Arm
         arm.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         arm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        setArmPosition(0, 0.4);
+        setArmPosition(ArmPosition.REST, 0.2);
         arm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
         // Claw
-        lClaw.setDirection(Servo.Direction.REVERSE);
+        rClaw.setDirection(Servo.Direction.REVERSE);
         clawOpen();
+
+        // Initialization Constat
+        initK = 0;
     }
 
-    public void setArmPosition(int position, double power) {
-        arm.setTargetPosition((int)Math.round(wobbleAngles[position] * WOBBLE_TICKS_PER_DEGREE));
+    public void setArmPosition(ArmPosition armPosition, double power) {
+        int index;
+        switch (armPosition) {
+            case HIGH:
+                index = 1;
+                break;
+            case LOW:
+                index = 2;
+                break;
+            default: // REST
+                index = 0;
+        }
+        arm.setTargetPosition((int)Math.round(wobbleAngles[index] * WOBBLE_TICKS_PER_DEGREE));
         setArmPower(power);
         this.armPosition = armPosition;
     }
 
-    public int getArmPosition() {
-        return arm.getCurrentPosition();
+    public ArmPosition getArmPosition() {
+        return armPosition;
     }
 
     public void setArmPower(double power) {
@@ -66,12 +86,16 @@ public class WobbleMech {
     public void clawOpen() {
         lClaw.setPosition(open);
         rClaw.setPosition(open);
-        clawPosition = "Open";
+        clawPosition = ClawPosition.OPEN;
     }
 
     public void clawClose() {
         lClaw.setPosition(close);
         rClaw.setPosition(close);
-        clawPosition = "Close";
+        clawPosition = ClawPosition.CLOSE;
+    }
+
+    public ClawPosition getClawPosition() {
+        return clawPosition;
     }
 }
