@@ -51,8 +51,8 @@ public abstract class TestingSuperclass extends LinearOpMode {
     // Constants
     public Constants constants = new Constants();
 
-    // Intake
-    public Intake intake = new Intake();
+    // Shooter
+    public Shooter shooter = new Shooter();
 
     // Controller
     public Deadline gamepadRateLimit = new Deadline(Constants.GAMEPAD_LOCKOUT, TimeUnit.MILLISECONDS);
@@ -62,18 +62,27 @@ public abstract class TestingSuperclass extends LinearOpMode {
     // Robot Initialization
     public void initialize() {
 
-        intake.topRoller = (DcMotorEx)hardwareMap.dcMotor.get("topRoller");
-        intake.bottomRoller = (DcMotorEx)hardwareMap.dcMotor.get("bottomRoller");
-        intake.initialize();
-        telemetry.addLine("Intake initialized");
+        // Shooter =================================================================================
+        shooter.launcher = (DcMotorEx)hardwareMap.dcMotor.get("launcher");
+        shooter.trigger = hardwareMap.servo.get("trigger");
+        shooter.initialize();
+        telemetry.addLine("Shooter initialized");
         telemetry.update();
         sleep(500);
     }
 
     public void displayTeleOpTelemetry() {
 
-        telemetry.addLine("=== INTAKE ===");
-        telemetry.addData("Status", intake.status);
+        telemetry.addLine("=== SHOOTER ===");
+        telemetry.addData("Velocity (ticks/s)", shooter.getVelocity());
+        telemetry.addData("Position", shooter.launcher.getCurrentPosition());
+        // telemetry.addData("Target Velocity", shooter.getTargetVelocity());
+        // telemetry.addData("Trigger", shooter.getTriggerPosition());
+        // telemetry.addData("Percent Velocity", shooter.percentVelocity);
+        // telemetry.addData("Max ticks/s", shooter.SHOOTER_MAX_TICKS_PER_SECOND);
+        telemetry.addData("RunMode", shooter.launcher.getMode());
+        telemetry.addData("Encoder PIDF", shooter.launcher.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER));
+        telemetry.addData("Position PIDF", shooter.launcher.getPIDFCoefficients(DcMotor.RunMode.RUN_TO_POSITION));
         telemetry.addLine();
 
         telemetry.update();

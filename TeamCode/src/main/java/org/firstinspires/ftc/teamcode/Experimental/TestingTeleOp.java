@@ -32,21 +32,23 @@ public class TestingTeleOp extends TestingSuperclass {
         if (!gamepadRateLimit.hasExpired())
             return;
 
-        // Intake ==================================================================================
+        // Shooter =================================================================================
 
-        if (gamepad1.a) {
-            if (intake.status == Intake.Status.IN)
-                intake.off();
-            else
-                intake.in();
-            gamepadRateLimit.reset();
+        if (gamepad1.dpad_up)
+            shooter.increasePower();
+        if (gamepad1.dpad_down)
+            shooter.decreasePower();
+
+        if (gamepad1.start) {
+            // shooter.launcher.setVelocity(28);
+            // shooter.launcher.setPower(0.3);
+            shooter.launcher.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         }
 
-        if (gamepad1.b) {
-            if (intake.status == Intake.Status.OUT)
-                intake.off();
-            else
-                intake.out();
+        if (gamepad1.right_bumper) {
+            shooter.pushTrigger();
+            sleep(375);
+            shooter.retractTrigger();
             gamepadRateLimit.reset();
         }
     }

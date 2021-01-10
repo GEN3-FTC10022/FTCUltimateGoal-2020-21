@@ -193,13 +193,17 @@ public abstract class QualsSuperclass extends LinearOpMode {
         telemetry.addData("Heading (Deg)", drivetrain.getHeading(false));
         telemetry.addLine();
 
+        telemetry.addLine("=== SHOOTER ===");
+        telemetry.addData("Velocity", shooter.getVelocity());
+        telemetry.addLine();
+
         telemetry.addLine("=== WOBBLE MECH ===");
         telemetry.addData("Arm Position", wobbleMech.getArmPosition());
         telemetry.addData("Claw Position", wobbleMech.getClawPosition());
         telemetry.addLine();
 
         telemetry.addLine("=== INTAKE ===");
-        telemetry.addData("Status", intake.status);
+        telemetry.addData("Rollers", intake.status);
         telemetry.addLine();
 
         telemetry.update();

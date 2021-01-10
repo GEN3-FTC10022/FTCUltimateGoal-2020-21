@@ -6,6 +6,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import org.firstinspires.ftc.robotcore.internal.system.Deadline;
 import org.firstinspires.ftc.teamcode.Subsystems.Drivetrain;
 import org.firstinspires.ftc.teamcode.Subsystems.Intake;
+import org.firstinspires.ftc.teamcode.Subsystems.Shooter;
 import org.firstinspires.ftc.teamcode.Subsystems.WobbleMech;
 import org.firstinspires.ftc.teamcode.Util.Constants;
 
@@ -124,6 +125,19 @@ public class QualsTeleOp extends QualsSuperclass {
             } else {
                 drivetrain.setMode(Drivetrain.DriveMode.FIELD_CENTRIC);
             }
+            gamepadRateLimit.reset();
+        }
+
+        // Shooter =================================================================================
+
+        if (gamepad1.dpad_up)
+            shooter.increasePower();
+        if (gamepad1.dpad_down)
+            shooter.decreasePower();
+
+        if (gamepad1.right_bumper) {
+            shooter.pushTrigger();
+            shooter.retractTrigger();
             gamepadRateLimit.reset();
         }
     }
