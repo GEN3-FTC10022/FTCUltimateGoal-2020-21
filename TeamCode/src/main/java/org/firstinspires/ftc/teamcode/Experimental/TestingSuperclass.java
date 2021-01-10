@@ -26,6 +26,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackableDefau
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
 import org.firstinspires.ftc.robotcore.internal.system.Deadline;
 import org.firstinspires.ftc.teamcode.Subsystems.Drivetrain;
+import org.firstinspires.ftc.teamcode.Subsystems.Intake;
 import org.firstinspires.ftc.teamcode.Subsystems.Shooter;
 import org.firstinspires.ftc.teamcode.Subsystems.Vision;
 import org.firstinspires.ftc.teamcode.Subsystems.WobbleMech;
@@ -50,8 +51,8 @@ public abstract class TestingSuperclass extends LinearOpMode {
     // Constants
     public Constants constants = new Constants();
 
-    // Vision
-    public WobbleMech wobbleMech = new WobbleMech();
+    // Intake
+    public Intake intake = new Intake();
 
     // Controller
     public Deadline gamepadRateLimit = new Deadline(Constants.GAMEPAD_LOCKOUT, TimeUnit.MILLISECONDS);
@@ -61,86 +62,20 @@ public abstract class TestingSuperclass extends LinearOpMode {
     // Robot Initialization
     public void initialize() {
 
-        wobbleMech.arm = (DcMotorEx)hardwareMap.dcMotor.get("arm");
-        wobbleMech.lClaw = hardwareMap.servo.get("lClaw");
-        wobbleMech.rClaw = hardwareMap.servo.get("rClaw");
-        wobbleMech.initialize();
-        telemetry.addLine("Wobble Mech initialized");
-        telemetry.addLine();
-
-        // telemetry.addLine("Load wobble goal and press 'A' or press 'B' to cancel load");
-        // telemetry.addLine();
+        intake.topRoller = (DcMotorEx)hardwareMap.dcMotor.get("topRoller");
+        intake.bottomRoller = (DcMotorEx)hardwareMap.dcMotor.get("bottomRoller");
+        intake.initialize();
+        telemetry.addLine("Intake initialized");
         telemetry.update();
         sleep(500);
-
-        /*
-        while (wobbleMech.initK == 0) {
-
-            if (gamepad1.a) {
-                // Set wobble goal to pre-loaded position
-                wobbleMech.clawClose();
-                sleep(2000);
-                wobbleMech.setArmPosition(WobbleMech.ArmPosition.REST, 0.2);
-
-                telemetry.addLine("Wobble goal loaded");
-                telemetry.update();
-
-                wobbleMech.initK = 1;
-                sleep(500);
-            }
-
-            // Cancel wobble goal pre-load
-            if (gamepad1.b) {
-                // Reset wobble mech
-                resetWobbleMech();
-
-                telemetry.addLine("Wobble goal not loaded");
-                telemetry.update();
-
-                wobbleMech.initK = 1;
-                sleep(500);
-            }
-
-            // Break out of loop if initialization is stopped to prevent forced restart
-            if (isStopRequested()) {
-                break;
-            }
-        }
-         */
     }
 
-    // Wobble Mech Methods =========================================================================
+    public void displayTeleOpTelemetry() {
 
-    public void aim() {
-        wobbleMech.clawOpen();
-        sleep(750);
-        wobbleMech.setArmPosition(WobbleMech.ArmPosition.LOW, 0.3);
-    }
+        telemetry.addLine("=== INTAKE ===");
+        telemetry.addData("Status", intake.status);
+        telemetry.addLine();
 
-    public void collect() {
-        wobbleMech.clawClose();
-        sleep(750);
-        wobbleMech.setArmPosition(WobbleMech.ArmPosition.REST, 0.2);
-    }
-
-    public void release() {
-        wobbleMech.setArmPosition(WobbleMech.ArmPosition.LOW, 0.2);
-        sleep(750);
-        wobbleMech.clawOpen();
-        sleep(750);
-        resetWobbleMech();
-    }
-
-    public void drop() {
-        wobbleMech.setArmPosition(WobbleMech.ArmPosition.HIGH, 0.2);
-        sleep(750);
-        wobbleMech.clawOpen();
-        sleep(750);
-        resetWobbleMech();
-    }
-
-    public void resetWobbleMech() {
-        wobbleMech.setArmPosition(WobbleMech.ArmPosition.REST, 0.3);
-        wobbleMech.clawClose();
+        telemetry.update();
     }
 }

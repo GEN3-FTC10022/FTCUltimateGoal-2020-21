@@ -189,12 +189,17 @@ public abstract class QualsSuperclass extends LinearOpMode {
 
     public void displayTeleOpTelemetry() {
         // Telemetry
+        telemetry.addLine("=== GENERAL ===");
         telemetry.addData("Heading (Deg)", drivetrain.getHeading(false));
         telemetry.addLine();
 
-        telemetry.addLine("Wobble Mech:");
+        telemetry.addLine("=== WOBBLE MECH ===");
         telemetry.addData("Arm Position", wobbleMech.getArmPosition());
         telemetry.addData("Claw Position", wobbleMech.getClawPosition());
+        telemetry.addLine();
+
+        telemetry.addLine("=== INTAKE ===");
+        telemetry.addData("Status", intake.status);
         telemetry.addLine();
 
         telemetry.update();

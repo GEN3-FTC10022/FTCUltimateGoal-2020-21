@@ -16,6 +16,7 @@ public class Intake {
 
     // Constants
     public Status status;
+    private final double power = 1;
 
     public Intake() { }
 
@@ -36,14 +37,14 @@ public class Intake {
     }
 
     public void in() {
-        topRoller.setPower(1);
-        bottomRoller.setPower(1);
+        topRoller.setPower(power);
+        bottomRoller.setPower(power);
         status = Status.IN;
     }
 
     public void out() {
-        topRoller.setPower(-1);
-        bottomRoller.setPower(-1);
+        topRoller.setPower(-power);
+        bottomRoller.setPower(-power);
         status = Status.OUT;
     }
 
