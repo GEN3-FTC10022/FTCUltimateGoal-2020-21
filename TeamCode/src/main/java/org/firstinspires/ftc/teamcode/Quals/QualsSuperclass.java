@@ -97,11 +97,6 @@ public abstract class QualsSuperclass extends LinearOpMode {
         drivetrain.frontRight = (DcMotorEx)hardwareMap.dcMotor.get("frontRight");
         drivetrain.backLeft = (DcMotorEx)hardwareMap.dcMotor.get("backLeft");
         drivetrain.backRight = (DcMotorEx)hardwareMap.dcMotor.get("backRight");
-        /*
-        drivetrain.leftEncoder = hardwareMap.dcMotor.get("leftEncoder");
-        drivetrain.rightEncoder = hardwareMap.dcMotor.get("rightEncoder");
-        drivetrain.horzEncoder = hardwareMap.dcMotor.get("horzEncoder");
-         */
         drivetrain.initialize();
         initCurrent++;
         telemetry.addLine("Drivetrain initialized " + "(" + initCurrent + "/" + initTotal + ")");
@@ -142,7 +137,7 @@ public abstract class QualsSuperclass extends LinearOpMode {
         sleep(500);
 
         telemetry.addLine();
-        telemetry.addLine("Load wobble goal and press 'Start'...");
+        telemetry.addLine("Load wobble goal and press 'A', or press 'B' to cancel...");
         telemetry.update();
 
         while (wobbleMech.initK == 0) {
@@ -189,12 +184,15 @@ public abstract class QualsSuperclass extends LinearOpMode {
 
     public void displayTeleOpTelemetry() {
         // Telemetry
-        telemetry.addLine("=== GENERAL ===");
+        telemetry.addLine("=== DRIVETRAIN ===");
         telemetry.addData("Heading (Deg)", drivetrain.getHeading(false));
+        telemetry.addData("Drive Mode", drivetrain.driveMode);
         telemetry.addLine();
 
         telemetry.addLine("=== SHOOTER ===");
-        telemetry.addData("Velocity", shooter.getVelocity());
+        telemetry.addData("Velocity (ticks/s)", shooter.getVelocity());
+        telemetry.addData("Power", shooter.launcherPower);
+        telemetry.addData("Rings Loaded", shooter.ringsLoaded);
         telemetry.addLine();
 
         telemetry.addLine("=== WOBBLE MECH ===");
@@ -216,7 +214,7 @@ public abstract class QualsSuperclass extends LinearOpMode {
         // FIELD-CENTRIC DRIVE -----------------------------------------------------------------
 
         vertical = -gamepad1.left_stick_y;
-         horizontal= gamepad1.left_stick_x * drivetrain.DRIVE_STRAFE_CORRECTION; // Correction to counteract imperfect strafing
+        horizontal= gamepad1.left_stick_x * drivetrain.DRIVE_STRAFE_CORRECTION; // Correction to counteract imperfect strafing
         rotation = gamepad1.right_stick_x;
 
         // Joystick deadzones
@@ -227,8 +225,23 @@ public abstract class QualsSuperclass extends LinearOpMode {
         if (Math.abs(rotation) < 0.05)
             rotation = 0;
 
-        if (drivetrain.driveMode == Drivetrain.DriveMode.FIELD_CENTRIC)
-            drivetrain.applyFieldCentricConversion(vertical,horizontal,rotation);
+        if (drivetrain.driveMode == Drivetrain.DriveMode.FIELD_CENTRIC) {
+
+            // Math
+            if (drivetrain.getHeading(true) < 0) {       // If theta is measured clockwise from zero reference
+
+                drivetrain.temp = vertical * Math.cos(drivetrain.getHeading(true)) + horizontal * Math.sin(-drivetrain.getHeading(true));
+                horizontal= -vertical * Math.sin(-drivetrain.getHeading(true)) + horizontal * Math.cos(drivetrain.getHeading(true));
+                vertical = drivetrain.temp;
+            }
+
+            if (drivetrain.getHeading(true) >= 0) {    // If theta is measured counterclockwise from zero reference
+
+                drivetrain.temp = vertical * Math.cos(drivetrain.getHeading(true)) - horizontal * Math.sin(drivetrain.getHeading(true));
+                horizontal= vertical * Math.sin(drivetrain.getHeading(true)) + horizontal * Math.cos(drivetrain.getHeading(true));
+                vertical = drivetrain.temp;
+            }
+        }
 
         // Assign calculated values to the power variables
         drivetrain.flpower = vertical + horizontal + rotation;

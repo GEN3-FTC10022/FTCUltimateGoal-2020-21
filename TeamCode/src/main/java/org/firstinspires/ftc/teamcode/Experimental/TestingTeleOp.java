@@ -22,6 +22,20 @@ public class TestingTeleOp extends TestingSuperclass {
 
             handleToggles();
 
+            shooter.runShooter();
+
+            if (gamepad1.dpad_up && constants.up == 0)
+                constants.up++;
+            else if (!gamepad1.dpad_up && constants.up == 1) {
+                shooter.increasePower();
+                constants.up--;
+            } else if (gamepad1.dpad_down && constants.down == 0)
+                constants.down++;
+            else if (!gamepad1.dpad_down && constants.down == 1) {
+                shooter.decreasePower();
+                constants.down--;
+            }
+
             displayTeleOpTelemetry();
         }
     }
@@ -34,21 +48,31 @@ public class TestingTeleOp extends TestingSuperclass {
 
         // Shooter =================================================================================
 
-        if (gamepad1.dpad_up)
-            shooter.increasePower();
-        if (gamepad1.dpad_down)
-            shooter.decreasePower();
-
-        if (gamepad1.start) {
-            // shooter.launcher.setVelocity(28);
-            // shooter.launcher.setPower(0.3);
-            shooter.launcher.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        }
-
         if (gamepad1.right_bumper) {
             shooter.pushTrigger();
             sleep(375);
             shooter.retractTrigger();
+            shooter.ringsLoaded--;
+            if (shooter.ringsLoaded == 0)
+                shooter.ringsLoaded = 3;
+            gamepadRateLimit.reset();
+        }
+
+        // Intake ==================================================================================
+
+        if (gamepad1.a) {
+            if (intake.status == Intake.Status.IN)
+                intake.off();
+            else
+                intake.in();
+            gamepadRateLimit.reset();
+        }
+
+        if (gamepad1.b) {
+            if (intake.status == Intake.Status.OUT)
+                intake.off();
+            else
+                intake.out();
             gamepadRateLimit.reset();
         }
     }

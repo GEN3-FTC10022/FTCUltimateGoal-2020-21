@@ -54,6 +54,9 @@ public abstract class TestingSuperclass extends LinearOpMode {
     // Shooter
     public Shooter shooter = new Shooter();
 
+    // Intake
+    public Intake intake = new Intake();
+
     // Controller
     public Deadline gamepadRateLimit = new Deadline(Constants.GAMEPAD_LOCKOUT, TimeUnit.MILLISECONDS);
 
@@ -69,20 +72,31 @@ public abstract class TestingSuperclass extends LinearOpMode {
         telemetry.addLine("Shooter initialized");
         telemetry.update();
         sleep(500);
+
+        // Intake ==================================================================================
+        intake.topRoller = (DcMotorEx)hardwareMap.dcMotor.get("topRoller");
+        intake.bottomRoller = (DcMotorEx)hardwareMap.dcMotor.get("bottomRoller");
+        intake.initialize();
+        telemetry.addLine("Intake initialized");
+        telemetry.update();
+        sleep(500);
     }
 
     public void displayTeleOpTelemetry() {
 
         telemetry.addLine("=== SHOOTER ===");
+        // telemetry.addData("Target Velocity (ticks/s)", shooter.targetVelocity);
         telemetry.addData("Velocity (ticks/s)", shooter.getVelocity());
-        telemetry.addData("Position", shooter.launcher.getCurrentPosition());
+        telemetry.addData("Power", shooter.launcherPower);
+        telemetry.addData("Rings Loaded", shooter.ringsLoaded);
+        // telemetry.addData("Position", shooter.launcher.getCurrentPosition());
         // telemetry.addData("Target Velocity", shooter.getTargetVelocity());
         // telemetry.addData("Trigger", shooter.getTriggerPosition());
         // telemetry.addData("Percent Velocity", shooter.percentVelocity);
         // telemetry.addData("Max ticks/s", shooter.SHOOTER_MAX_TICKS_PER_SECOND);
-        telemetry.addData("RunMode", shooter.launcher.getMode());
-        telemetry.addData("Encoder PIDF", shooter.launcher.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER));
-        telemetry.addData("Position PIDF", shooter.launcher.getPIDFCoefficients(DcMotor.RunMode.RUN_TO_POSITION));
+        // telemetry.addData("RunMode", shooter.launcher.getMode());
+        // telemetry.addData("Encoder PIDF", shooter.launcher.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER));
+        // telemetry.addData("Position PIDF", shooter.launcher.getPIDFCoefficients(DcMotor.RunMode.RUN_TO_POSITION));
         telemetry.addLine();
 
         telemetry.update();

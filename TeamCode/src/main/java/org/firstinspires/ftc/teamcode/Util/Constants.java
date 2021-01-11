@@ -17,6 +17,6 @@ public class Constants {
             YELLOWJACKET_5202_TICKS_PER_REV};
 
     // Controller Constants
-    public int x = 0, y = 0, lBumper = 0;
+    public int x = 0, y = 0, lBumper = 0, up = 0, down = 0;
     public static final int GAMEPAD_LOCKOUT = 500;
 }

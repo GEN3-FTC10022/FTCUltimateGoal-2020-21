@@ -56,6 +56,22 @@ public class QualsTeleOp extends QualsSuperclass {
             drive();
             handleToggles();
 
+            // Shooter =============================================================================
+
+            shooter.runShooter();
+
+            if (gamepad1.dpad_up && constants.up == 0)
+                constants.up++;
+            else if (!gamepad1.dpad_up && constants.up == 1) {
+                shooter.increasePower();
+                constants.up--;
+            } else if (gamepad1.dpad_down && constants.down == 0)
+                constants.down++;
+            else if (!gamepad1.dpad_down && constants.down == 1) {
+                shooter.decreasePower();
+                constants.down--;
+            }
+
             // Wobble Mech =========================================================================
 
             if (gamepad1.y && constants.y == 0) {
@@ -130,14 +146,13 @@ public class QualsTeleOp extends QualsSuperclass {
 
         // Shooter =================================================================================
 
-        if (gamepad1.dpad_up)
-            shooter.increasePower();
-        if (gamepad1.dpad_down)
-            shooter.decreasePower();
-
         if (gamepad1.right_bumper) {
             shooter.pushTrigger();
+            sleep(375);
             shooter.retractTrigger();
+            shooter.ringsLoaded--;
+            if (shooter.ringsLoaded == 0)
+                shooter.ringsLoaded = 3;
             gamepadRateLimit.reset();
         }
     }
