@@ -11,7 +11,7 @@ public class QualsAuto extends QualsSuperclass {
     @Override
     public void runOpMode() {
 
-        initialize();
+        initialize(true);
 
         waitForStart();
 

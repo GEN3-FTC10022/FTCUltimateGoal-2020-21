@@ -49,7 +49,7 @@ public abstract class QualsSuperclass extends LinearOpMode {
     // Constants
     public Constants constants = new Constants();
     public int initCurrent = 0;
-    public final int initTotal = 5;
+    public int initTotal;
 
     // Drivetrain
     public Drivetrain drivetrain = new Drivetrain();
@@ -75,7 +75,7 @@ public abstract class QualsSuperclass extends LinearOpMode {
 
     // General Robot Methods =======================================================================
 
-    public void initialize() {
+    public void initialize(boolean isAuto) {
 
         // Telemetry ===============================================================================
         telemetry.setAutoClear(false);
@@ -83,13 +83,10 @@ public abstract class QualsSuperclass extends LinearOpMode {
         telemetry.update();
         sleep(500);
 
-        // Vision ==================================================================================
-        vision.webcamName = hardwareMap.get(WebcamName.class, "Webcam");
-        vision.initialize();
-        initCurrent++;
-        telemetry.addLine("Vision initialized " + "(" + initCurrent + "/" + initTotal + ")");
-        telemetry.update();
-        sleep(500);
+        if (isAuto)
+            initTotal = 5;
+        else
+            initTotal = 4;
 
         // Drivetrain ==============================================================================
         drivetrain.imu = hardwareMap.get(BNO055IMU.class, "imu");
@@ -131,47 +128,61 @@ public abstract class QualsSuperclass extends LinearOpMode {
         telemetry.update();
         sleep(500);
 
+        if (isAuto) {
+
+            // Vision ==============================================================================
+            vision.webcamName = hardwareMap.get(WebcamName.class, "Webcam");
+            vision.initialize();
+            initCurrent++;
+            telemetry.addLine("Vision initialized " + "(" + initCurrent + "/" + initTotal + ")");
+            telemetry.update();
+            sleep(500);
+
+            telemetry.addLine();
+            telemetry.addLine("Load wobble goal and press 'A', or press 'B' to cancel...");
+            telemetry.update();
+
+            while (wobbleMech.initK == 0) {
+
+                if (gamepad1.a) {
+                    // Set wobble goal to pre-loaded position
+                    wobbleMech.clawClose();
+                    sleep(2000);
+                    wobbleMech.setArmPosition(WobbleMech.ArmPosition.REST, 0.2);
+
+                    telemetry.addLine("Wobble goal loaded");
+                    telemetry.update();
+
+                    wobbleMech.initK = 1;
+                    sleep(500);
+                }
+
+                // Cancel wobble goal pre-load
+                if (gamepad1.b) {
+                    // Reset wobble mech
+                    resetWobbleMech();
+
+                    telemetry.addLine("Wobble goal not loaded");
+                    telemetry.update();
+
+                    wobbleMech.initK = 1;
+                    sleep(500);
+                }
+
+                // Break out of loop if initialization is stopped to prevent forced restart
+                if (isStopRequested()) {
+                    break;
+                }
+            }
+
+        } else {
+            resetWobbleMech();
+        }
+
         // Telemetry ===============================================================================
         telemetry.addLine("Initialization Finished " + "(" + initCurrent + "/" + initTotal + ")");
         telemetry.update();
         sleep(500);
-
-        telemetry.addLine();
-        telemetry.addLine("Load wobble goal and press 'A', or press 'B' to cancel...");
-        telemetry.update();
-
-        while (wobbleMech.initK == 0) {
-
-            if (gamepad1.a) {
-                // Set wobble goal to pre-loaded position
-                wobbleMech.clawClose();
-                sleep(2000);
-                wobbleMech.setArmPosition(WobbleMech.ArmPosition.REST, 0.2);
-
-                telemetry.addLine("Wobble goal loaded");
-                telemetry.update();
-
-                wobbleMech.initK = 1;
-                sleep(500);
-            }
-
-            // Cancel wobble goal pre-load
-            if (gamepad1.b) {
-                // Reset wobble mech
-                resetWobbleMech();
-
-                telemetry.addLine("Wobble goal not loaded");
-                telemetry.update();
-
-                wobbleMech.initK = 1;
-                sleep(500);
-            }
-
-            // Break out of loop if initialization is stopped to prevent forced restart
-            if (isStopRequested()) {
-                break;
-            }
-        }
 
         // Display robot rotation
         telemetry.setAutoClear(true);
@@ -297,8 +308,22 @@ public abstract class QualsSuperclass extends LinearOpMode {
         if (Math.abs(rotation) < 0.05)
             rotation = 0;
 
-        if (drivetrain.driveMode == Drivetrain.DriveMode.FIELD_CENTRIC)
-            drivetrain.applyFieldCentricConversion(vertical,horizontal,rotation);
+        if (drivetrain.driveMode == Drivetrain.DriveMode.FIELD_CENTRIC) {
+            // Math
+            if (drivetrain.getHeading(true) < 0) {       // If theta is measured clockwise from zero reference
+
+                drivetrain.temp = vertical * Math.cos(drivetrain.getHeading(true)) + horizontal * Math.sin(-drivetrain.getHeading(true));
+                horizontal= -vertical * Math.sin(-drivetrain.getHeading(true)) + horizontal * Math.cos(drivetrain.getHeading(true));
+                vertical = drivetrain.temp;
+            }
+
+            if (drivetrain.getHeading(true) >= 0) {    // If theta is measured counterclockwise from zero reference
+
+                drivetrain.temp = vertical * Math.cos(drivetrain.getHeading(true)) - horizontal * Math.sin(drivetrain.getHeading(true));
+                horizontal= vertical * Math.sin(drivetrain.getHeading(true)) + horizontal * Math.cos(drivetrain.getHeading(true));
+                vertical = drivetrain.temp;
+            }
+        }
 
         // Assign calculated values to the power variables
         drivetrain.flpower = vertical + horizontal + rotation;

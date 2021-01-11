@@ -75,10 +75,6 @@ public class Drivetrain {
         // resetTicks();
     }
 
-    public void applyFieldCentricConversion(double vertical, double horizontal, double rotation) {
-
-    }
-
     public void updatePosition(Telemetry telemetry) {
 
         leftChange = getLeftTicks() / DRIVE_TICKS_PER_INCH;

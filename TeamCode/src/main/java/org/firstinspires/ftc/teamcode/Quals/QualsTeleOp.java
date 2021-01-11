@@ -46,7 +46,7 @@ public class QualsTeleOp extends QualsSuperclass {
     @Override
     public void runOpMode() {
 
-        initialize();
+        initialize(false);
 
         waitForStart();
 
