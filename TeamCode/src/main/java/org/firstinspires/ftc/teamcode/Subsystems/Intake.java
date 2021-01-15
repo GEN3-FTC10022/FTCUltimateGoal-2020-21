@@ -16,7 +16,7 @@ public class Intake {
 
     // Constants
     public Status status;
-    private final double power = 1;
+    private final double power = 0.7;
 
     public Intake() { }
 

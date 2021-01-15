@@ -20,18 +20,23 @@ public class Shooter {
     public TriggerPosition triggerPosition;
 
     // Servo Constants
-    private final double retract = 0.55; // temp
-    private final double push = 0.2; // temp
+    private final double retract = 0.53; // temp
+    private final double push = 0.15; // temp
 
     // Shooter Constants
     private final double SHOOTER_TICKS_PER_REV = motorTicksPerRev[3];
     private final double SHOOTER_MAX_REV_PER_MIN = 0.8 * YELLOWJACKET_5202_MAX_RPM; // Max Shooter Vel @ 80% of motor max
     public final double SHOOTER_MAX_TICKS_PER_SECOND = SHOOTER_MAX_REV_PER_MIN * (SHOOTER_TICKS_PER_REV/60.0);
 
-    public final double powerModifier = 0.025;
-    public double launcherPower;
+    public final double VELOCITY_MODIFIER = 20;
+    private double targetVelocity;
     public int ringsLoaded;
-    public double targetVelocity;
+    public final double MID_SHOT_VELOCITY = 1340;
+    public final double POWER_SHOT_VELOCITY = 1380;
+
+    // PID
+    public PIDFCoefficients launcherEncoderPIDF = new PIDFCoefficients(7.5,3,3.5,0);
+    public PIDFCoefficients launcherPositionPIDF = new PIDFCoefficients(0,0,0,0);
 
     public Shooter() { }
 
@@ -46,12 +51,13 @@ public class Shooter {
         retractTrigger();
 
         // Shooter
-        // launcher.setDirection(DcMotorSimple.Direction.REVERSE);
+        launcher.setDirection(DcMotorSimple.Direction.REVERSE);
         launcher.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        launcher.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        launcher.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        // launcher.setVelocityPIDFCoefficients(10,0,0,5);
+        launcher.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, launcherEncoderPIDF);
+        launcher.setPIDFCoefficients(DcMotor.RunMode.RUN_TO_POSITION, launcherPositionPIDF);
         ringsLoaded = 3;
-        launcherPower = 0;
-        runShooter();
     }
 
     public void pushTrigger() {
@@ -69,19 +75,28 @@ public class Shooter {
     }
 
     public double getVelocity() {
-        return -launcher.getVelocity();
+        return launcher.getVelocity();
     }
 
-    public void increasePower() {
-        launcherPower += powerModifier;
+    public void increaseVelocity() {
+        targetVelocity += VELOCITY_MODIFIER;
+        runShooter();
     }
 
-    public void decreasePower() {
-        launcherPower -= powerModifier;
+    public void decreaseVelocity() {
+        targetVelocity -= VELOCITY_MODIFIER;
+        runShooter();
+    }
+
+    public void setTargetVelocity(double velocity) {
+        targetVelocity = velocity;
+    }
+
+    public double getTargetVelocity() {
+        return targetVelocity;
     }
 
     public void runShooter() {
-        targetVelocity = 1200 + ringsLoaded * 100;
-        launcher.setPower(launcherPower);
+        launcher.setVelocity(targetVelocity);
     }
 }

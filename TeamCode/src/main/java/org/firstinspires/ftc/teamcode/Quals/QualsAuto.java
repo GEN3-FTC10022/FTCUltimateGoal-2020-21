@@ -15,9 +15,18 @@ public class QualsAuto extends QualsSuperclass {
 
         waitForStart();
 
-        vuforiaScanStack(false,false);
+        rotateToAngle(0.3,-180);
 
-        sleep(60000);
+        sleep(2000);
+
+        // rotateToAngle(0.3,45);
+
+        // sleep(2000);
+
+        telemetry.addData("Final Angle", drivetrain.getHeading(false));
+        telemetry.update();
+
+        sleep(30000);
 
         stop();
     }

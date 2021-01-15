@@ -16,6 +16,10 @@ public class TestingAuto extends TestingSuperclass {
         initialize();
 
         waitForStart();
+
+
+
+        sleep(60000);
     }
 
 }

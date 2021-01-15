@@ -44,7 +44,7 @@ public class Drivetrain {
     public final double DRIVE_TICKS_PER_REV = motorTicksPerRev[0];
     public final double DRIVE_GEAR_REDUCTION = 1;
     public final double DRIVE_TICKS_PER_INCH = (((DRIVE_TICKS_PER_REV * DRIVE_GEAR_REDUCTION) / WHEEL_CIRCUMFERENCE_INCHES));
-    public final double DRIVE_TICKS_PER_DEGREE = (double)3545.0/360.0; // temp
+    public final double DRIVE_TICKS_PER_DEGREE = (double)3600.0/360.0; // temp
     public final double DRIVE_STRAFE_CORRECTION = (double)5.0/4.25;
     public final double DRIVE_TRACK_WIDTH = 12.2047; //temp
 
@@ -73,6 +73,23 @@ public class Drivetrain {
 
         // Odometry
         // resetTicks();
+    }
+
+    public void applyFieldCentricConversion(double vertical, double horizontal, double rotation) {
+        // Math
+        if (getHeading(true) < 0) {       // If theta is measured clockwise from zero reference
+
+            temp = vertical * Math.cos(getHeading(true)) + horizontal * Math.sin(-getHeading(true));
+            horizontal= -vertical * Math.sin(-getHeading(true)) + horizontal * Math.cos(getHeading(true));
+            vertical = temp;
+        }
+
+        if (getHeading(true) >= 0) {    // If theta is measured counterclockwise from zero reference
+
+            temp = vertical * Math.cos(getHeading(true)) - horizontal * Math.sin(getHeading(true));
+            horizontal= vertical * Math.sin(getHeading(true)) + horizontal * Math.cos(getHeading(true));
+            vertical = temp;
+        }
     }
 
     public void updatePosition(Telemetry telemetry) {

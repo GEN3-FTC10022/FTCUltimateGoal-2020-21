@@ -202,8 +202,10 @@ public abstract class QualsSuperclass extends LinearOpMode {
 
         telemetry.addLine("=== SHOOTER ===");
         telemetry.addData("Velocity (ticks/s)", shooter.getVelocity());
-        telemetry.addData("Power", shooter.launcherPower);
+        telemetry.addData("Target Velocity (ticks/s)", shooter.getTargetVelocity());
         telemetry.addData("Rings Loaded", shooter.ringsLoaded);
+        telemetry.addData("PID Encoder", shooter.launcher.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER));
+        telemetry.addData("PID Position", shooter.launcher.getPIDFCoefficients(DcMotor.RunMode.RUN_TO_POSITION));
         telemetry.addLine();
 
         telemetry.addLine("=== WOBBLE MECH ===");
@@ -232,7 +234,7 @@ public abstract class QualsSuperclass extends LinearOpMode {
         if (Math.abs(vertical) < 0.05)
             vertical = 0;
         if (Math.abs(horizontal) < 0.05)
-             horizontal= 0;
+            horizontal= 0;
         if (Math.abs(rotation) < 0.05)
             rotation = 0;
 
@@ -262,7 +264,7 @@ public abstract class QualsSuperclass extends LinearOpMode {
 
         // Find the greatest motor power
         max = Math.max(Math.max(Math.abs(drivetrain.flpower), Math.abs(drivetrain.frpower)),
-                              Math.max(Math.abs(drivetrain.blpower), Math.abs(drivetrain.brpower)));
+                Math.max(Math.abs(drivetrain.blpower), Math.abs(drivetrain.brpower)));
         // Scale motor powers with the greatest motor power
         drivetrain.flpower /= max;
         drivetrain.frpower /= max;
@@ -297,14 +299,14 @@ public abstract class QualsSuperclass extends LinearOpMode {
         // FIELD-CENTRIC DRIVE -----------------------------------------------------------------
 
         vertical = -gamepad1.left_stick_y;
-         horizontal= gamepad1.left_stick_x * drivetrain.DRIVE_STRAFE_CORRECTION; // Correction to counteract imperfect strafing
+        horizontal= gamepad1.left_stick_x * drivetrain.DRIVE_STRAFE_CORRECTION; // Correction to counteract imperfect strafing
         rotation = gamepad1.right_stick_x;
 
         // Joystick deadzones
         if (Math.abs(vertical) < 0.05)
             vertical = 0;
         if (Math.abs(horizontal) < 0.05)
-             horizontal= 0;
+            horizontal= 0;
         if (Math.abs(rotation) < 0.05)
             rotation = 0;
 
@@ -504,17 +506,42 @@ public abstract class QualsSuperclass extends LinearOpMode {
 
     public void rotateToAngle(double power, double targetAngle) {
 
+        telemetry.setAutoClear(false);
         double initialAngle = drivetrain.getHeading(false);
         double deltaAngle = targetAngle - initialAngle;
         if (Math.abs(deltaAngle) > 180) {
             deltaAngle = 360 - Math.abs(deltaAngle);
         }
-        rotateRight(deltaAngle,power);
+        telemetry.addData("Initial Angle", initialAngle);
+        telemetry.addData("Target Angle", targetAngle);
+        telemetry.addData("Delta Angle", deltaAngle);
+        telemetry.update();
+
+        double target = deltaAngle * drivetrain.DRIVE_TICKS_PER_DEGREE;
+
+        if (opModeIsActive()) {
+
+            drivetrain.resetDriveEncoders();
+            drivetrain.setDriveTarget(target,
+                    -1, 1,
+                    -1, 1);
+            drivetrain.setDriveRunMode();
+
+            while (opModeIsActive() && drivetrain.driveIsBusy()) {
+                drivetrain.setDrivePower(power);
+            }
+
+            drivetrain.setDrivePower(0);
+            drivetrain.resetDriveMode();
+        }
+
+        telemetry.addLine("Rotate Finished");
+        telemetry.update();
     }
 
     // Vision Methods ==============================================================================
 
-    public void scanBitmap(boolean showPixelData) {
+    private void scanBitmap(boolean showPixelData) {
 
         int heightMid = (int)(vision.cropHeight/2.0);
         int[] yPos = {heightMid-9,heightMid-6,heightMid-3,heightMid,heightMid+3,heightMid+6,heightMid+9}; // 7 pixels top to bottom
@@ -680,5 +707,27 @@ public abstract class QualsSuperclass extends LinearOpMode {
     public void resetWobbleMech() {
         wobbleMech.setArmPosition(WobbleMech.ArmPosition.REST, 0.3);
         wobbleMech.clawClose();
+    }
+
+    // Shooter Methods =============================================================================
+
+    public void shootSingle() {
+        shooter.pushTrigger();
+        sleep(375);
+        shooter.retractTrigger();
+        shooter.ringsLoaded--;
+        if (shooter.ringsLoaded == 0)
+            shooter.ringsLoaded = 3;
+    }
+
+    public void shootAll(int sleepMS) {
+        for (int i = 0; i < 3; i++) {
+            shootSingle();
+            displayTeleOpTelemetry();
+            if (shooter.ringsLoaded > 0)
+                sleep(sleepMS);
+            else
+                break;
+        }
     }
 }

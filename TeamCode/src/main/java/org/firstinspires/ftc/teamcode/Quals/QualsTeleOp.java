@@ -22,7 +22,7 @@ import java.util.concurrent.TimeUnit;
         Up: Increase Shooter Speed
         Down: Decrease Shooter Speed
         Left:
-        Right:
+        Right: Claw Toggle
 
         Left Stick X: Left/Right Strafe
         Left Stick Y: Forward/Reverse
@@ -31,7 +31,7 @@ import java.util.concurrent.TimeUnit;
         Right Stick Y:
         Right Stick Button:
 
-        Left Bumper: Claw Toggle
+        Left Bumper: Multi-Fire
         Left Trigger:
         Right Bumper: Single-Fire
         Right Trigger: Drive Speed Modifier
@@ -50,6 +50,8 @@ public class QualsTeleOp extends QualsSuperclass {
 
         waitForStart();
 
+        shooter.setTargetVelocity(shooter.MID_SHOT_VELOCITY);
+
         while (opModeIsActive()) {
 
             displayTeleOpTelemetry();
@@ -63,12 +65,12 @@ public class QualsTeleOp extends QualsSuperclass {
             if (gamepad1.dpad_up && constants.up == 0)
                 constants.up++;
             else if (!gamepad1.dpad_up && constants.up == 1) {
-                shooter.increasePower();
+                shooter.increaseVelocity();
                 constants.up--;
             } else if (gamepad1.dpad_down && constants.down == 0)
                 constants.down++;
             else if (!gamepad1.dpad_down && constants.down == 1) {
-                shooter.decreasePower();
+                shooter.decreaseVelocity();
                 constants.down--;
             }
 
@@ -125,7 +127,7 @@ public class QualsTeleOp extends QualsSuperclass {
 
         // Wobble Mech =============================================================================
 
-        if (gamepad1.left_bumper) {
+        if (gamepad1.dpad_right) {
             if (wobbleMech.getClawPosition() == WobbleMech.ClawPosition.CLOSE)
                 wobbleMech.clawOpen();
             else
@@ -147,12 +149,12 @@ public class QualsTeleOp extends QualsSuperclass {
         // Shooter =================================================================================
 
         if (gamepad1.right_bumper) {
-            shooter.pushTrigger();
-            sleep(375);
-            shooter.retractTrigger();
-            shooter.ringsLoaded--;
-            if (shooter.ringsLoaded == 0)
-                shooter.ringsLoaded = 3;
+            shootSingle();
+            gamepadRateLimit.reset();
+        }
+
+        if (gamepad1.left_bumper) {
+            shootAll(2250);
             gamepadRateLimit.reset();
         }
     }
