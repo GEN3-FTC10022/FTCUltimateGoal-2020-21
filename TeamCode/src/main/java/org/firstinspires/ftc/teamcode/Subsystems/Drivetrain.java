@@ -77,17 +77,17 @@ public class Drivetrain {
 
     public void applyFieldCentricConversion(double vertical, double horizontal, double rotation) {
         // Math
-        if (getHeading(true) < 0) {       // If theta is measured clockwise from zero reference
+        if (getHeading(AngleUnit.RADIANS) < 0) {       // If theta is measured clockwise from zero reference
 
-            temp = vertical * Math.cos(getHeading(true)) + horizontal * Math.sin(-getHeading(true));
-            horizontal= -vertical * Math.sin(-getHeading(true)) + horizontal * Math.cos(getHeading(true));
+            temp = vertical * Math.cos(getHeading(AngleUnit.RADIANS)) + horizontal * Math.sin(-getHeading(AngleUnit.RADIANS));
+            horizontal= -vertical * Math.sin(-getHeading(AngleUnit.RADIANS)) + horizontal * Math.cos(getHeading(AngleUnit.RADIANS));
             vertical = temp;
         }
 
-        if (getHeading(true) >= 0) {    // If theta is measured counterclockwise from zero reference
+        if (getHeading(AngleUnit.RADIANS) >= 0) {    // If theta is measured counterclockwise from zero reference
 
-            temp = vertical * Math.cos(getHeading(true)) - horizontal * Math.sin(getHeading(true));
-            horizontal= vertical * Math.sin(getHeading(true)) + horizontal * Math.cos(getHeading(true));
+            temp = vertical * Math.cos(getHeading(AngleUnit.RADIANS)) - horizontal * Math.sin(getHeading(AngleUnit.RADIANS));
+            horizontal= vertical * Math.sin(getHeading(AngleUnit.RADIANS)) + horizontal * Math.cos(getHeading(AngleUnit.RADIANS));
             vertical = temp;
         }
     }
@@ -193,16 +193,13 @@ public class Drivetrain {
     }
 
     /**
-     * The REV Hub IMU measures heading in euler angles [-180,180) or [-π,π).
-     * @param inRadian If true, returns the robot heading in radians [-π,π). Else, returns the
-     *                 robot heading in degrees [-180,180).
-     * @return Robot heading
+     * The REV Hub IMU measures heading in euler angles [-180,180) or [-π,π). This method returns
+     * the robot heading.
+     * @param angleUnit The desired units for the robot heading to be expressed in.
+     * @return The angle the robot is currently facing in.
      */
-    public double getHeading(boolean inRadian) {
-        if (inRadian)
-            orientation = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.XYZ, AngleUnit.RADIANS);
-        else
-            orientation = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.XYZ, AngleUnit.DEGREES);
+    public double getHeading(AngleUnit angleUnit) {
+        orientation = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.XYZ, angleUnit);
         angle = orientation.thirdAngle; // temp
         return angle;
     }

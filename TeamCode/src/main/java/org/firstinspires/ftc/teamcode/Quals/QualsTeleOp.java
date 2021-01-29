@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.Quals;
 
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.internal.system.Deadline;
 import org.firstinspires.ftc.teamcode.Subsystems.Drivetrain;
 import org.firstinspires.ftc.teamcode.Subsystems.Intake;
@@ -75,17 +76,17 @@ public class QualsTeleOp extends QualsSuperclass {
             if (drivetrain.driveMode == Drivetrain.DriveMode.FIELD_CENTRIC) {
 
                 // Math
-                if (drivetrain.getHeading(true) < 0) {       // If theta is measured clockwise from zero reference
+                if (drivetrain.getHeading(AngleUnit.RADIANS) < 0) {       // If theta is measured clockwise from zero reference
 
-                    drivetrain.temp = vertical * Math.cos(drivetrain.getHeading(true)) + horizontal * Math.sin(-drivetrain.getHeading(true));
-                    horizontal= -vertical * Math.sin(-drivetrain.getHeading(true)) + horizontal * Math.cos(drivetrain.getHeading(true));
+                    drivetrain.temp = vertical * Math.cos(drivetrain.getHeading(AngleUnit.RADIANS)) + horizontal * Math.sin(-drivetrain.getHeading(AngleUnit.RADIANS));
+                    horizontal= -vertical * Math.sin(-drivetrain.getHeading(AngleUnit.RADIANS)) + horizontal * Math.cos(drivetrain.getHeading(AngleUnit.RADIANS));
                     vertical = drivetrain.temp;
                 }
 
-                if (drivetrain.getHeading(true) >= 0) {    // If theta is measured counterclockwise from zero reference
+                if (drivetrain.getHeading(AngleUnit.RADIANS) >= 0) {    // If theta is measured counterclockwise from zero reference
 
-                    drivetrain.temp = vertical * Math.cos(drivetrain.getHeading(true)) - horizontal * Math.sin(drivetrain.getHeading(true));
-                    horizontal= vertical * Math.sin(drivetrain.getHeading(true)) + horizontal * Math.cos(drivetrain.getHeading(true));
+                    drivetrain.temp = vertical * Math.cos(drivetrain.getHeading(AngleUnit.RADIANS)) - horizontal * Math.sin(drivetrain.getHeading(AngleUnit.RADIANS));
+                    horizontal= vertical * Math.sin(drivetrain.getHeading(AngleUnit.RADIANS)) + horizontal * Math.cos(drivetrain.getHeading(AngleUnit.RADIANS));
                     vertical = drivetrain.temp;
                 }
             }

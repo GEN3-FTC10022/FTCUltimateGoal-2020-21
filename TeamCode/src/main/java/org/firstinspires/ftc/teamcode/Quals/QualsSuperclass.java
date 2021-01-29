@@ -194,7 +194,7 @@ public abstract class QualsSuperclass extends LinearOpMode {
     public void displayTeleOpTelemetry() {
         // Telemetry
         telemetry.addLine("=== DRIVETRAIN ===");
-        telemetry.addData("Heading (Deg)", drivetrain.getHeading(false));
+        telemetry.addData("Heading (Deg)", drivetrain.getHeading(AngleUnit.DEGREES));
         telemetry.addData("Drive Mode", drivetrain.driveMode);
         telemetry.addLine();
 
@@ -239,17 +239,17 @@ public abstract class QualsSuperclass extends LinearOpMode {
         if (drivetrain.driveMode == Drivetrain.DriveMode.FIELD_CENTRIC) {
 
             // Math
-            if (drivetrain.getHeading(true) < 0) {       // If theta is measured clockwise from zero reference
+            if (drivetrain.getHeading(AngleUnit.RADIANS) < 0) {       // If theta is measured clockwise from zero reference
 
-                drivetrain.temp = vertical * Math.cos(drivetrain.getHeading(true)) + horizontal * Math.sin(-drivetrain.getHeading(true));
-                horizontal= -vertical * Math.sin(-drivetrain.getHeading(true)) + horizontal * Math.cos(drivetrain.getHeading(true));
+                drivetrain.temp = vertical * Math.cos(drivetrain.getHeading(AngleUnit.RADIANS)) + horizontal * Math.sin(-drivetrain.getHeading(AngleUnit.RADIANS));
+                horizontal= -vertical * Math.sin(-drivetrain.getHeading(AngleUnit.RADIANS)) + horizontal * Math.cos(drivetrain.getHeading(AngleUnit.RADIANS));
                 vertical = drivetrain.temp;
             }
 
-            if (drivetrain.getHeading(true) >= 0) {    // If theta is measured counterclockwise from zero reference
+            if (drivetrain.getHeading(AngleUnit.RADIANS) >= 0) {    // If theta is measured counterclockwise from zero reference
 
-                drivetrain.temp = vertical * Math.cos(drivetrain.getHeading(true)) - horizontal * Math.sin(drivetrain.getHeading(true));
-                horizontal= vertical * Math.sin(drivetrain.getHeading(true)) + horizontal * Math.cos(drivetrain.getHeading(true));
+                drivetrain.temp = vertical * Math.cos(drivetrain.getHeading(AngleUnit.RADIANS)) - horizontal * Math.sin(drivetrain.getHeading(AngleUnit.RADIANS));
+                horizontal= vertical * Math.sin(drivetrain.getHeading(AngleUnit.RADIANS)) + horizontal * Math.cos(drivetrain.getHeading(AngleUnit.RADIANS));
                 vertical = drivetrain.temp;
             }
         }
@@ -297,17 +297,17 @@ public abstract class QualsSuperclass extends LinearOpMode {
 
         if (drivetrain.driveMode == Drivetrain.DriveMode.FIELD_CENTRIC) {
             // Math
-            if (drivetrain.getHeading(true) < 0) {       // If theta is measured clockwise from zero reference
+            if (drivetrain.getHeading(AngleUnit.RADIANS) < 0) {       // If theta is measured clockwise from zero reference
 
-                drivetrain.temp = vertical * Math.cos(drivetrain.getHeading(true)) + horizontal * Math.sin(-drivetrain.getHeading(true));
-                horizontal= -vertical * Math.sin(-drivetrain.getHeading(true)) + horizontal * Math.cos(drivetrain.getHeading(true));
+                drivetrain.temp = vertical * Math.cos(drivetrain.getHeading(AngleUnit.RADIANS)) + horizontal * Math.sin(-drivetrain.getHeading(AngleUnit.RADIANS));
+                horizontal= -vertical * Math.sin(-drivetrain.getHeading(AngleUnit.RADIANS)) + horizontal * Math.cos(drivetrain.getHeading(AngleUnit.RADIANS));
                 vertical = drivetrain.temp;
             }
 
-            if (drivetrain.getHeading(true) >= 0) {    // If theta is measured counterclockwise from zero reference
+            if (drivetrain.getHeading(AngleUnit.RADIANS) >= 0) {    // If theta is measured counterclockwise from zero reference
 
-                drivetrain.temp = vertical * Math.cos(drivetrain.getHeading(true)) - horizontal * Math.sin(drivetrain.getHeading(true));
-                horizontal= vertical * Math.sin(drivetrain.getHeading(true)) + horizontal * Math.cos(drivetrain.getHeading(true));
+                drivetrain.temp = vertical * Math.cos(drivetrain.getHeading(AngleUnit.RADIANS)) - horizontal * Math.sin(drivetrain.getHeading(AngleUnit.RADIANS));
+                horizontal= vertical * Math.sin(drivetrain.getHeading(AngleUnit.RADIANS)) + horizontal * Math.cos(drivetrain.getHeading(AngleUnit.RADIANS));
                 vertical = drivetrain.temp;
             }
         }
@@ -492,7 +492,7 @@ public abstract class QualsSuperclass extends LinearOpMode {
     public void rotateToAngle(double power, double targetAngle) {
 
         telemetry.setAutoClear(false);
-        double initialAngle = drivetrain.getHeading(false);
+        double initialAngle = drivetrain.getHeading(AngleUnit.DEGREES);
         double deltaAngle = targetAngle - initialAngle;
         if (Math.abs(deltaAngle) > 180) {
             deltaAngle = 360 - Math.abs(deltaAngle);
