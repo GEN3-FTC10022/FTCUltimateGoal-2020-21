@@ -4,7 +4,7 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
 import org.firstinspires.ftc.teamcode.Quals.QualsSuperclass;
 
-@Autonomous (name = "Auto: Qual 2")
+@Autonomous (name = "Auto: Qual 3")
 
 public class QualsAuto extends QualsSuperclass {
 
@@ -15,20 +15,46 @@ public class QualsAuto extends QualsSuperclass {
 
         waitForStart();
 
-        rotateToAngle(0.3,-180);
+        vuforiaScanStack(false, false);
 
-        sleep(2000);
+        // Move to zone
+        if (vision.getStackHeight() == 0) {
+            forward(0.5, 35);
+            sleep(500);
+        } else if (vision.getStackHeight() == 1) {
+            forward(0.5, 35);
+            sleep(500);
+            rotateLeft(0.5,45);
+            sleep(500);
+            forward(0.5,5);
+            sleep(500);
+        } else {
+            forward(0.5, 50);
+            sleep(500);
+        }
 
-        // rotateToAngle(0.3,45);
+        /*
+        // Drop
+        drop();
 
-        // sleep(2000);
-
-        telemetry.addData("Final Angle", drivetrain.getHeading(false));
-        telemetry.update();
+        if (vision.getStackHeight() == 0) {
+            forward(0.5, 35);
+            sleep(500);
+        } else if (vision.getStackHeight() == 1) {
+            forward(0.5, 35);
+            sleep(500);
+            rotateLeft(0.5,45);
+            sleep(500);
+            forward(0.5,5);
+            sleep(500);
+        } else {
+            forward(0.5, 50);
+            sleep(500);
+        }
+         */
 
         sleep(30000);
 
         stop();
     }
-
 }

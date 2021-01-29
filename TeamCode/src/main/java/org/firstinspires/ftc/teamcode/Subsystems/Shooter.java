@@ -15,13 +15,13 @@ import static org.firstinspires.ftc.teamcode.Util.Constants.motorTicksPerRev;
 public class Shooter {
 
     // Shooter Objects
-    public DcMotorEx launcher;
+    public DcMotorEx launcherOne, launcherTwo;
     public Servo trigger;
     public TriggerPosition triggerPosition;
 
     // Servo Constants
-    private final double retract = 0.53; // temp
-    private final double push = 0.15; // temp
+    private final double retract = 0; // temp
+    private final double push = 0.3; // temp
 
     // Shooter Constants
     private final double SHOOTER_TICKS_PER_REV = motorTicksPerRev[3];
@@ -31,8 +31,10 @@ public class Shooter {
     public final double VELOCITY_MODIFIER = 20;
     private double targetVelocity;
     public int ringsLoaded;
-    public final double MID_SHOT_VELOCITY = 1340;
-    public final double POWER_SHOT_VELOCITY = 1380;
+    public final double LOW_SHOT_VELOCITY = 1300; // temp
+    public final double MID_SHOT_VELOCITY = 1340; // temp
+    public final double POWER_SHOT_VELOCITY = 1380; // temp
+    public final double HIGH_SHOT_VELOCITY = 1660; // tested
 
     // PID
     public PIDFCoefficients launcherEncoderPIDF = new PIDFCoefficients(7.5,3,3.5,0);
@@ -51,12 +53,20 @@ public class Shooter {
         retractTrigger();
 
         // Shooter
-        launcher.setDirection(DcMotorSimple.Direction.REVERSE);
-        launcher.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        launcher.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        // launcher.setVelocityPIDFCoefficients(10,0,0,5);
-        launcher.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, launcherEncoderPIDF);
-        launcher.setPIDFCoefficients(DcMotor.RunMode.RUN_TO_POSITION, launcherPositionPIDF);
+        launcherOne.setDirection(DcMotorSimple.Direction.REVERSE);
+        launcherTwo.setDirection(DcMotorSimple.Direction.REVERSE);
+
+        launcherOne.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        launcherTwo.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+        launcherOne.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        launcherTwo.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        launcherOne.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, launcherEncoderPIDF);
+        launcherTwo.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, launcherEncoderPIDF);
+        launcherOne.setPIDFCoefficients(DcMotor.RunMode.RUN_TO_POSITION, launcherPositionPIDF);
+        launcherTwo.setPIDFCoefficients(DcMotor.RunMode.RUN_TO_POSITION, launcherPositionPIDF);
+
         ringsLoaded = 3;
     }
 
@@ -75,7 +85,7 @@ public class Shooter {
     }
 
     public double getVelocity() {
-        return launcher.getVelocity();
+        return launcherOne.getVelocity();
     }
 
     public void increaseVelocity() {
@@ -97,6 +107,7 @@ public class Shooter {
     }
 
     public void runShooter() {
-        launcher.setVelocity(targetVelocity);
+        launcherOne.setVelocity(targetVelocity);
+        launcherTwo.setVelocity(targetVelocity);
     }
 }

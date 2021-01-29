@@ -53,8 +53,8 @@ public abstract class QualsSuperclass extends LinearOpMode {
 
     // Drivetrain
     public Drivetrain drivetrain = new Drivetrain();
-    double vertical, horizontal, rotation;
-    double max, kSlow;
+    public double vertical, horizontal, rotation;
+    public double max, kSlow;
 
     // Wobble Mech
     public WobbleMech wobbleMech = new WobbleMech();
@@ -67,9 +67,6 @@ public abstract class QualsSuperclass extends LinearOpMode {
 
     // Vision
     public Vision vision = new Vision();
-
-    // Controller
-    public Deadline gamepadRateLimit = new Deadline(Constants.GAMEPAD_LOCKOUT, TimeUnit.MILLISECONDS);
 
     // METHODS -------------------------------------------------------------------------------------
 
@@ -101,7 +98,8 @@ public abstract class QualsSuperclass extends LinearOpMode {
         sleep(500);
 
         // Shooter =================================================================================
-        shooter.launcher = (DcMotorEx)hardwareMap.dcMotor.get("launcher");
+        shooter.launcherOne = (DcMotorEx)hardwareMap.dcMotor.get("launcherOne");
+        shooter.launcherTwo = (DcMotorEx)hardwareMap.dcMotor.get("launcherTwo");
         shooter.trigger = hardwareMap.servo.get("trigger");
         shooter.initialize();
         initCurrent++;
@@ -110,8 +108,8 @@ public abstract class QualsSuperclass extends LinearOpMode {
         sleep(500);
 
         // Intake ==================================================================================
-        intake.topRoller = (DcMotorEx)hardwareMap.dcMotor.get("topRoller");
-        intake.bottomRoller = (DcMotorEx)hardwareMap.dcMotor.get("bottomRoller");
+        intake.roller = (DcMotorEx)hardwareMap.dcMotor.get("roller");
+        intake.release = hardwareMap.servo.get("release");
         intake.initialize();
         initCurrent++;
         telemetry.addLine("Intake initialized " + "(" + initCurrent + "/" + initTotal + ")");
@@ -184,7 +182,7 @@ public abstract class QualsSuperclass extends LinearOpMode {
         telemetry.update();
         sleep(500);
 
-        // Display robot rotation
+        // Display telemetry
         telemetry.setAutoClear(true);
 
         while(!isStarted())
@@ -204,8 +202,8 @@ public abstract class QualsSuperclass extends LinearOpMode {
         telemetry.addData("Velocity (ticks/s)", shooter.getVelocity());
         telemetry.addData("Target Velocity (ticks/s)", shooter.getTargetVelocity());
         telemetry.addData("Rings Loaded", shooter.ringsLoaded);
-        telemetry.addData("PID Encoder", shooter.launcher.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER));
-        telemetry.addData("PID Position", shooter.launcher.getPIDFCoefficients(DcMotor.RunMode.RUN_TO_POSITION));
+        telemetry.addData("PID Encoder", shooter.launcherOne.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER));
+        telemetry.addData("PID Position", shooter.launcherOne.getPIDFCoefficients(DcMotor.RunMode.RUN_TO_POSITION));
         telemetry.addLine();
 
         telemetry.addLine("=== WOBBLE MECH ===");
@@ -262,26 +260,13 @@ public abstract class QualsSuperclass extends LinearOpMode {
         drivetrain.blpower = vertical - horizontal + rotation;
         drivetrain.brpower = vertical + horizontal - rotation;
 
-        // Find the greatest motor power
+        // Find the greatest motor power and scale motors accordingly
         max = Math.max(Math.max(Math.abs(drivetrain.flpower), Math.abs(drivetrain.frpower)),
                 Math.max(Math.abs(drivetrain.blpower), Math.abs(drivetrain.brpower)));
-        // Scale motor powers with the greatest motor power
         drivetrain.flpower /= max;
         drivetrain.frpower /= max;
         drivetrain.blpower /= max;
         drivetrain.brpower /= max;
-
-        /*
-        // Motor powers are set to the power of 3 so that the drivetrain motors accelerates
-        // exponentially instead of linearly
-        // Note: you may consider, in the future, moving this code block to before the
-        // max > 1 code block to see if that is better or worse performance, but I think
-        // it will be worse because it may mess up proportions
-        drivetrain.flpower = Math.pow(drivetrain.flpower, 3);
-        drivetrain.blpower = Math.pow(drivetrain.blpower, 3);
-        drivetrain.frpower = Math.pow(drivetrain.frpower, 3);
-        drivetrain.brpower = Math.pow(drivetrain.brpower, 3);
-         */
 
         // Motor power is decreased proportional to the horizontal trigger value to allow for more
         // precise robot control.
@@ -713,21 +698,18 @@ public abstract class QualsSuperclass extends LinearOpMode {
 
     public void shootSingle() {
         shooter.pushTrigger();
-        sleep(375);
+        sleep(100);
         shooter.retractTrigger();
         shooter.ringsLoaded--;
         if (shooter.ringsLoaded == 0)
             shooter.ringsLoaded = 3;
     }
 
-    public void shootAll(int sleepMS) {
+    public void shootAll() {
         for (int i = 0; i < 3; i++) {
             shootSingle();
+            sleep(100);
             displayTeleOpTelemetry();
-            if (shooter.ringsLoaded > 0)
-                sleep(sleepMS);
-            else
-                break;
         }
     }
 }

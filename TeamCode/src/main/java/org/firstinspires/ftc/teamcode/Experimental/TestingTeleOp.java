@@ -20,16 +20,39 @@ public class TestingTeleOp extends TestingSuperclass {
 
         while (opModeIsActive()) {
 
-            handleToggles();
+            // Shooter =============================================================================
+
+            shooter.runShooter();
+
+            // Velocity
+            if (gamepad1.dpad_up && constants.up == 0)
+                constants.up++;
+            else if (!gamepad1.dpad_up && constants.up == 1) {
+                shooter.increaseVelocity();
+                constants.up--;
+            } else if (gamepad1.dpad_down && constants.down == 0)
+                constants.down++;
+            else if (!gamepad1.dpad_down && constants.down == 1) {
+                shooter.decreaseVelocity();
+                constants.down--;
+            }
+
+            // Launching
+            if (gamepad1.right_bumper && constants.rBumper == 0)
+                constants.rBumper++;
+            else if (!gamepad1.right_bumper && constants.rBumper == 1) {
+                shootSingle();
+                constants.rBumper--;
+            } else if (gamepad1.left_bumper && constants.lBumper == 0)
+                constants.lBumper++;
+            else if (!gamepad1.left_bumper && constants.lBumper == 1) {
+                shootAll();
+                constants.lBumper--;
+            }
+
+            // Telemetry ===========================================================================
 
             displayTeleOpTelemetry();
         }
-    }
-
-    // Gamepad
-    protected void handleToggles() {
-
-        if (!gamepadRateLimit.hasExpired())
-            return;
     }
 }

@@ -12,11 +12,15 @@ import static org.firstinspires.ftc.teamcode.Util.Constants.motorTicksPerRev;
 public class Intake {
 
     // Objects
-    public DcMotorEx topRoller, bottomRoller;
+    public DcMotorEx roller;
+    public Servo release;
 
     // Constants
     public Status status;
+    public Position position;
     private final double power = 0.7;
+    private final double up = 0;
+    private final double down = 0.5;
 
     public Intake() { }
 
@@ -26,31 +30,44 @@ public class Intake {
         OFF
     }
 
+    public enum Position {
+        UP,
+        DOWN;
+    }
+
     public void initialize() {
 
+        // Release
+        up();
+
         // Arm
-        topRoller.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        bottomRoller.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        topRoller.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        bottomRoller.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        roller.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        roller.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         off();
     }
 
     public void in() {
-        topRoller.setPower(power);
-        bottomRoller.setPower(power);
+        roller.setPower(power);
         status = Status.IN;
     }
 
     public void out() {
-        topRoller.setPower(-power);
-        bottomRoller.setPower(-power);
+        roller.setPower(-power);
         status = Status.OUT;
     }
 
     public void off() {
-        topRoller.setPower(0);
-        bottomRoller.setPower(0);
+        roller.setPower(0);
         status = Status.OFF;
+    }
+
+    public void up() {
+        release.setPosition(up);
+        position = Position.UP;
+    }
+
+    public void down() {
+        release.setPosition(down);
+        position = Position.DOWN;
     }
 }

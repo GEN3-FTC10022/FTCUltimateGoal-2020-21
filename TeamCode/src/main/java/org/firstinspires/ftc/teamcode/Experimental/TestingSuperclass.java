@@ -51,134 +51,55 @@ public abstract class TestingSuperclass extends LinearOpMode {
     // Constants
     public Constants constants = new Constants();
 
-    // Vision
-    public Vision vision = new Vision();
-
-    // Controller
-    public Deadline gamepadRateLimit = new Deadline(Constants.GAMEPAD_LOCKOUT, TimeUnit.MILLISECONDS);
+    // Shooter
+    public Shooter shooter = new Shooter();
 
     // METHODS -------------------------------------------------------------------------------------
 
     // Robot Initialization
     public void initialize() {
 
-        // Vision ==============================================================================
-        vision.webcamName = hardwareMap.get(WebcamName.class, "Webcam");
-        vision.initialize();
-        telemetry.addLine("Vision initialized");
+        // Shooter =================================================================================
+        shooter.launcherOne = (DcMotorEx)hardwareMap.dcMotor.get("launcherOne");
+        shooter.launcherTwo = (DcMotorEx)hardwareMap.dcMotor.get("launcherTwo");
+        shooter.trigger = hardwareMap.servo.get("trigger");
+        shooter.initialize();
+        telemetry.addLine("Shooter initialized");
         telemetry.update();
         sleep(500);
+
+        // Display telemetry
+        telemetry.setAutoClear(true);
+        while(!isStarted())
+            displayTeleOpTelemetry();
     }
 
     public void displayTeleOpTelemetry() {
-
-    }
-
-    // Vision Methods ==============================================================================
-
-    private void scanBitmap(boolean showPixelData) {
-
-        int heightMid = (int)(vision.cropHeight/2.0);
-        int[] yPos = {heightMid-9,heightMid-6,heightMid-3,heightMid,heightMid+3,heightMid+6,heightMid+9}; // 7 pixels top to bottom
-        int[] xPos = {vision.cropWidth-1,0}; // Ring 1 (Rightmost pixel), Ring 4 (Leftmost pixel)
-        int pixel, r, g, b, total;
-
-        for (int i = 0; i < xPos.length; i++) {
-
-            for (int j = 0; j < yPos.length; j++) {
-
-                pixel = vision.croppedBitmap.getPixel(xPos[i],yPos[j]);
-                r = Color.red(pixel);
-                g = Color.green(pixel);
-                b = Color.blue(pixel);
-                total = r + g + b;
-
-                // Print per pixel RGB to telemetry
-                if (showPixelData) {
-                    telemetry.addData("Red", r);
-                    telemetry.addData("Green", g);
-                    telemetry.addData("Blue", b);
-                    telemetry.addData("Total", total);
-                    telemetry.update();
-                }
-
-                // If lighting is too bright, increment check if r > g > b with noticeable difference
-                // Else if under normal lighting, check if b < 17.5% of r+g
-                // Else fail check (too dark)
-                if (total > 375) {
-                    if (r > g+40 && g > b && b > 70) {
-                        telemetry.addLine("(" + i + "," + j + "): " + "*Bright Check Successful*");
-                        telemetry.addLine();
-                        telemetry.update();
-                        vision.check++;
-                    } else {
-                        telemetry.addLine("(" + i + "," + j + "): " + "~Bright Check Failed~");
-                        telemetry.addLine();
-                        telemetry.update();
-                    }
-                } else if (total > 50) {
-                    if ((17.5/100.0)*(r+g) > b) {
-                        telemetry.addLine("(" + i + "," + j + "): " + "*Normal Check Successful*");
-                        telemetry.addLine();
-                        telemetry.update();
-                        vision.check++;
-                    } else {
-                        telemetry.addLine("(" + i + "," + j + "): " + "~Normal Check Failed~");
-                        telemetry.addLine();
-                        telemetry.update();
-                    }
-                } else {
-                    telemetry.addLine("(" + i + "," + j + "): " + "~Too Dark, Check Failed~");
-                    telemetry.addLine();
-                    telemetry.update();
-                }
-            }
-
-            telemetry.addLine();
-            telemetry.addData("Ring " + (i+1) + " Check Count",vision.check + "/7");
-            telemetry.addLine();
-            telemetry.update();
-
-            if (vision.check >= 5) {
-                vision.ringsDetected++;
-            }
-
-            vision.check = 0;
-        }
-    }
-
-    public void vuforiaScanStack(boolean saveBitmaps, boolean showPixelData) {
-
-        telemetry.setAutoClear(false);
-
-        // Capture frame from camera
-        vision.captureFrame();
-        telemetry.addLine("Frame captured");
-        telemetry.addLine();
+        telemetry.addLine("=== SHOOTER ===");
+        telemetry.addData("Velocity (ticks/s)", shooter.getVelocity());
+        telemetry.addData("Target Velocity (ticks/s)", shooter.getTargetVelocity());
+        telemetry.addData("Rings Loaded", shooter.ringsLoaded);
+        telemetry.addData("PID Encoder", shooter.launcherOne.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER));
+        telemetry.addData("PID Position", shooter.launcherOne.getPIDFCoefficients(DcMotor.RunMode.RUN_TO_POSITION));
         telemetry.update();
+    }
 
-        if (vision.rgbImage != null) {
+    // Shooter Methods =============================================================================
 
-            // Transpose frame into bitmaps
-            vision.setBitmaps();
-            telemetry.addLine("Frame converted to bitmaps");
-            telemetry.addLine();
-            telemetry.update();
+    public void shootSingle() {
+        shooter.pushTrigger();
+        sleep(100);
+        shooter.retractTrigger();
+        shooter.ringsLoaded--;
+        if (shooter.ringsLoaded == 0)
+            shooter.ringsLoaded = 3;
+    }
 
-            // Save bitmaps to .png files
-            if (saveBitmaps) {
-                vision.saveBitmap("Bitmap", vision.bitmap);
-                vision.saveBitmap("CroppedBitmap", vision.croppedBitmap);
-                telemetry.addLine("Bitmaps saved to device");
-                telemetry.addLine();
-                telemetry.update();
-            }
-
-            // Scan bitmap for starter stack height
-            scanBitmap(showPixelData);
-            telemetry.addLine("Bitmap scan finished");
-            telemetry.addData("Stack Height", vision.getStackHeight());
-            telemetry.update();
+    public void shootAll() {
+        for (int i = 0; i < 3; i++) {
+            shootSingle();
+            sleep(100);
+            displayTeleOpTelemetry();
         }
     }
 }

@@ -64,9 +64,9 @@ public class Vision {
     public Bitmap croppedBitmap = null;
 
     // Crop Variables
-    public final int cropInitialX = 360;
+    public final int cropInitialX = 308;
     public final int cropInitialY = 160;
-    public final int cropFinalX = 405;
+    public final int cropFinalX = 350;
     public final int cropFinalY = 200;
     public final int cropWidth = cropFinalX-cropInitialX; // Tested with 53p width
     public final int cropHeight = cropFinalY-cropInitialY; // Tested with 40p height
