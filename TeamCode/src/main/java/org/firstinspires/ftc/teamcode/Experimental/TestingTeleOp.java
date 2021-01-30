@@ -155,7 +155,10 @@ public class TestingTeleOp extends TestingSuperclass {
 
             // Telemetry ===========================================================================
 
-            displayTeleOpTelemetry();
+            telemetry.addData("Velocity Motor 1 (ticks/s)", shooter.launcherOne.getVelocity());
+            telemetry.addData("Velocity Motor 2 (ticks/s)", shooter.launcherTwo.getVelocity());
+            telemetry.addData("Target Velocity (ticks/s)", shooter.getTargetVelocity());
+            //displayTeleOpTelemetry();
         }
     }
 
