@@ -24,7 +24,7 @@ import org.firstinspires.ftc.teamcode.Subsystems.WobbleMech;
  * lBumper - shootAll()
  */
 
-@TeleOp(name = "TeleOp: Test (Shooter & Shooter Motors)")
+@TeleOp(name = "TeleOp: Shooter Test")
 public class TestingTeleOp extends TestingSuperclass {
 
     int state;
@@ -101,8 +101,8 @@ public class TestingTeleOp extends TestingSuperclass {
                 shooter.launcherTwo.setVelocity(shooter.getTargetVelocity());
                 constants.y++;
                 // fix individual toggle states
-                constants.x = 0;
-                constants.a = 0;
+                constants.x = 2;
+                constants.a = 2;
 
                 // update state
                 state = 3;
@@ -115,8 +115,8 @@ public class TestingTeleOp extends TestingSuperclass {
                 shooter.launcherTwo.setVelocity(0);
                 constants.y = 0;
                 // fix individual toggle states
-                constants.x = 2;
-                constants.a = 2;
+                constants.x = 0;
+                constants.a = 0;
 
                 // update state
                 state = 0;
@@ -128,14 +128,14 @@ public class TestingTeleOp extends TestingSuperclass {
             if (gamepad1.dpad_up && constants.up == 0)
                 constants.up++;
             else if (!gamepad1.dpad_up && constants.up == 1) {
-                shooter.increaseVelocity();
+                adjustVelocity(1);
                 constants.up--;
             }
             // down
             else if (gamepad1.dpad_down && constants.down == 0)
                 constants.down++;
             else if (!gamepad1.dpad_down && constants.down == 1) {
-                shooter.decreaseVelocity();
+                adjustVelocity(-1);
                 constants.down--;
             }
 
@@ -162,12 +162,16 @@ public class TestingTeleOp extends TestingSuperclass {
     public void adjustVelocity(double signModifier){
 
         double newVelocity = shooter.getTargetVelocity() + (shooter.VELOCITY_MODIFIER * signModifier);
+
         shooter.setTargetVelocity(newVelocity);
+
         if (state == 3){
             shooter.launcherOne.setVelocity(shooter.getTargetVelocity());
             shooter.launcherTwo.setVelocity(shooter.getTargetVelocity());
+
         } else if (state == 1){
             shooter.launcherOne.setVelocity(shooter.getTargetVelocity());
+
         } else if (state == 2){
             shooter.launcherTwo.setVelocity(shooter.getTargetVelocity());
         }

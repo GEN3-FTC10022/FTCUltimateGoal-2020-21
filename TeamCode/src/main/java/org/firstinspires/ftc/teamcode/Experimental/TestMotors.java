@@ -7,10 +7,10 @@ import org.firstinspires.ftc.teamcode.Subsystems.Intake;
 import org.firstinspires.ftc.teamcode.Subsystems.WobbleMech;
 
 /**
- * Backup of the most recent version of TestingTeleOp before the Shooter & Shooter Motors ver.
+ * Copy of the most recent version of TestingTeleOp before the Shooter & Shooter Motors ver.
  */
 
-@TeleOp(name = "TeleOp: Test")
+// @TeleOp(name = "TeleOp: Test")
 public class TestMotors extends TestingSuperclass {
 
     @Override
