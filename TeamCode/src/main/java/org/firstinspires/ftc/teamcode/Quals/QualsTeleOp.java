@@ -76,17 +76,23 @@ public class QualsTeleOp extends QualsSuperclass {
             if (drivetrain.driveMode == Drivetrain.DriveMode.FIELD_CENTRIC) {
 
                 // Math
-                if (drivetrain.getHeading(AngleUnit.RADIANS) < 0) {       // If theta is measured clockwise from zero reference
+                if (drivetrain.getHeading(AngleUnit.RADIANS) < 0) {
+                // If theta is measured clockwise from zero reference
 
-                    drivetrain.temp = vertical * Math.cos(drivetrain.getHeading(AngleUnit.RADIANS)) + horizontal * Math.sin(-drivetrain.getHeading(AngleUnit.RADIANS));
-                    horizontal= -vertical * Math.sin(-drivetrain.getHeading(AngleUnit.RADIANS)) + horizontal * Math.cos(drivetrain.getHeading(AngleUnit.RADIANS));
+                    drivetrain.temp = vertical * Math.cos(drivetrain.getHeading(AngleUnit.RADIANS))
+                            + horizontal * Math.sin(-drivetrain.getHeading(AngleUnit.RADIANS));
+                    horizontal = - vertical * Math.sin(-drivetrain.getHeading(AngleUnit.RADIANS))
+                            + horizontal * Math.cos(drivetrain.getHeading(AngleUnit.RADIANS));
                     vertical = drivetrain.temp;
                 }
 
-                if (drivetrain.getHeading(AngleUnit.RADIANS) >= 0) {    // If theta is measured counterclockwise from zero reference
+                if (drivetrain.getHeading(AngleUnit.RADIANS) >= 0) {
+                // If theta is measured counterclockwise from zero reference
 
-                    drivetrain.temp = vertical * Math.cos(drivetrain.getHeading(AngleUnit.RADIANS)) - horizontal * Math.sin(drivetrain.getHeading(AngleUnit.RADIANS));
-                    horizontal= vertical * Math.sin(drivetrain.getHeading(AngleUnit.RADIANS)) + horizontal * Math.cos(drivetrain.getHeading(AngleUnit.RADIANS));
+                    drivetrain.temp = vertical * Math.cos(drivetrain.getHeading(AngleUnit.RADIANS))
+                            - horizontal * Math.sin(drivetrain.getHeading(AngleUnit.RADIANS));
+                    horizontal = vertical * Math.sin(drivetrain.getHeading(AngleUnit.RADIANS))
+                            + horizontal * Math.cos(drivetrain.getHeading(AngleUnit.RADIANS));
                     vertical = drivetrain.temp;
                 }
             }
