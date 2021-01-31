@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.Quals;
 
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.os.Environment;
 
 import com.qualcomm.hardware.bosch.BNO055IMU;
@@ -21,13 +22,20 @@ import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackable;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackableDefaultListener;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
+import org.firstinspires.ftc.robotcore.internal.system.Deadline;
+import org.firstinspires.ftc.teamcode.Subsystems.Intake;
+import org.firstinspires.ftc.teamcode.Subsystems.Shooter;
+import org.firstinspires.ftc.teamcode.Subsystems.Vision;
 import org.firstinspires.ftc.teamcode.Subsystems.WobbleMech;
+import org.firstinspires.ftc.teamcode.Subsystems.Drivetrain;
+import org.firstinspires.ftc.teamcode.Util.Constants;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static android.graphics.Bitmap.createBitmap;
 import static android.graphics.Bitmap.createScaledBitmap;
@@ -38,661 +46,670 @@ public abstract class QualsSuperclass extends LinearOpMode {
 
     // ROBOT OBJECTS -------------------------------------------------------------------------------
 
+    // Constants
+    public Constants constants = new Constants();
+    public int initCurrent = 0;
+    public int initTotal;
+
     // Drivetrain
-    public DcMotorEx frontLeft, frontRight, backLeft, backRight;
+    public Drivetrain drivetrain = new Drivetrain();
+    public double vertical, horizontal, rotation;
+    public double max, kSlow;
 
     // Wobble Mech
     public WobbleMech wobbleMech = new WobbleMech();
 
-    // REV Sensors
-    public BNO055IMU imu;
-    public Orientation orientation;
-    public float angle;
+    // Intake
+    public Intake intake = new Intake();
 
-    public double temp;
-    public double flpower, frpower, blpower, brpower;
+    // Shooter
+    public Shooter shooter = new Shooter();
 
-    // Toggle Integers
-    public int x = 0, a = 0, b = 0, y = 0;
-
-    // Vuforia
-    // IMPORTANT: If you are using a USB WebCam, camera choice "BACK" and phone portrait "false"
-    private static final VuforiaLocalizer.CameraDirection CAMERA_CHOICE = BACK;
-    private static final boolean PHONE_IS_PORTRAIT = false;
-
-    private static final String VUFORIA_KEY = "AaMuRa7/////AAABmeeXefeDrEfGtTjiMIEuO2djgL8Uz6M9/NrJ" +
-            "CrNousZ9V7tnau7MP3q5eACYGf+HgjNwjsOkV8ERj5yJglYfVjm3W9NBeAEAP18/1TMnFvSY6+dalmccEnnbag" +
-            "eBAPAVMBLk5OLCA35uka2sjuLb37/rdMPNJGmSqklqcthb1NuxWzpVe7BZcf2YODtUPWnTHKi5t5s6XKQA5p4T" +
-            "u6x73Mha8a6jN7hv/pnvneUoG0N5Eih6gZ1sSXKcGfpqjf1npkJUb4AcMoqYE0DE31kUk+V/N2hjNsg9mQSGw2" +
-            "TmXG7Iq15ugKdyFwzgpWf6IueyoTKkwOczEiGALV2lObz+fyFLob4rq6HtpkCpL4gkh4xy";
-
-    // Class Members
-    public VuforiaLocalizer vuforia;
-
-    // This is the webcam we are to use. As with other hardware devices such as motors and
-    // servos, this device is identified using the robot configuration tool in the FTC application.
-
-    WebcamName webcamName;
-
-    private boolean targetVisible;
-
-    // Configure Vuforia by creating a Parameter object, and passing it to the Vuforia engine.
-    // We can pass Vuforia the handle to a camera preview resource (on the RC phone);
-    // If no camera monitor is desired, use the parameter-less constructor instead (commented out below).
-
-    // int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
-    // VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters(cameraMonitorViewId);
-    VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters();
-
-    VuforiaTrackables targetsUltimateGoal;
-
-    List<VuforiaTrackable> allTrackables;
-
-    public Image rgbImage = null;
-    public VuforiaLocalizer.CloseableFrame closeableFrame = null;
-
-    // CONTROL CONSTANTS ---------------------------------------------------------------------------
-
-    // Drivetrain
-    public final double WHEEL_DIAMETER_INCHES = 4;
-    public final double WHEEL_CIRCUMFERENCE_INCHES = WHEEL_DIAMETER_INCHES * Math.PI;
-    public final double DRIVE_TICKS_PER_REV = motorTicksPerRev[0];
-    public final double DRIVE_GEAR_REDUCTION = 1;
-    public final double DRIVE_TICKS_PER_INCH = (((DRIVE_TICKS_PER_REV * DRIVE_GEAR_REDUCTION) / WHEEL_CIRCUMFERENCE_INCHES));
-    public final double DRIVE_TICKS_PER_DEGREE = ((double)3545.0/360.0); // temp
-    public final double DRIVE_STRAFE_CORRECTION = (double)5.0/4.25;
+    // Vision
+    public Vision vision = new Vision();
 
     // METHODS -------------------------------------------------------------------------------------
 
-    // Robot Initialization
-    public void initialize() {
+    // General Robot Methods =======================================================================
 
-        // Device Initialization
+    public void initialize(boolean isAuto) {
 
-        // Telemetry
+        // Telemetry ===============================================================================
+        telemetry.setAutoClear(false);
         telemetry.addLine("Initializing Robot...");
         telemetry.update();
+        sleep(500);
 
-        // Drivetrain
-        frontLeft = (DcMotorEx)hardwareMap.dcMotor.get("frontLeft");
-        frontRight = (DcMotorEx)hardwareMap.dcMotor.get("frontRight");
-        backLeft = (DcMotorEx)hardwareMap.dcMotor.get("backLeft");
-        backRight = (DcMotorEx)hardwareMap.dcMotor.get("backRight");
-        frontRight.setDirection(DcMotor.Direction.REVERSE);
-        backRight.setDirection(DcMotor.Direction.REVERSE);
-        setDriveZeroPowerBehavior();
+        if (isAuto)
+            initTotal = 5;
+        else
+            initTotal = 4;
 
-        // Wobble Mech
-        wobbleMech.motor = (DcMotorEx)hardwareMap.dcMotor.get("wobbleMech");
-        wobbleMech.servo = hardwareMap.servo.get("wobbleClamp");
-        wobbleMech.initialize();
-
-        // Odometry
-
-        // REV Sensors
-        BNO055IMU.Parameters imuParameters = new BNO055IMU.Parameters();
-        imuParameters.angleUnit = BNO055IMU.AngleUnit.DEGREES;
-        imu = hardwareMap.get(BNO055IMU.class, "imu");
-        imu.initialize(imuParameters);
-
-        // Telemetry
-        telemetry.addLine("Robot Initialized");
+        // Drivetrain ==============================================================================
+        drivetrain.imu = hardwareMap.get(BNO055IMU.class, "imu");
+        drivetrain.frontLeft = (DcMotorEx)hardwareMap.dcMotor.get("frontLeft");
+        drivetrain.frontRight = (DcMotorEx)hardwareMap.dcMotor.get("frontRight");
+        drivetrain.backLeft = (DcMotorEx)hardwareMap.dcMotor.get("backLeft");
+        drivetrain.backRight = (DcMotorEx)hardwareMap.dcMotor.get("backRight");
+        drivetrain.initialize();
+        initCurrent++;
+        telemetry.addLine("Drivetrain initialized " + "(" + initCurrent + "/" + initTotal + ")");
         telemetry.update();
-    }
+        sleep(500);
 
-    public void initializeVuforia() {
+        // Shooter =================================================================================
+        shooter.launcherOne = (DcMotorEx)hardwareMap.dcMotor.get("launcherOne");
+        shooter.launcherTwo = (DcMotorEx)hardwareMap.dcMotor.get("launcherTwo");
+        shooter.trigger = hardwareMap.servo.get("trigger");
+        shooter.initialize();
+        initCurrent++;
+        telemetry.addLine("Shooter initialized " + "(" + initCurrent + "/" + initTotal + ")");
+        telemetry.update();
+        sleep(500);
 
-        webcamName = hardwareMap.get(WebcamName.class, "Webcam");
+        // Intake ==================================================================================
+        intake.roller = (DcMotorEx)hardwareMap.dcMotor.get("roller");
+        intake.release = hardwareMap.servo.get("release");
+        intake.initialize();
+        initCurrent++;
+        telemetry.addLine("Intake initialized " + "(" + initCurrent + "/" + initTotal + ")");
+        telemetry.update();
+        sleep(500);
 
-        parameters.vuforiaLicenseKey = VUFORIA_KEY;
+        // Wobble Mech =============================================================================
+        wobbleMech.arm = (DcMotorEx)hardwareMap.dcMotor.get("arm");
+        wobbleMech.lClaw = hardwareMap.servo.get("lClaw");
+        wobbleMech.rClaw = hardwareMap.servo.get("rClaw");
+        wobbleMech.initialize();
+        initCurrent++;
+        telemetry.addLine("Wobble Mech initialized " + "(" + initCurrent + "/" + initTotal + ")");
+        telemetry.update();
+        sleep(500);
 
-        // We also indicate which camera on the RC we wish to use.
+        if (isAuto) {
 
-        parameters.cameraName = webcamName;
+            // Vision ==============================================================================
+            vision.webcamName = hardwareMap.get(WebcamName.class, "Webcam");
+            vision.initialize();
+            initCurrent++;
+            telemetry.addLine("Vision initialized " + "(" + initCurrent + "/" + initTotal + ")");
+            telemetry.update();
+            sleep(500);
 
-        // Make sure extended tracking is disabled for this example.
-        parameters.useExtendedTracking = false;
+            telemetry.addLine();
+            telemetry.addLine("Load wobble goal and press 'A', or press 'B' to cancel...");
+            telemetry.update();
 
-        //  Instantiate the Vuforia engine
-        vuforia = ClassFactory.getInstance().createVuforia(parameters);
+            while (wobbleMech.initK == 0) {
 
-        // Load the data sets for the trackable objects. These particular data
-        // sets are stored in the 'assets' part of our application.
-        targetsUltimateGoal = this.vuforia.loadTrackablesFromAsset("UltimateGoal");
-        VuforiaTrackable blueTowerGoalTarget = targetsUltimateGoal.get(0);
-        blueTowerGoalTarget.setName("Blue Tower Goal Target");
-        VuforiaTrackable redTowerGoalTarget = targetsUltimateGoal.get(1);
-        redTowerGoalTarget.setName("Red Tower Goal Target");
-        VuforiaTrackable redAllianceTarget = targetsUltimateGoal.get(2);
-        redAllianceTarget.setName("Red Alliance Target");
-        VuforiaTrackable blueAllianceTarget = targetsUltimateGoal.get(3);
-        blueAllianceTarget.setName("Blue Alliance Target");
-        VuforiaTrackable frontWallTarget = targetsUltimateGoal.get(4);
-        frontWallTarget.setName("Front Wall Target");
+                if (gamepad1.a) {
+                    // Set wobble goal to pre-loaded position
+                    wobbleMech.clawClose();
+                    sleep(2000);
+                    wobbleMech.setArmPosition(WobbleMech.ArmPosition.REST, 0.2);
 
-        // For convenience, gather together all the trackable objects in one easily-iterable collection
-        allTrackables = new ArrayList<VuforiaTrackable>();
-        allTrackables.addAll(targetsUltimateGoal);
-    }
+                    telemetry.addLine("Wobble goal loaded");
+                    telemetry.update();
 
-    // Drive Methods
-    public void forward(double pow, double inches) {
+                    wobbleMech.initK = 1;
+                    sleep(500);
+                }
 
-        double target = inches * DRIVE_TICKS_PER_INCH;
+                // Cancel wobble goal pre-load
+                if (gamepad1.b) {
+                    // Reset wobble mech
+                    resetWobbleMech();
 
-        if (opModeIsActive()) {
+                    telemetry.addLine("Wobble goal not loaded");
+                    telemetry.update();
 
-            resetDriveEncoders();
-            setDriveTarget(target,
-                    1, 1,
-                    1, 1);
-            setDriveMode();
+                    wobbleMech.initK = 1;
+                    sleep(500);
+                }
 
-            while (opModeIsActive() && driveIsBusy()) {
-                setDrivePower(pow);
-            }
-
-            setDrivePower(0);
-            resetDriveMode();
-        }
-    }
-
-    public void backward(double pow, double inches) {
-
-        double target = inches * DRIVE_TICKS_PER_INCH;
-
-        if (opModeIsActive()) {
-
-            resetDriveEncoders();
-            setDriveTarget(target,
-                    -1, -1,
-                    -1, -1);
-            setDriveMode();
-
-            while (opModeIsActive() && driveIsBusy()) {
-                setDrivePower(pow);
-            }
-
-            setDrivePower(0);
-            resetDriveMode();
-        }
-    }
-
-    public void strafeRight(double pow, double inches) {
-
-        double target = inches * DRIVE_TICKS_PER_INCH;
-        target *= DRIVE_STRAFE_CORRECTION;
-
-        if (opModeIsActive()) {
-
-            resetDriveEncoders();
-            setDriveTarget(target,
-                    1, -1,
-                    -1, 1);
-            setDriveMode();
-
-            while (opModeIsActive() && driveIsBusy()) {
-                setDrivePower(pow);
-            }
-
-            setDrivePower(0);
-            resetDriveMode();
-        }
-    }
-
-    public void strafeLeft(double pow, double inches) {
-
-        double target = inches * DRIVE_TICKS_PER_INCH;
-        target *= DRIVE_STRAFE_CORRECTION;
-
-        if (opModeIsActive()) {
-
-            resetDriveEncoders();
-            setDriveTarget(target,
-                    -1, 1,
-                    1, -1);
-            setDriveMode();
-
-            while (opModeIsActive() && driveIsBusy()) {
-                setDrivePower(pow);
-            }
-
-            setDrivePower(0);
-            resetDriveMode();
-        }
-    }
-
-    public void rotateRight(double pow, double angle) {
-
-        double target = angle * DRIVE_TICKS_PER_DEGREE;
-
-        if (opModeIsActive()) {
-
-            resetDriveEncoders();
-            setDriveTarget(target,
-                    1, -1,
-                    1, -1);
-            setDriveMode();
-
-            while (opModeIsActive() && driveIsBusy()) {
-                setDrivePower(pow);
-            }
-
-            setDrivePower(0);
-            resetDriveMode();
-        }
-    }
-
-    public void rotateLeft(double pow, double angle) {
-
-        double target = angle * DRIVE_TICKS_PER_DEGREE;
-
-        if (opModeIsActive()) {
-
-            resetDriveEncoders();
-            setDriveTarget(target,
-                    -1, 1,
-                    -1, 1);
-            setDriveMode();
-
-            while (opModeIsActive() && driveIsBusy()) {
-                setDrivePower(pow);
-            }
-
-            setDrivePower(0);
-            resetDriveMode();
-        }
-    }
-
-    // Vision Methods
-
-    public void vuforiaScanTarget() {
-
-        // Note: To use the remote camera preview:
-        // AFTER you hit Init on the Driver Station, use the "options menu" to select "Camera Stream"
-        // Tap the preview window to receive a fresh image.
-
-        targetsUltimateGoal.activate();
-
-        // Change condition to something else later
-        while (!isStopRequested()) {
-
-            // check all the trackable targets to see which one (if any) is visible.
-            targetVisible = false;
-            for (VuforiaTrackable trackable : allTrackables) {
-                if (((VuforiaTrackableDefaultListener)trackable.getListener()).isVisible()) {
-                    telemetry.addData("Visible Target", trackable.getName());
-                    targetVisible = true;
+                // Break out of loop if initialization is stopped to prevent forced restart
+                if (isStopRequested()) {
                     break;
                 }
             }
 
-            telemetry.update();
+        } else {
+            resetWobbleMech();
         }
 
-        // Disable Tracking when we are done;
-        targetsUltimateGoal.deactivate();
+        // Telemetry ===============================================================================
+        telemetry.addLine("Initialization Finished " + "(" + initCurrent + "/" + initTotal + ")");
+        telemetry.update();
+        sleep(500);
+
+        // Display telemetry
+        telemetry.setAutoClear(true);
+
+        while(!isStarted())
+            displayTeleOpTelemetry();
     }
 
-    public void vuforiaScanPixel(boolean saveBitmap) {
+    // Telemetry ===================================================================================
 
-        Vuforia.setFrameFormat(PIXEL_FORMAT.RGB565, true); // Enables RGB565 format for image
-        vuforia.setFrameQueueCapacity(1); // Store only one frame at a time
+    public void displayTeleOpTelemetry() {
+        // Telemetry
+        telemetry.addLine("=== DRIVETRAIN ===");
+        telemetry.addData("Heading (Deg)", drivetrain.getHeading(AngleUnit.DEGREES));
+        telemetry.addData("Drive Mode", drivetrain.driveMode);
+        telemetry.addLine();
 
-        // Capture Vuforia Frame
-        while (rgbImage == null) {
+        telemetry.addLine("=== SHOOTER ===");
+        telemetry.addData("Velocity (ticks/s)", shooter.getVelocity());
+        telemetry.addData("Target Velocity (ticks/s)", shooter.getTargetVelocity());
+        telemetry.addData("Rings Loaded", shooter.ringsLoaded);
+        telemetry.addData("PID Encoder", shooter.launcherOne.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER));
+        telemetry.addData("PID Position", shooter.launcherOne.getPIDFCoefficients(DcMotor.RunMode.RUN_TO_POSITION));
+        telemetry.addLine();
 
-            try {
+        telemetry.addLine("=== WOBBLE MECH ===");
+        telemetry.addData("Arm Position", wobbleMech.getArmPosition());
+        telemetry.addData("Claw Position", wobbleMech.getClawPosition());
+        telemetry.addLine();
 
-                closeableFrame = vuforia.getFrameQueue().take();
-                long numImages = closeableFrame.getNumImages();
+        telemetry.addLine("=== INTAKE ===");
+        telemetry.addData("Rollers", intake.status);
+        telemetry.addLine();
 
-                for (int i = 0; i < numImages; i++) {
-
-                    if (closeableFrame.getImage(i).getFormat() == PIXEL_FORMAT.RGB565) {
-
-                        rgbImage = closeableFrame.getImage(i);
-
-                        if (rgbImage != null)
-                            break;
-                    }
-                }
-
-            } catch (InterruptedException exc) {
-
-            } finally {
-
-                if (closeableFrame != null)
-                    closeableFrame.close();
-            }
-        }
-
-        if (rgbImage != null) {
-
-            telemetry.addLine("Picture taken");
-            telemetry.update();
-
-            // Copy Bitmap from Vuforia Frame
-            Bitmap quarry = createBitmap(rgbImage.getWidth(), rgbImage.getHeight(), Bitmap.Config.RGB_565);
-            quarry.copyPixelsFromBuffer(rgbImage.getPixels());
-
-            // Find Directory
-            String path = Environment.getExternalStorageDirectory().toString();
-            FileOutputStream out = null;
-
-            // Save Bitmap to file
-            if (saveBitmap) {
-                try {
-
-                    File file = new File(path, "Bitmap.png");
-                    out = new FileOutputStream(file);
-                    quarry.compress(Bitmap.CompressFormat.PNG, 100, out);
-
-                } catch (Exception e) {
-                    e.printStackTrace();
-
-                } finally {
-
-                    try {
-                        if (out != null) {
-                            out.flush();
-                            out.close();
-                        }
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-
-            // Crop Bitmap
-            // (0,0) is the top-left corner of the bitmap
-            int cropStartX;
-            int cropStartY;
-            int cropWidth;
-            int cropHeight;
-
-            int quarryWidth, quarryHeight;
-            quarryWidth = quarry.getWidth();
-            quarryHeight = quarry.getHeight();
-
-            cropStartX = (int) (quarryWidth * 20.0 / 69.5);     // x initial | max: 31.5 original 26.0 / 69.5
-            cropStartY = (int) (quarryHeight * 13.0 / 39.0);    // y initial | max: 33.0 original 13.0 / 39.0
-            cropWidth = (int) (quarryWidth * 38.0 / 69.5);      // delta x
-            cropHeight = (int) (quarryHeight * 6.0 / 39.0);     // delta y
-
-            // Create cropped bitmap to show only stones
-            quarry = createBitmap(quarry, cropStartX, cropStartY, cropWidth, cropHeight);
-
-            // Save cropped bitmap to file
-            if (saveBitmap) {
-                try {
-
-                    File file = new File(path, "CroppedBitmap.png");
-                    out = new FileOutputStream(file);
-                    quarry.compress(Bitmap.CompressFormat.PNG, 100, out);
-
-                } catch (Exception e) {
-                    e.printStackTrace();
-
-                } finally {
-
-                    try {
-                        if (out != null) {
-                            out.flush();
-                            out.close();
-                        }
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-
-            // Compress bitmap to reduce scan time
-            quarry = createScaledBitmap(quarry, 110, 20, true);
-
-            /*
-
-            // this is a test Rbg ----------------------------------------------------------------------------------
-            // this program takes the Rbg of the pixel by use arrays 
-            // then it compare it to a set rbg if true it add one to a value
-            // if value 0 = zero comments
-            // if value 3 =  one stone
-            // if value 12 = 4 stone 
-            int[] Yloc = {}; // put 4 locations 
-            int[] Xloc = {}; // put 3 locations
-            int locx = 0; // this is for the arrays
-            int locy = 0; 
-            int stonenum = 0; //this is for the stong count 
-            Color stonecolor = new Color(255,255,255);//this is the stone color it is set to white have to change that 
-            for( int i = 0; i < 4; i++){
-                for( int t = 0; t < 3; t++){ 
-                    Color c1 = new Color(quarry.getRGB(Xloc[locx], Yloc[locy]));// this takes the Rbg of the pixel have to test
-                    if(c1.getRGB() == stonecolor.getRGB()){
-                        stonenum += 1;
-                    }
-                    locx +=1;
-                }
-
-                locy += 1;
-                locx = 0;
-                
-            }
-
-             */
-
-            telemetry.update();
-        }
+        telemetry.update();
     }
 
-    // UTILITY METHODS -----------------------------------------------------------------------------
-
-    // Drivetrain
-
-    public void resetDriveEncoders() {
-
-        frontLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        backLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        frontRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        backRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-    }
-
-    public void setDriveTarget(double dist, double fl, double fr, double bl, double br) {
-
-        frontLeft.setTargetPosition((int) (fl * dist));
-        backLeft.setTargetPosition((int) (bl * dist));
-        frontRight.setTargetPosition((int) (fr * dist));
-        backRight.setTargetPosition((int) (br * dist));
-    }
-
-    public void setDriveMode() {
-        frontLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        backLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        frontRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        backRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-    }
-
-    public boolean driveIsBusy() {
-
-        if (frontLeft.isBusy() && backLeft.isBusy() && frontRight.isBusy() && backRight.isBusy())
-            return true;
-        else
-            return false;
-    }
-
-    public void setDrivePower(double pow) {
-
-        frontLeft.setPower(pow);
-        backLeft.setPower(pow);
-        frontRight.setPower(pow);
-        backRight.setPower(pow);
-    }
-
-    public void resetDriveMode() {
-
-        frontLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        backLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        frontRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        backRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-    }
-
-    public void setDriveZeroPowerBehavior() {
-        frontLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        frontRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        backLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        backRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-    }
-
-    // General
+    // Drive Methods ===============================================================================
 
     public void drive() {
 
         // FIELD-CENTRIC DRIVE -----------------------------------------------------------------
 
-        // Display rotation data
-        telemetry.addData("FC Rotation (Radians): ", getHeading(true));
-        telemetry.addData("FC Rotation (Degrees): ", Math.toDegrees(getHeading(true)));
-        telemetry.addData("Normal Rotation (Radians): ", Math.toRadians(getHeading(false)));
-        telemetry.addData("Normal Rotation (Degrees): ", getHeading(false));
-
-        double forward = -gamepad1.left_stick_y;
-        double right = gamepad1.left_stick_x;
-        double clockwise = gamepad1.right_stick_x;
+        vertical = -gamepad1.left_stick_y;
+        horizontal= gamepad1.left_stick_x * drivetrain.DRIVE_STRAFE_CORRECTION; // Correction to counteract imperfect strafing
+        rotation = gamepad1.right_stick_x;
 
         // Joystick deadzones
-        if (Math.abs(forward) < 0.05)
-            forward = 0;
-        if (Math.abs(right) < 0.05)
-            right = 0;
-        if (Math.abs(clockwise) < 0.05)
-            clockwise = 0;
+        if (Math.abs(vertical) < 0.05)
+            vertical = 0;
+        if (Math.abs(horizontal) < 0.05)
+            horizontal= 0;
+        if (Math.abs(rotation) < 0.05)
+            rotation = 0;
 
-        // math
-        if (getHeading(true) < 0) {       // If theta is measured clockwise from zero reference
+        if (drivetrain.driveMode == Drivetrain.DriveMode.FIELD_CENTRIC) {
 
-            temp = forward * Math.cos(getHeading(true)) + right * Math.sin(-getHeading(true));
-            right = -forward * Math.sin(-getHeading(true)) + right * Math.cos(getHeading(true));
-            forward = temp;
-        }
+            // Math
+            if (drivetrain.getHeading(AngleUnit.RADIANS) < 0) {       // If theta is measured clockwise from zero reference
 
-        if (getHeading(true) >= 0) {    // If theta is measured counterclockwise from zero reference
-
-            temp = forward * Math.cos(getHeading(true)) - right * Math.sin(getHeading(true));
-            right = forward * Math.sin(getHeading(true)) + right * Math.cos(getHeading(true));
-            forward = temp;
-        }
-
-        // assign calculated values to the power variables
-        flpower = forward + right + clockwise;
-        frpower = forward - right - clockwise;
-        blpower = forward - right + clockwise;
-        brpower = forward + right - clockwise;
-
-        // if you have the testing time, maybe remove this one day and see if it causes any
-        // problems?
-        // Find the maximum of the powers
-        double max = Math.max(  Math.max(Math.abs(flpower), Math.abs(frpower)),
-                Math.max(Math.abs(blpower), Math.abs(brpower))  );
-        // Use this to make sure no motor powers are above 1 (the max value the motor can accept)
-        if (max > 1) {
-
-            flpower /= max;
-            frpower /= max;
-            blpower /= max;
-            brpower /= max;
-        }
-
-        // Motor powers are set to the power of 3 so that the drivetrain motors accelerates
-        // exponentially instead of linearly
-        // Note: you may consider, in the future, moving this code block to before the
-        // max > 1 code block to see if that is better or worse performance, but I think
-        // it will be worse because it may mess up proportions
-        flpower = Math.pow(flpower, 3);
-        blpower = Math.pow(blpower, 3);
-        frpower = Math.pow(frpower, 3);
-        brpower = Math.pow(brpower, 3);
-
-        // Motor Power is decreased while the right trigger is held down to allow for more
-        // precise robot control
-        if (gamepad1.right_trigger > 0.8) {
-
-            flpower /= 3;
-            frpower /= 3;
-            blpower /= 3;
-            brpower /= 3;
-        }
-
-        // If the trigger is held down, but not pressed all the way down, motor power will
-        // slow down proportionally to how much the trigger is pressed
-        else if (gamepad1.right_trigger > 0.1) {
-
-            double driveSlow = -0.8 * gamepad1.right_trigger + 1;
-
-            flpower *= driveSlow;
-            frpower *= driveSlow;
-            blpower *= driveSlow;
-            brpower *= driveSlow;
-        }
-
-            /*
-            // Alternate version of drive slowing
-            // This version does not scale proportionally to the press, but uses a constant
-            // multiplier instead
-            // Programmers may choose to use this version of drive slowing instead due to a
-            // driver's preference
-            if (gamepad1.right_trigger > 0.5){
-
-                flpower /= 3;
-                blpower /= 3;
-                frpower /= 3;
-                brpower /= 3;
+                drivetrain.temp = vertical * Math.cos(drivetrain.getHeading(AngleUnit.RADIANS)) + horizontal * Math.sin(-drivetrain.getHeading(AngleUnit.RADIANS));
+                horizontal= -vertical * Math.sin(-drivetrain.getHeading(AngleUnit.RADIANS)) + horizontal * Math.cos(drivetrain.getHeading(AngleUnit.RADIANS));
+                vertical = drivetrain.temp;
             }
-            */
 
-        frontLeft.setPower(flpower);
-        frontRight.setPower(frpower);
-        backLeft.setPower(blpower);
-        backRight.setPower(brpower);
+            if (drivetrain.getHeading(AngleUnit.RADIANS) >= 0) {    // If theta is measured counterclockwise from zero reference
+
+                drivetrain.temp = vertical * Math.cos(drivetrain.getHeading(AngleUnit.RADIANS)) - horizontal * Math.sin(drivetrain.getHeading(AngleUnit.RADIANS));
+                horizontal= vertical * Math.sin(drivetrain.getHeading(AngleUnit.RADIANS)) + horizontal * Math.cos(drivetrain.getHeading(AngleUnit.RADIANS));
+                vertical = drivetrain.temp;
+            }
+        }
+
+        // Assign calculated values to the power variables
+        drivetrain.flpower = vertical + horizontal + rotation;
+        drivetrain.frpower = vertical - horizontal - rotation;
+        drivetrain.blpower = vertical - horizontal + rotation;
+        drivetrain.brpower = vertical + horizontal - rotation;
+
+        // Find the greatest motor power and scale motors accordingly
+        max = Math.max(Math.max(Math.abs(drivetrain.flpower), Math.abs(drivetrain.frpower)),
+                Math.max(Math.abs(drivetrain.blpower), Math.abs(drivetrain.brpower)));
+        drivetrain.flpower /= max;
+        drivetrain.frpower /= max;
+        drivetrain.blpower /= max;
+        drivetrain.brpower /= max;
+
+        // Motor power is decreased proportional to the horizontal trigger value to allow for more
+        // precise robot control.
+        kSlow = -2.0/3.0 * gamepad1.right_trigger + 1;
+        drivetrain.flpower *= kSlow;
+        drivetrain.frpower *= kSlow;
+        drivetrain.blpower *= kSlow;
+        drivetrain.brpower *= kSlow;
+
+        drivetrain.setDrivePower(drivetrain.flpower, drivetrain.frpower, drivetrain.blpower, drivetrain.brpower);
     }
 
-    public double getHeading(boolean isFieldCentric) {
+    public void driveTest() {
 
-        orientation = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.XYZ, AngleUnit.DEGREES);
-        angle = orientation.thirdAngle; // temp
+        // FIELD-CENTRIC DRIVE -----------------------------------------------------------------
 
-        if (isFieldCentric) {
-            return Math.toRadians(angle);
+        vertical = -gamepad1.left_stick_y;
+        horizontal= gamepad1.left_stick_x * drivetrain.DRIVE_STRAFE_CORRECTION; // Correction to counteract imperfect strafing
+        rotation = gamepad1.right_stick_x;
 
+        // Joystick deadzones
+        if (Math.abs(vertical) < 0.05)
+            vertical = 0;
+        if (Math.abs(horizontal) < 0.05)
+            horizontal= 0;
+        if (Math.abs(rotation) < 0.05)
+            rotation = 0;
+
+        if (drivetrain.driveMode == Drivetrain.DriveMode.FIELD_CENTRIC) {
+            // Math
+            if (drivetrain.getHeading(AngleUnit.RADIANS) < 0) {       // If theta is measured clockwise from zero reference
+
+                drivetrain.temp = vertical * Math.cos(drivetrain.getHeading(AngleUnit.RADIANS)) + horizontal * Math.sin(-drivetrain.getHeading(AngleUnit.RADIANS));
+                horizontal= -vertical * Math.sin(-drivetrain.getHeading(AngleUnit.RADIANS)) + horizontal * Math.cos(drivetrain.getHeading(AngleUnit.RADIANS));
+                vertical = drivetrain.temp;
+            }
+
+            if (drivetrain.getHeading(AngleUnit.RADIANS) >= 0) {    // If theta is measured counterclockwise from zero reference
+
+                drivetrain.temp = vertical * Math.cos(drivetrain.getHeading(AngleUnit.RADIANS)) - horizontal * Math.sin(drivetrain.getHeading(AngleUnit.RADIANS));
+                horizontal= vertical * Math.sin(drivetrain.getHeading(AngleUnit.RADIANS)) + horizontal * Math.cos(drivetrain.getHeading(AngleUnit.RADIANS));
+                vertical = drivetrain.temp;
+            }
+        }
+
+        // Assign calculated values to the power variables
+        drivetrain.flpower = vertical + horizontal + rotation;
+        drivetrain.frpower = vertical - horizontal - rotation;
+        drivetrain.blpower = vertical - horizontal + rotation;
+        drivetrain.brpower = vertical + horizontal - rotation;
+
+        // Find the greatest motor power
+        max = Math.max(Math.max(Math.abs(drivetrain.flpower), Math.abs(drivetrain.frpower)),
+                Math.max(Math.abs(drivetrain.blpower), Math.abs(drivetrain.brpower)));
+        // Scale motor powers with the greatest motor power
+        drivetrain.flpower /= max;
+        drivetrain.frpower /= max;
+        drivetrain.blpower /= max;
+        drivetrain.brpower /= max;
+
+        // Round powers for testing
+        if (drivetrain.flpower >= 0.5) {
+            drivetrain.flpower = 1;
+        } else if (drivetrain.flpower <= -0.5) {
+            drivetrain.flpower = -1;
         } else {
-            // Convert -180 to 180 into 0-360
-            if (angle > 0)
-                return angle;
-            else if (angle < 0)
-                return (angle + 360);
-            else
-                return 0;
+            drivetrain.flpower = 0;
+        }
+
+        if (drivetrain.frpower >= 0.5) {
+            drivetrain.frpower = 1;
+        } else if (drivetrain.frpower <= -0.5) {
+            drivetrain.frpower = -1;
+        } else {
+            drivetrain.frpower = 0;
+        }
+
+        if (drivetrain.blpower >= 0.5) {
+            drivetrain.blpower = 1;
+        } else if (drivetrain.blpower <= -0.5) {
+            drivetrain.blpower = -1;
+        } else {
+            drivetrain.blpower = 0;
+        }
+
+        if (drivetrain.brpower >= 0.5) {
+            drivetrain.brpower = 1;
+        } else if (drivetrain.brpower <= -0.5) {
+            drivetrain.brpower = -1;
+        } else {
+            drivetrain.brpower = 0;
         }
     }
 
-    /*
+    public void forward(double power, double inches) {
 
-    public void runEncoder(DcMotor m_motor, double power, double ticks) {
+        double target = inches * drivetrain.DRIVE_TICKS_PER_INCH;
 
-        int delta = (int)Math.round(ticks);
-        m_motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        m_motor.setTargetPosition(delta);
-        m_motor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        if (opModeIsActive()) {
 
-        while (m_motor.isBusy()) {
-            driveTeleOp();
-            m_motor.setPower(power);
+            drivetrain.resetDriveEncoders();
+            drivetrain.setDriveTarget(target,
+                    1, 1,
+                    1, 1);
+            drivetrain.setDriveRunMode();
+
+            while (opModeIsActive() && drivetrain.driveIsBusy()) {
+                drivetrain.setDrivePower(power);
+            }
+
+            drivetrain.setDrivePower(0);
+            drivetrain.resetDriveMode();
         }
-
-        // Stop all motion;
-        m_motor.setPower(0);
-
-        // Turn off RUN_TO_POSITION
-        m_motor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
     }
 
-     */
+    public void backward(double power, double inches) {
+
+        double target = inches * drivetrain.DRIVE_TICKS_PER_INCH;
+
+        if (opModeIsActive()) {
+
+            drivetrain.resetDriveEncoders();
+            drivetrain.setDriveTarget(target,
+                    -1, -1,
+                    -1, -1);
+            drivetrain.setDriveRunMode();
+
+            while (opModeIsActive() && drivetrain.driveIsBusy()) {
+                drivetrain.setDrivePower(power);
+            }
+
+            drivetrain.setDrivePower(0);
+            drivetrain.resetDriveMode();
+        }
+    }
+
+    public void strafeRight(double power, double inches) {
+
+        double target = inches * drivetrain.DRIVE_TICKS_PER_INCH;
+        target *= drivetrain.DRIVE_STRAFE_CORRECTION;
+
+        if (opModeIsActive()) {
+
+            drivetrain.resetDriveEncoders();
+            drivetrain.setDriveTarget(target,
+                    1, -1,
+                    -1, 1);
+            drivetrain.setDriveRunMode();
+
+            while (opModeIsActive() && drivetrain.driveIsBusy()) {
+                drivetrain.setDrivePower(power);
+            }
+
+            drivetrain.setDrivePower(0);
+            drivetrain.resetDriveMode();
+        }
+    }
+
+    public void strafeLeft(double power, double inches) {
+
+        double target = inches * drivetrain.DRIVE_TICKS_PER_INCH;
+        target *= drivetrain.DRIVE_STRAFE_CORRECTION;
+
+        if (opModeIsActive()) {
+
+            drivetrain.resetDriveEncoders();
+            drivetrain.setDriveTarget(target,
+                    -1, 1,
+                    1, -1);
+            drivetrain.setDriveRunMode();
+
+            while (opModeIsActive() && drivetrain.driveIsBusy()) {
+                drivetrain.setDrivePower(power);
+            }
+
+            drivetrain.setDrivePower(0);
+            drivetrain.resetDriveMode();
+        }
+    }
+
+    public void rotateRight(double power, double deltaAngle) {
+
+        double target = deltaAngle * drivetrain.DRIVE_TICKS_PER_DEGREE;
+
+        if (opModeIsActive()) {
+
+            drivetrain.resetDriveEncoders();
+            drivetrain.setDriveTarget(target,
+                    1, -1,
+                    1, -1);
+            drivetrain.setDriveRunMode();
+
+            while (opModeIsActive() && drivetrain.driveIsBusy()) {
+                drivetrain.setDrivePower(power);
+            }
+
+            drivetrain.setDrivePower(0);
+            drivetrain.resetDriveMode();
+        }
+    }
+
+    public void rotateLeft(double power, double deltaAngle) {
+
+        double target = deltaAngle * drivetrain.DRIVE_TICKS_PER_DEGREE;
+
+        if (opModeIsActive()) {
+
+            drivetrain.resetDriveEncoders();
+            drivetrain.setDriveTarget(target,
+                    -1, 1,
+                    -1, 1);
+            drivetrain.setDriveRunMode();
+
+            while (opModeIsActive() && drivetrain.driveIsBusy()) {
+                drivetrain.setDrivePower(power);
+            }
+
+            drivetrain.setDrivePower(0);
+            drivetrain.resetDriveMode();
+        }
+    }
+
+    public void rotateToAngle(double power, double targetAngle) {
+
+        telemetry.setAutoClear(false);
+        double initialAngle = drivetrain.getHeading(AngleUnit.DEGREES);
+        double deltaAngle = targetAngle - initialAngle;
+        if (Math.abs(deltaAngle) > 180) {
+            deltaAngle = 360 - Math.abs(deltaAngle);
+        }
+        telemetry.addData("Initial Angle", initialAngle);
+        telemetry.addData("Target Angle", targetAngle);
+        telemetry.addData("Delta Angle", deltaAngle);
+        telemetry.update();
+
+        double target = deltaAngle * drivetrain.DRIVE_TICKS_PER_DEGREE;
+
+        if (opModeIsActive()) {
+
+            drivetrain.resetDriveEncoders();
+            drivetrain.setDriveTarget(target,
+                    -1, 1,
+                    -1, 1);
+            drivetrain.setDriveRunMode();
+
+            while (opModeIsActive() && drivetrain.driveIsBusy()) {
+                drivetrain.setDrivePower(power);
+            }
+
+            drivetrain.setDrivePower(0);
+            drivetrain.resetDriveMode();
+        }
+
+        telemetry.addLine("Rotate Finished");
+        telemetry.update();
+    }
+
+    // Vision Methods ==============================================================================
+
+    private void scanBitmap(boolean showPixelData) {
+
+        int heightMid = (int)(vision.cropHeight/2.0);
+        int[] yPos = {heightMid-9,heightMid-6,heightMid-3,heightMid,heightMid+3,heightMid+6,heightMid+9}; // 7 pixels top to bottom
+        int[] xPos = {vision.cropWidth-1,0}; // Ring 1 (Rightmost pixel), Ring 4 (Leftmost pixel)
+        int pixel, r, g, b, total;
+
+        for (int i = 0; i < xPos.length; i++) {
+
+            for (int j = 0; j < yPos.length; j++) {
+
+                pixel = vision.croppedBitmap.getPixel(xPos[i],yPos[j]);
+                r = Color.red(pixel);
+                g = Color.green(pixel);
+                b = Color.blue(pixel);
+                total = r + g + b;
+
+                // Print per pixel RGB to telemetry
+                if (showPixelData) {
+                    telemetry.addData("Red", r);
+                    telemetry.addData("Green", g);
+                    telemetry.addData("Blue", b);
+                    telemetry.addData("Total", total);
+                    telemetry.update();
+                }
+
+                // If lighting is too bright, increment check if r > g > b with noticeable difference
+                // Else if under normal lighting, check if b < 17.5% of r+g
+                // Else fail check (too dark)
+                if (total > 375) {
+                    if (r > g+40 && g > b && b > 70) {
+                        telemetry.addLine("(" + i + "," + j + "): " + "*Bright Check Successful*");
+                        telemetry.addLine();
+                        telemetry.update();
+                        vision.check++;
+                    } else {
+                        telemetry.addLine("(" + i + "," + j + "): " + "~Bright Check Failed~");
+                        telemetry.addLine();
+                        telemetry.update();
+                    }
+                } else if (total > 50) {
+                    if ((17.5/100.0)*(r+g) > b) {
+                        telemetry.addLine("(" + i + "," + j + "): " + "*Normal Check Successful*");
+                        telemetry.addLine();
+                        telemetry.update();
+                        vision.check++;
+                    } else {
+                        telemetry.addLine("(" + i + "," + j + "): " + "~Normal Check Failed~");
+                        telemetry.addLine();
+                        telemetry.update();
+                    }
+                } else {
+                    telemetry.addLine("(" + i + "," + j + "): " + "~Too Dark, Check Failed~");
+                    telemetry.addLine();
+                    telemetry.update();
+                }
+            }
+
+            telemetry.addLine();
+            telemetry.addData("Ring " + (i+1) + " Check Count",vision.check + "/7");
+            telemetry.addLine();
+            telemetry.update();
+
+            if (vision.check >= 5) {
+                vision.ringsDetected++;
+            }
+
+            vision.check = 0;
+        }
+    }
+
+    public void vuforiaScanStack(boolean saveBitmaps, boolean showPixelData) {
+
+        telemetry.setAutoClear(false);
+
+        // Capture frame from camera
+        vision.captureFrame();
+        telemetry.addLine("Frame captured");
+        telemetry.addLine();
+        telemetry.update();
+
+        if (vision.rgbImage != null) {
+
+            // Transpose frame into bitmaps
+            vision.setBitmaps();
+            telemetry.addLine("Frame converted to bitmaps");
+            telemetry.addLine();
+            telemetry.update();
+
+            // Save bitmaps to .png files
+            if (saveBitmaps) {
+                vision.saveBitmap("Bitmap", vision.bitmap);
+                vision.saveBitmap("CroppedBitmap", vision.croppedBitmap);
+                telemetry.addLine("Bitmaps saved to device");
+                telemetry.addLine();
+                telemetry.update();
+            }
+
+            // Scan bitmap for starter stack height
+            scanBitmap(showPixelData);
+            telemetry.addLine("Bitmap scan finished");
+            telemetry.addData("Stack Height", vision.getStackHeight());
+            telemetry.update();
+        }
+    }
+
+    public void vuforiaScanTrackable() {
+
+        // Note: To use the remote camera preview:
+        // AFTER you hit Init on the Driver Station, use the "options menu" to select "Camera Stream"
+        // Tap the preview window to receive a fresh image.
+
+        vision.targetsUltimateGoal.activate();
+
+        // Change condition to something else later
+        while (!isStopRequested()) {
+
+            // check all the trackable targets to see which one (if any) is visible.
+            vision.targetVisible = false;
+            for (VuforiaTrackable trackable : vision.allTrackables) {
+                if (((VuforiaTrackableDefaultListener)trackable.getListener()).isVisible()) {
+                    telemetry.addData("Visible Target", trackable.getName());
+                    vision.targetVisible = true;
+                    break;
+                }
+            }
+            telemetry.update();
+        }
+
+        // Disable Tracking when we are done;
+        vision.targetsUltimateGoal.deactivate();
+    }
+
+    // Wobble Mech Methods =========================================================================
+
+    public void aim() {
+        wobbleMech.clawOpen();
+        sleep(750);
+        wobbleMech.setArmPosition(WobbleMech.ArmPosition.LOW, 0.3);
+    }
+
+    public void collect() {
+        wobbleMech.clawClose();
+        sleep(750);
+        wobbleMech.setArmPosition(WobbleMech.ArmPosition.REST, 0.2);
+    }
+
+    public void release() {
+        wobbleMech.setArmPosition(WobbleMech.ArmPosition.LOW, 0.2);
+        sleep(750);
+        wobbleMech.clawOpen();
+        sleep(750);
+        resetWobbleMech();
+    }
+
+    public void drop() {
+        wobbleMech.setArmPosition(WobbleMech.ArmPosition.HIGH, 0.2);
+        sleep(750);
+        wobbleMech.clawOpen();
+        sleep(750);
+        resetWobbleMech();
+    }
+
+    public void resetWobbleMech() {
+        wobbleMech.setArmPosition(WobbleMech.ArmPosition.REST, 0.3);
+        wobbleMech.clawClose();
+    }
+
+    // Shooter Methods =============================================================================
+
+    public void shootSingle() {
+        shooter.pushTrigger();
+        sleep(100);
+        shooter.retractTrigger();
+        shooter.ringsLoaded--;
+        if (shooter.ringsLoaded == 0)
+            shooter.ringsLoaded = 3;
+    }
+
+    public void shootAll() {
+        for (int i = 0; i < 3; i++) {
+            shootSingle();
+            sleep(100);
+            displayTeleOpTelemetry();
+        }
+    }
 }

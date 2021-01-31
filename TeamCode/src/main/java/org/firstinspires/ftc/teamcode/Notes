@@ -1,0 +1,13 @@
+Android Studio: Where you code, and stuff
+FTC SDK: FIRST releases an SDK every season. Download it from their github. You need it for your code.
+
+Folders:
+- Experimental: Testing classes; contain less code to make testing less confusing
+- Quals / "Main" Classes": Classes we use in competitions; everything should come together here
+- Subsystems: Classes the seperate robot mechanisms; makes coding less cluttered; used in main/testing classes
+- Util: "Utility" classes; constants/templates; Store info
+
+Subsystem is the "Recipe", make the "dish" in Main/Testing Classes:
+- Constructor: What allows you to "make" a dish
+- Objects: Ingredients for the dish
+- Methods/Functions: Instructions related to the dish
