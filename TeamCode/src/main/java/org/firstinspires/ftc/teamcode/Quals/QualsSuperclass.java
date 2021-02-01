@@ -108,7 +108,7 @@ public abstract class QualsSuperclass extends LinearOpMode {
         sleep(500);
 
         // Intake ==================================================================================
-        intake.roller = (DcMotorEx)hardwareMap.dcMotor.get("roller");
+        intake.roller = (DcMotorEx)hardwareMap.dcMotor.get("rollers");
         intake.release = hardwareMap.servo.get("release");
         intake.initialize();
         initCurrent++;

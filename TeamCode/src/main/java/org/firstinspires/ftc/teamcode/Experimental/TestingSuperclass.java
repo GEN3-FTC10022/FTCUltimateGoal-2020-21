@@ -54,17 +54,43 @@ public abstract class TestingSuperclass extends LinearOpMode {
     // Shooter
     public Shooter shooter = new Shooter();
 
+    // Intake
+    public Intake intake = new Intake();
+
+    // Wobble Mech
+    public WobbleMech wobbleMech = new WobbleMech();
+
+
     // METHODS -------------------------------------------------------------------------------------
 
     // Robot Initialization
     public void initialize() {
 
+        telemetry.setAutoClear(false);
+
         // Shooter =================================================================================
-        shooter.launcherOne = (DcMotorEx)hardwareMap.dcMotor.get("launcherOne");
+        // shooter.launcherOne = (DcMotorEx)hardwareMap.dcMotor.get("launcherOne");
         shooter.launcherTwo = (DcMotorEx)hardwareMap.dcMotor.get("launcherTwo");
         shooter.trigger = hardwareMap.servo.get("trigger");
         shooter.initialize();
         telemetry.addLine("Shooter initialized");
+        telemetry.update();
+        sleep(500);
+
+        // Intake ==================================================================================
+        intake.roller = (DcMotorEx)hardwareMap.dcMotor.get("rollers");
+        intake.release = hardwareMap.servo.get("release");
+        intake.initialize();
+        telemetry.addLine("Intake initialized");
+        telemetry.update();
+        sleep(500);
+
+        // Wobble Mech =============================================================================
+        wobbleMech.arm = (DcMotorEx)hardwareMap.dcMotor.get("arm");
+        wobbleMech.lClaw = hardwareMap.servo.get("lClaw");
+        wobbleMech.rClaw = hardwareMap.servo.get("rClaw");
+        wobbleMech.initialize();
+        telemetry.addLine("Wobble Mech initialized");
         telemetry.update();
         sleep(500);
 
@@ -79,9 +105,44 @@ public abstract class TestingSuperclass extends LinearOpMode {
         telemetry.addData("Velocity (ticks/s)", shooter.getVelocity());
         telemetry.addData("Target Velocity (ticks/s)", shooter.getTargetVelocity());
         telemetry.addData("Rings Loaded", shooter.ringsLoaded);
-        telemetry.addData("PID Encoder", shooter.launcherOne.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER));
-        telemetry.addData("PID Position", shooter.launcherOne.getPIDFCoefficients(DcMotor.RunMode.RUN_TO_POSITION));
+        telemetry.addData("PID Encoder", shooter.launcherTwo.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER));
+        telemetry.addData("PID Position", shooter.launcherTwo.getPIDFCoefficients(DcMotor.RunMode.RUN_TO_POSITION));
         telemetry.update();
+    }
+
+    // Wobble Mech Methods =========================================================================
+
+    public void aim() {
+        wobbleMech.clawOpen();
+        sleep(750);
+        wobbleMech.setArmPosition(WobbleMech.ArmPosition.LOW, 0.3);
+    }
+
+    public void collect() {
+        wobbleMech.clawClose();
+        sleep(750);
+        wobbleMech.setArmPosition(WobbleMech.ArmPosition.REST, 0.2);
+    }
+
+    public void release() {
+        wobbleMech.setArmPosition(WobbleMech.ArmPosition.LOW, 0.2);
+        sleep(750);
+        wobbleMech.clawOpen();
+        sleep(750);
+        resetWobbleMech();
+    }
+
+    public void drop() {
+        wobbleMech.setArmPosition(WobbleMech.ArmPosition.HIGH, 0.2);
+        sleep(750);
+        wobbleMech.clawOpen();
+        sleep(750);
+        resetWobbleMech();
+    }
+
+    public void resetWobbleMech() {
+        wobbleMech.setArmPosition(WobbleMech.ArmPosition.REST, 0.3);
+        wobbleMech.clawClose();
     }
 
     // Shooter Methods =============================================================================
@@ -98,7 +159,7 @@ public abstract class TestingSuperclass extends LinearOpMode {
     public void shootAll() {
         for (int i = 0; i < 3; i++) {
             shootSingle();
-            sleep(100);
+            sleep(250);
             displayTeleOpTelemetry();
         }
     }

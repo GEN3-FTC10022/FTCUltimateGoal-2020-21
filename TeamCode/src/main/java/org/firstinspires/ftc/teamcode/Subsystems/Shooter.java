@@ -21,7 +21,7 @@ public class Shooter {
 
     // Servo Constants
     private final double retract = 0; // temp
-    private final double push = 0.3; // temp
+    private final double push = 0.15; // temp
 
     // Shooter Constants
     private final double SHOOTER_TICKS_PER_REV = motorTicksPerRev[3];
@@ -53,18 +53,18 @@ public class Shooter {
         retractTrigger();
 
         // Shooter
-        launcherOne.setDirection(DcMotorSimple.Direction.REVERSE);
+        // launcherOne.setDirection(DcMotorSimple.Direction.REVERSE);
         launcherTwo.setDirection(DcMotorSimple.Direction.REVERSE);
 
-        launcherOne.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        // launcherOne.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         launcherTwo.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-        launcherOne.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        // launcherOne.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         launcherTwo.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-        launcherOne.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, launcherEncoderPIDF);
+        // launcherOne.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, launcherEncoderPIDF);
         launcherTwo.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, launcherEncoderPIDF);
-        launcherOne.setPIDFCoefficients(DcMotor.RunMode.RUN_TO_POSITION, launcherPositionPIDF);
+        // launcherOne.setPIDFCoefficients(DcMotor.RunMode.RUN_TO_POSITION, launcherPositionPIDF);
         launcherTwo.setPIDFCoefficients(DcMotor.RunMode.RUN_TO_POSITION, launcherPositionPIDF);
 
         ringsLoaded = 3;
@@ -85,7 +85,7 @@ public class Shooter {
     }
 
     public double getVelocity() {
-        return launcherOne.getVelocity();
+        return launcherTwo.getVelocity();
     }
 
     public void increaseVelocity() {
@@ -107,7 +107,7 @@ public class Shooter {
     }
 
     public void runShooter() {
-        launcherOne.setVelocity(targetVelocity);
+        // launcherOne.setVelocity(targetVelocity);
         launcherTwo.setVelocity(targetVelocity);
     }
 }

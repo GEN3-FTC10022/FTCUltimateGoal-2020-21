@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.Subsystems;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 
 import static org.firstinspires.ftc.robotcore.external.BlocksOpModeCompanion.gamepad1;
@@ -42,9 +43,13 @@ public class WobbleMech {
         CLOSE;
     }
 
+    /** Sets the arm to the rest position and opens the claw.
+     * @see org.firstinspires.ftc.teamcode.Quals.QualsSuperclass
+     */
     public void initialize() {
 
         // Arm
+        arm.setDirection(DcMotorSimple.Direction.REVERSE);
         arm.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         arm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         setArmPosition(ArmPosition.REST, 0.2);
@@ -54,10 +59,14 @@ public class WobbleMech {
         rClaw.setDirection(Servo.Direction.REVERSE);
         clawOpen();
 
-        // Initialization Constat
+        // Initialization Constant
         initK = 0;
     }
 
+    /** Sets the arm to the speicified position at the given power.
+     * @param armPosition Positions of the Wobble Mech (REST/HIGH/LOW)
+     * @param power Power set to the motor
+     */
     public void setArmPosition(ArmPosition armPosition, double power) {
         int index;
         switch (armPosition) {
@@ -75,6 +84,12 @@ public class WobbleMech {
         this.armPosition = armPosition;
     }
 
+
+    /**
+     * Outputs the current position of the arm.
+     *
+     * @return armPosition The position of the arm (REST/HIGH/LOW).
+     */
     public ArmPosition getArmPosition() {
         return armPosition;
     }
@@ -83,6 +98,9 @@ public class WobbleMech {
         arm.setPower(power);
     }
 
+    /**
+     * Opens the claws
+     */
     public void clawOpen() {
         lClaw.setPosition(open);
         rClaw.setPosition(open);
