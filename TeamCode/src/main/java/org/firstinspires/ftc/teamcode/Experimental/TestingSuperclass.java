@@ -115,25 +115,23 @@ public abstract class TestingSuperclass extends LinearOpMode {
     public void aim() {
         wobbleMech.clawOpen();
         sleep(750);
-        wobbleMech.setArmPosition(WobbleMech.ArmPosition.LOW, 0.3);
+        wobbleMech.setArmPosition(WobbleMech.ArmPosition.LOW);
     }
 
     public void collect() {
         wobbleMech.clawClose();
         sleep(750);
-        wobbleMech.setArmPosition(WobbleMech.ArmPosition.REST, 0.2);
+        wobbleMech.setArmPosition(WobbleMech.ArmPosition.REST);
     }
 
-    public void release() {
-        wobbleMech.setArmPosition(WobbleMech.ArmPosition.LOW, 0.2);
-        sleep(750);
-        wobbleMech.clawOpen();
+    public void place() {
+        wobbleMech.setArmPosition(WobbleMech.ArmPosition.LOW);
         sleep(750);
         resetWobbleMech();
     }
 
     public void drop() {
-        wobbleMech.setArmPosition(WobbleMech.ArmPosition.HIGH, 0.2);
+        wobbleMech.setArmPosition(WobbleMech.ArmPosition.HIGH);
         sleep(750);
         wobbleMech.clawOpen();
         sleep(750);
@@ -141,7 +139,7 @@ public abstract class TestingSuperclass extends LinearOpMode {
     }
 
     public void resetWobbleMech() {
-        wobbleMech.setArmPosition(WobbleMech.ArmPosition.REST, 0.3);
+        wobbleMech.setArmPosition(WobbleMech.ArmPosition.REST);
         wobbleMech.clawClose();
     }
 

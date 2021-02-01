@@ -146,7 +146,7 @@ public abstract class QualsSuperclass extends LinearOpMode {
                     // Set wobble goal to pre-loaded position
                     wobbleMech.clawClose();
                     sleep(2000);
-                    wobbleMech.setArmPosition(WobbleMech.ArmPosition.REST, 0.2);
+                    wobbleMech.setArmPosition(WobbleMech.ArmPosition.REST);
 
                     telemetry.addLine("Wobble goal loaded");
                     telemetry.update();
@@ -664,25 +664,23 @@ public abstract class QualsSuperclass extends LinearOpMode {
     public void aim() {
         wobbleMech.clawOpen();
         sleep(750);
-        wobbleMech.setArmPosition(WobbleMech.ArmPosition.LOW, 0.3);
+        wobbleMech.setArmPosition(WobbleMech.ArmPosition.LOW);
     }
 
     public void collect() {
         wobbleMech.clawClose();
         sleep(750);
-        wobbleMech.setArmPosition(WobbleMech.ArmPosition.REST, 0.2);
+        wobbleMech.setArmPosition(WobbleMech.ArmPosition.REST);
     }
 
-    public void release() {
-        wobbleMech.setArmPosition(WobbleMech.ArmPosition.LOW, 0.2);
-        sleep(750);
-        wobbleMech.clawOpen();
+    public void place() {
+        wobbleMech.setArmPosition(WobbleMech.ArmPosition.LOW);
         sleep(750);
         resetWobbleMech();
     }
 
     public void drop() {
-        wobbleMech.setArmPosition(WobbleMech.ArmPosition.HIGH, 0.2);
+        wobbleMech.setArmPosition(WobbleMech.ArmPosition.HIGH);
         sleep(750);
         wobbleMech.clawOpen();
         sleep(750);
@@ -690,7 +688,10 @@ public abstract class QualsSuperclass extends LinearOpMode {
     }
 
     public void resetWobbleMech() {
-        wobbleMech.setArmPosition(WobbleMech.ArmPosition.REST, 0.3);
+        wobbleMech.setArmPosition(WobbleMech.ArmPosition.REST);
+        wobbleMech.arm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        wobbleMech.setArmPosition(WobbleMech.ArmPosition.REST);
+        wobbleMech.arm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         wobbleMech.clawClose();
     }
 

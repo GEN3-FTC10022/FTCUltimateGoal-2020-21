@@ -19,10 +19,12 @@ public class WobbleMech {
     private final double WOBBLE_TICKS_PER_REV = motorTicksPerRev[2];
     public final double WOBBLE_GEAR_REDUCTION = 2;
     private final double WOBBLE_TICKS_PER_DEGREE = (WOBBLE_TICKS_PER_REV * WOBBLE_GEAR_REDUCTION)/360.0;
+    public int initK;
+    public double armPower = 0.8;
 
     // Arm Angle Positions
     private final double[] wobbleAngles =
-            {0, 60, 135}; // temp
+            {0, 60, 125}; // temp
     private ArmPosition armPosition;
 
     // Claw Positions
@@ -52,19 +54,20 @@ public class WobbleMech {
         arm.setDirection(DcMotorSimple.Direction.REVERSE);
         arm.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         arm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        setArmPosition(ArmPosition.REST, 0.2);
-        arm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        setArmPosition(ArmPosition.REST);
 
         // Claw
         rClaw.setDirection(Servo.Direction.REVERSE);
         clawOpen();
+
+        // Initialization
+        initK = 0;
     }
 
     /** Sets the arm to the speicified position at the given power.
      * @param armPosition Positions of the Wobble Mech (REST/HIGH/LOW)
-     * @param power Power set to the motor
      */
-    public void setArmPosition(ArmPosition armPosition, double power) {
+    public void setArmPosition(ArmPosition armPosition) {
         int index;
         switch (armPosition) {
             case HIGH:
@@ -77,10 +80,15 @@ public class WobbleMech {
                 index = 0;
         }
         arm.setTargetPosition((int)Math.round(wobbleAngles[index] * WOBBLE_TICKS_PER_DEGREE));
-        setArmPower(power);
+        arm.setPower(armPower);
+        arm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         this.armPosition = armPosition;
     }
 
+    public void zeroArm() {
+        arm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        arm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+    }
 
     /**
      * Outputs the current position of the arm.
@@ -89,10 +97,6 @@ public class WobbleMech {
      */
     public ArmPosition getArmPosition() {
         return armPosition;
-    }
-
-    public void setArmPower(double power) {
-        arm.setPower(power);
     }
 
     /**

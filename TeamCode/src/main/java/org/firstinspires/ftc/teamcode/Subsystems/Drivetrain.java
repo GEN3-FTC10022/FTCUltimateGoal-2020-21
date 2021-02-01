@@ -5,6 +5,7 @@ import android.graphics.Color;
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
@@ -26,7 +27,8 @@ public class Drivetrain {
     // REV IMU
     public BNO055IMU imu;
     private Orientation orientation;
-    public float angle;
+    private double heading;
+    private double headingZeroCorrectionDegrees; // Initial Angle Correction
 
     // TeleOp variables
     public double temp;
@@ -67,9 +69,10 @@ public class Drivetrain {
      * drive train's ZeroPowerBehavior to BRAKE, setting IMU parameters to degrees and m/s/s, and
      * setting driveMode to FIELD_CENTRIC.
      */
-    public void initialize(){
+    public void initialize() {
 
         // Drive
+        backLeft.setDirection(DcMotor.Direction.REVERSE); // fix
         frontRight.setDirection(DcMotor.Direction.REVERSE);
         backRight.setDirection(DcMotor.Direction.REVERSE);
         setDriveZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -79,6 +82,7 @@ public class Drivetrain {
         imuParameters.angleUnit = BNO055IMU.AngleUnit.DEGREES;
         imuParameters.accelUnit = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
         imu.initialize(imuParameters);
+        headingZeroCorrectionDegrees = 0;
 
         // Mode
         driveMode = DriveMode.FIELD_CENTRIC;
@@ -286,8 +290,20 @@ public class Drivetrain {
      */
     public double getHeading(AngleUnit angleUnit) {
         orientation = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.XYZ, angleUnit);
-        angle = orientation.thirdAngle; // temp
-        return angle;
+        heading = orientation.thirdAngle - getHeadingCorrection(angleUnit);
+        return heading;
+    }
+
+    public void setHeadingCorrectionDegrees() {
+        orientation = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.XYZ, AngleUnit.DEGREES);
+        headingZeroCorrectionDegrees = orientation.thirdAngle;
+    }
+
+    public double getHeadingCorrection(AngleUnit angleUnit) {
+        if (angleUnit == AngleUnit.DEGREES)
+            return headingZeroCorrectionDegrees;
+        else
+            return Math.toRadians(headingZeroCorrectionDegrees);
     }
 
     /**
