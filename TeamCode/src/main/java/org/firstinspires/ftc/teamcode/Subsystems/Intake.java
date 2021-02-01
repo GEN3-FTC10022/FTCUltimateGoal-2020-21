@@ -20,7 +20,7 @@ public class Intake {
     // Constants
     public Status status;
     public Position position;
-    private final double power = 0.7;
+    private final double power = 1;
     private final double up = 0;
     private final double down = 0.5;
 
