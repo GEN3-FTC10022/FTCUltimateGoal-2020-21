@@ -41,104 +41,21 @@ public class TestingTeleOp extends TestingSuperclass {
 
             // SHOOTER =============================================================================
 
-            // on
-            if (gamepad1.x && constants.x == 0)
-                constants.x++;
-            else if (!gamepad1.x && constants.x == 1){
-                shooter.launcherOne.setVelocity(shooter.getTargetVelocity());
-                constants.x++;
 
-                // update state
-                if (state == 0) state = 1;
-                else if (state == 2) state = 3;
-            }
-            // off
-            else if (gamepad1.x && constants.x == 2)
-                constants.x++;
-            else if (!gamepad1.x && constants.x == 3){
-                shooter.launcherOne.setVelocity(0);
-                constants.x = 0;
-
-                // update state
-                if (state == 1) state = 0;
-                else if (state == 3) state = 2;
-            }
-
-            // Launcher 2 ==========================================================================
-
-            // on
-            if (gamepad1.a && constants.a == 0)
-                constants.a++;
-            else if (!gamepad1.a && constants.a == 1){
-                shooter.launcherTwo.setVelocity(shooter.getTargetVelocity());
-                constants.a++;
-
-                // update state
-                if (state == 0) state = 2;
-                else if (state == 1) state = 3;
-            }
-            // off
-            else if (gamepad1.a && constants.a == 2)
-                constants.a++;
-            else if (!gamepad1.a && constants.a == 3){
-                shooter.launcherTwo.setVelocity(0);
-                constants.a = 0;
-
-                // update state
-                if (state == 2) state = 0;
-                else if (state == 3) state = 1;
-            }
-
-            // Both on & off =======================================================================
-
-            // on
-            if (gamepad1.y && constants.y == 0)
-                constants.y++;
-            else if (!gamepad1.y && constants.y == 1){
-                shooter.launcherOne.setVelocity(shooter.getTargetVelocity());
-                shooter.launcherTwo.setVelocity(shooter.getTargetVelocity());
-                constants.y++;
-                // fix individual toggle states
-                constants.x = 2;
-                constants.a = 2;
-
-                // update state
-                state = 3;
-            }
-            // off
-            else if (gamepad1.b && constants.y == 2)
-                constants.y ++;
-            else if (!gamepad1.b && constants.y == 3){
-                shooter.launcherOne.setVelocity(0);
-                shooter.launcherTwo.setVelocity(0);
-                constants.y = 0;
-                // fix individual toggle states
-                constants.x = 0;
-                constants.a = 0;
-
-                // update state
-                state = 0;
-            }
-
-            // Velocity ============================================================================
-
-            // up
+            // Velocity
             if (gamepad1.dpad_up && constants.up == 0)
                 constants.up++;
             else if (!gamepad1.dpad_up && constants.up == 1) {
-                adjustVelocity(1);
+                shooter.increaseVelocity();
                 constants.up--;
-            }
-            // down
-            else if (gamepad1.dpad_down && constants.down == 0)
+            } else if (gamepad1.dpad_down && constants.down == 0)
                 constants.down++;
             else if (!gamepad1.dpad_down && constants.down == 1) {
-                adjustVelocity(-1);
+                shooter.decreaseVelocity();
                 constants.down--;
             }
 
-            // Launching ===========================================================================
-
+            // Launching
             if (gamepad1.right_bumper && constants.rBumper == 0)
                 constants.rBumper++;
             else if (!gamepad1.right_bumper && constants.rBumper == 1) {
@@ -212,24 +129,6 @@ public class TestingTeleOp extends TestingSuperclass {
             // TELEMETRY ===========================================================================
 
             displayTeleOpTelemetry();
-        }
-    }
-
-    public void adjustVelocity(double signModifier){
-
-        double newVelocity = shooter.getTargetVelocity() + (shooter.VELOCITY_MODIFIER * signModifier);
-
-        shooter.setTargetVelocity(newVelocity);
-
-        if (state == 3){
-            shooter.launcherOne.setVelocity(shooter.getTargetVelocity());
-            shooter.launcherTwo.setVelocity(shooter.getTargetVelocity());
-
-        } else if (state == 1){
-            shooter.launcherOne.setVelocity(shooter.getTargetVelocity());
-
-        } else if (state == 2){
-            shooter.launcherTwo.setVelocity(shooter.getTargetVelocity());
         }
     }
 }

@@ -17,8 +17,8 @@ public class WobbleMech {
 
     // Constants
     private final double WOBBLE_TICKS_PER_REV = motorTicksPerRev[2];
-    private final double WOBBLE_TICKS_PER_DEGREE = WOBBLE_TICKS_PER_REV/360;
-    public int initK;
+    public final double WOBBLE_GEAR_REDUCTION = 2;
+    private final double WOBBLE_TICKS_PER_DEGREE = (WOBBLE_TICKS_PER_REV * WOBBLE_GEAR_REDUCTION)/360.0;
 
     // Arm Angle Positions
     private final double[] wobbleAngles =
@@ -58,9 +58,6 @@ public class WobbleMech {
         // Claw
         rClaw.setDirection(Servo.Direction.REVERSE);
         clawOpen();
-
-        // Initialization Constant
-        initK = 0;
     }
 
     /** Sets the arm to the speicified position at the given power.
