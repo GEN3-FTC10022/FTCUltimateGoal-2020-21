@@ -1,14 +1,17 @@
 package org.firstinspires.ftc.teamcode.Experimental.SubsystemTesters;
 
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 
-import org.firstinspires.ftc.teamcode.Experimental.TestingSuperclass;
-import org.firstinspires.ftc.teamcode.Subsystems.Intake;
-import org.firstinspires.ftc.teamcode.Subsystems.WobbleMech;
+import org.firstinspires.ftc.robotcore.external.Const;
+import org.firstinspires.ftc.teamcode.Subsystems.Shooter;
+import org.firstinspires.ftc.teamcode.Util.Constants;
 
 /**
- * Jan. 30, 2021
+ * Feb. 1, 2021
+ *
  * Tests shooter motors individually (or combined, driver can control)
  *
  * x - launcher1 - second press - off
@@ -26,21 +29,29 @@ import org.firstinspires.ftc.teamcode.Subsystems.WobbleMech;
  */
 
 @TeleOp(name = "Subsystems: Shooter Test")
-public class TestShooter extends TestingSuperclass {
+public class TestShooter extends LinearOpMode {
 
     int state;
+    private Constants constants = new Constants();
+    private Shooter shooter = new Shooter();
 
     @Override
     public void runOpMode() {
 
         initialize();
-        state = 0;  // 0 = none, 1 = launcher1 is on, 2= launcher 2 is on, 3 = both are on
 
         telemetry.setAutoClear(true);
 
         waitForStart();
 
+        doTeleOp();
+    }
+
+    private void doTeleOp(){
+
         while (opModeIsActive()) {
+
+            displayTeleOpTelemetry();
 
             // Launcher 1 ==========================================================================
 
@@ -154,13 +165,46 @@ public class TestShooter extends TestingSuperclass {
                 constants.lBumper--;
             }
 
-            // Telemetry ===========================================================================
-
-            telemetry.addData("Velocity Motor 1 (ticks/s)", shooter.launcherOne.getVelocity());
-            telemetry.addData("Velocity Motor 2 (ticks/s)", shooter.launcherTwo.getVelocity());
-            telemetry.addData("Target Velocity (ticks/s)", shooter.getTargetVelocity());
-            //displayTeleOpTelemetry();
         }
+
+    }
+
+    public void doAuto() {
+
+    }
+
+    public void initialize() {
+
+        // Telemetry ===============================================================================
+        telemetry.setAutoClear(false);
+        telemetry.addLine("Initializing Robot...");
+        telemetry.update();
+        sleep(500);
+
+        // Shooter =============================================================================
+        shooter.launcherOne = (DcMotorEx)hardwareMap.dcMotor.get("launcherOne");
+        shooter.launcherTwo = (DcMotorEx)hardwareMap.dcMotor.get("launcherTwo");
+        shooter.trigger = hardwareMap.servo.get("trigger");
+        shooter.initialize();
+        telemetry.addLine("Shooter initialized");
+        telemetry.update();
+        sleep(500);
+
+        // Display telemetry
+        telemetry.setAutoClear(true);
+        while(!isStarted())
+            displayTeleOpTelemetry();
+
+        state = 0;  // 0 = none, 1 = launcher1 is on, 2= launcher 2 is on, 3 = both are on
+    }
+
+    public void displayTeleOpTelemetry() {
+
+        telemetry.addLine("=== SHOOTER ===");
+        telemetry.addData("Velocity Motor 1 (ticks/s)", shooter.launcherOne.getVelocity());
+        telemetry.addData("Velocity Motor 2 (ticks/s)", shooter.launcherTwo.getVelocity());
+        telemetry.addData("Target Velocity (ticks/s)", shooter.getTargetVelocity());
+        telemetry.update();
     }
 
     public void adjustVelocity(double signModifier){
@@ -178,6 +222,24 @@ public class TestShooter extends TestingSuperclass {
 
         } else if (state == 2){
             shooter.launcherTwo.setVelocity(shooter.getTargetVelocity());
+        }
+    }
+
+    // shooter methods =============================================================================
+
+    public void shootSingle() {
+        shooter.pushTrigger();
+        sleep(100);
+        shooter.retractTrigger();
+        shooter.ringsLoaded--;
+        if (shooter.ringsLoaded == 0)
+            shooter.ringsLoaded = 3;
+    }
+
+    public void shootAll() {
+        for (int i = 0; i < 3; i++) {
+            shootSingle();
+            sleep(100);
         }
     }
 }
