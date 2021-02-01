@@ -40,13 +40,24 @@ public class Shooter {
     public PIDFCoefficients launcherEncoderPIDF = new PIDFCoefficients(7.5,3,3.5,0);
     public PIDFCoefficients launcherPositionPIDF = new PIDFCoefficients(0,0,0,0);
 
+    /**
+     * Creates a shooter object
+     */
     public Shooter() { }
 
+    /**
+     * Contains the position of the trigger as one of two options: push or retract
+     */
     public enum TriggerPosition {
         PUSH,
         RETRACT;
     }
 
+    /**
+     * Initializes the shooter by retracting the trigger, reversing the motor, setting it's
+     * zeroPowerBehavior to BRAKE, and putting it in run mode to travel at a targeted
+     * velocity using PID.
+     */
     public void initialize() {
 
         // Trigger
@@ -70,42 +81,71 @@ public class Shooter {
         ringsLoaded = 3;
     }
 
+    /**
+     * Puts the trigger in the push position and updates the triggerPosition variable
+     */
     public void pushTrigger() {
         trigger.setPosition(push);
         triggerPosition = TriggerPosition.PUSH;
     }
 
+    /**
+     * Puts the trigger in the retract position and updates the triggerPosition variable
+     */
     public void retractTrigger() {
         trigger.setPosition(retract);
         triggerPosition = TriggerPosition.RETRACT;
     }
 
+    /**
+     * @return the trigger position as either push or retract
+     */
     public TriggerPosition getTriggerPosition() {
         return triggerPosition;
     }
 
+    /**
+     * @return the current velocity of the second launcher
+     */
     public double getVelocity() {
         return launcherTwo.getVelocity();
     }
 
+    /**
+     * @param velocity The target velocity is updated to the input value
+     */
+    public void setTargetVelocity(double velocity) {
+        targetVelocity = velocity;
+    }
+
+    /**
+     * @return the current target velocity
+     */
+    public double getTargetVelocity() {
+        return targetVelocity;
+    }
+
+    /**
+     * Increases the target velocity by a decided upon value and updates the
+     * target velocity for the launcher
+     */
     public void increaseVelocity() {
         targetVelocity += VELOCITY_MODIFIER;
         runShooter();
     }
 
+    /**
+     * Decreases the target velocity by a decided upon value and updates the
+     * target velocity for the launcher
+     */
     public void decreaseVelocity() {
         targetVelocity -= VELOCITY_MODIFIER;
         runShooter();
     }
 
-    public void setTargetVelocity(double velocity) {
-        targetVelocity = velocity;
-    }
-
-    public double getTargetVelocity() {
-        return targetVelocity;
-    }
-
+    /**
+     * Sets the velocity of the launcher to the specified target speed
+     */
     public void runShooter() {
         // launcherOne.setVelocity(targetVelocity);
         launcherTwo.setVelocity(targetVelocity);
