@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.Experimental;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 
+import org.firstinspires.ftc.teamcode.Subsystems.Drivetrain;
 import org.firstinspires.ftc.teamcode.Subsystems.Intake;
 import org.firstinspires.ftc.teamcode.Subsystems.WobbleMech;
 
@@ -24,7 +25,7 @@ import org.firstinspires.ftc.teamcode.Subsystems.WobbleMech;
  * lBumper - shootAll()
  */
 
-@TeleOp(name = "TeleOp: Shooter Test")
+@TeleOp(name = "TeleOp: Test")
 public class TestingTeleOp extends TestingSuperclass {
 
     int state;
@@ -32,15 +33,36 @@ public class TestingTeleOp extends TestingSuperclass {
     @Override
     public void runOpMode() {
 
-        initialize();
-        state = 0;  // 0 = none, 1 = launcher1 is on, 2= launcher 2 is on, 3 = both are on
+        initialize(false);
 
         waitForStart();
 
+        telemetry.setAutoClear(true);
+
+        intake.down();
+
         while (opModeIsActive()) {
+
+            // DRIVETRAIN ==========================================================================
+
+            // Drive
+            drive();
+
+            // Switch Modes
+            if (gamepad1.back && constants.back == 0)
+                constants.back++;
+            else if (!gamepad1.back && constants.back == 1) {
+                if (drivetrain.driveMode == Drivetrain.DriveMode.FIELD_CENTRIC) {
+                    drivetrain.setMode(Drivetrain.DriveMode.ROBOT_CENTRIC);
+                } else {
+                    drivetrain.setMode(Drivetrain.DriveMode.FIELD_CENTRIC);
+                }
+                constants.back--;
+            }
 
             // SHOOTER =============================================================================
 
+            shooter.runShooter();
 
             // Velocity
             if (gamepad1.dpad_up && constants.up == 0)
@@ -91,7 +113,7 @@ public class TestingTeleOp extends TestingSuperclass {
             } else if (!gamepad1.x && constants.x == 1) { // Reset wobble mech
                 resetWobbleMech();
                 constants.y = 0;
-                constants.x--;
+                constants.x = 0;
             }
 
             // Claw

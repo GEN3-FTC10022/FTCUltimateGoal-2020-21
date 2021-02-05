@@ -183,6 +183,9 @@ public class TestWobbleMech extends LinearOpMode {
     public void place() {
         wobbleMech.setArmPosition(WobbleMech.ArmPosition.LOW);
         sleep(500);
+        wobbleMech.clawOpen();
+        sleep(500);
+        wobbleMech.setArmPosition(WobbleMech.ArmPosition.REST);
     }
 
     public void drop() {

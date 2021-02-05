@@ -29,12 +29,13 @@ public class Shooter {
     public final double SHOOTER_MAX_TICKS_PER_SECOND = SHOOTER_MAX_REV_PER_MIN * (SHOOTER_TICKS_PER_REV/60.0);
 
     public final double VELOCITY_MODIFIER = 20;
-    private double targetVelocity;
+    private int targetVelocity;
     public int ringsLoaded;
-    public final double LOW_SHOT_VELOCITY = 1300; // temp
-    public final double MID_SHOT_VELOCITY = 1340; // temp
-    public final double POWER_SHOT_VELOCITY = 1380; // temp
-    public final double HIGH_SHOT_VELOCITY = 1660; // tested
+    private final double LOW_SHOT_VELOCITY = 1300; // temp
+    private final double MID_SHOT_VELOCITY = 1340; // temp
+    private final double POWER_SHOT_VELOCITY = 1440; // temp
+    private final double HIGH_SHOT_VELOCITY = 1460; // tested
+    public final double[] VELOCITIES = {LOW_SHOT_VELOCITY,MID_SHOT_VELOCITY,POWER_SHOT_VELOCITY,HIGH_SHOT_VELOCITY};
 
     // PID
     public PIDFCoefficients launcherEncoderPIDF = new PIDFCoefficients(7.5,3,3.5,0);
@@ -78,6 +79,7 @@ public class Shooter {
         // launcherOne.setPIDFCoefficients(DcMotor.RunMode.RUN_TO_POSITION, launcherPositionPIDF);
         launcherTwo.setPIDFCoefficients(DcMotor.RunMode.RUN_TO_POSITION, launcherPositionPIDF);
 
+        setTargetVelocity(3);
         ringsLoaded = 3;
     }
 
@@ -111,18 +113,15 @@ public class Shooter {
         return launcherTwo.getVelocity();
     }
 
-    /**
-     * @param velocity The target velocity is updated to the input value
-     */
-    public void setTargetVelocity(double velocity) {
-        targetVelocity = velocity;
+    public void setTargetVelocity(int setting) {
+        targetVelocity = setting;
     }
 
     /**
      * @return the current target velocity
      */
     public double getTargetVelocity() {
-        return targetVelocity;
+        return VELOCITIES[targetVelocity];
     }
 
     /**
@@ -130,7 +129,8 @@ public class Shooter {
      * target velocity for the launcher
      */
     public void increaseVelocity() {
-        targetVelocity += VELOCITY_MODIFIER;
+        if (targetVelocity < VELOCITIES.length-1)
+            targetVelocity++;
         runShooter();
     }
 
@@ -139,7 +139,8 @@ public class Shooter {
      * target velocity for the launcher
      */
     public void decreaseVelocity() {
-        targetVelocity -= VELOCITY_MODIFIER;
+        if (targetVelocity > 0)
+            targetVelocity--;
         runShooter();
     }
 
@@ -148,6 +149,6 @@ public class Shooter {
      */
     public void runShooter() {
         // launcherOne.setVelocity(targetVelocity);
-        launcherTwo.setVelocity(targetVelocity);
+        launcherTwo.setVelocity(VELOCITIES[targetVelocity]);
     }
 }

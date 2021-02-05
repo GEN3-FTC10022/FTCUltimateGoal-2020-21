@@ -21,8 +21,8 @@ public class Intake {
     public Status status;
     public Position position;
     private final double power = 1;
-    private final double up = 0;
-    private final double down = 0.5;
+    private final double up = 0.3;
+    private final double down = 0;
 
     public Intake() { }
     /**
@@ -54,7 +54,7 @@ public class Intake {
     public void initialize() {
 
         // Release
-        up();
+        up(); // Locks the intake
 
         // Arm
         roller.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);

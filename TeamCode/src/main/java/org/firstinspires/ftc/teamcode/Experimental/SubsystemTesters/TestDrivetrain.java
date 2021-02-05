@@ -6,9 +6,13 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
+import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
+import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.firstinspires.ftc.teamcode.Experimental.TestingSuperclass;
 import org.firstinspires.ftc.teamcode.Subsystems.Drivetrain;
 import org.firstinspires.ftc.teamcode.Util.Constants;
+import org.firstinspires.ftc.teamcode.Util.PIDController;
 
 @TeleOp(name = "Subsystems: Drivetrain Test")
 public class TestDrivetrain extends LinearOpMode {
@@ -72,6 +76,7 @@ public class TestDrivetrain extends LinearOpMode {
 
             // TELEMETRY ===========================================================================
 
+            telemetry.setAutoClear(true);
             displayTeleOpTelemetry();
 
             // Drive
@@ -88,14 +93,22 @@ public class TestDrivetrain extends LinearOpMode {
                 }
                 constants.back--;
             }
+
+            if (gamepad1.a && constants.a == 0)
+                constants.a++;
+            else if (!gamepad1.a && constants.a == 1) {
+                rotateToAnglePID(0.8, -135);
+                sleep(2000);
+                rotateToAnglePID(0.8, 0);
+                sleep(2000);
+                constants.a--;
+            }
         }
     }
 
     public void doAuto() {
-        rotateRight(0.6, 225);
-        sleep(125);
-        rotateToAngle(0.6, 0, true);
-        sleep(10000);
+        rotateToAnglePID(0.6, 90);
+        sleep(30000);
     }
 
     public void displayTeleOpTelemetry() {
@@ -428,5 +441,105 @@ public class TestDrivetrain extends LinearOpMode {
             telemetry.addLine("Rotate Finished");
             telemetry.update();
         }
+    }
+
+    public void rotateToAnglePID(double power, double targetAngle) {
+        telemetry.setAutoClear(false);
+        double initialAngle = drivetrain.getHeading(AngleUnit.DEGREES);
+        double deltaAngle = targetAngle - initialAngle;
+
+        telemetry.addLine("\n Rotating...");
+        telemetry.addData("Initial Angle", initialAngle);
+        telemetry.addData("Target Angle", targetAngle);
+        telemetry.addData("Delta Angle", deltaAngle);
+        telemetry.update();
+
+        rotate(power,deltaAngle);
+
+        telemetry.addData("Rotate Finished", drivetrain.getHeading(AngleUnit.DEGREES));
+        telemetry.update();
+    }
+
+    /**
+     * Rotate left or right the number of degrees. Does not support turning more than 359 degrees.
+     * @param degrees Degrees to turn, + is left - is right
+     */
+    public void rotate(double power, double degrees) {
+        // restart imu angle tracking.
+        drivetrain.resetAngle();
+
+        // If input degrees > 359, we cap at 359 with same sign as input.
+        if (Math.abs(degrees) > 359) degrees = Math.copySign(359, degrees);
+
+        // start pid controller. PID controller will monitor the turn angle with respect to the
+        // target angle and reduce power as we approach the target angle. We compute the p and I
+        // values based on the input degrees and starting power level. We compute the tolerance %
+        // to yield a tolerance value of about 1 degree.
+        // Overshoot is dependant on the motor and gearing configuration, starting power, weight
+        // of the robot and the on target tolerance.
+
+        drivetrain.controller.reset();
+
+        // Proportional factor can be found by dividing the max desired pid output by
+        // the setpoint or target. Here 30% power is divided by 90 degrees (.30 / 90)
+        // to get a P factor of .003. This works for the robot we testing this code with.
+        // Your robot may vary but this way finding P works well in most situations.
+        double p = Math.abs(power/degrees);
+
+        // Integrative factor can be approximated by diving P by 100. Then you have to tune
+        // this value until the robot turns, slows down and stops accurately and also does
+        // not take too long to "home" in on the setpoint. Started with 100 but robot did not
+        // slow and overshot the turn. Increasing I slowed the end of the turn and completed
+        // the turn in a timely manner
+        double i = p / 100.0;
+
+        drivetrain.controller.setPID(p, i, 0);
+
+        drivetrain.controller.setSetpoint(degrees);
+        drivetrain.controller.setInputRange(0, degrees);
+        drivetrain.controller.setOutputRange(0, power);
+        drivetrain.controller.setTolerance(1.0 / Math.abs(degrees) * 100.0);
+        telemetry.addData("Tolerance", (1.0 / Math.abs(degrees) * 100.0));
+        telemetry.update();
+        sleep(2000);
+        drivetrain.controller.enable();
+
+        // drivetrain.getAngle() returns + when rotating counter clockwise (left) and - when rotating
+        // clockwise (right).
+
+        // rotate until turn is completed.
+
+        if (degrees < 0)
+        {
+            // On right turn we have to get off zero first.
+            while (opModeIsActive() && drivetrain.getAngle() == 0)
+            {
+                drivetrain.setDrivePower(power,-power,power,-power);
+                sleep(100);
+            }
+
+            do
+            {
+                power = drivetrain.controller.performPID(drivetrain.getAngle()); // power will be - on right turn.
+                drivetrain.setDrivePower(-power,power,-power,power);
+            } while (opModeIsActive() && !drivetrain.controller.onTarget());
+        }
+        else    // left turn.
+            do
+            {
+                power = drivetrain.controller.performPID(drivetrain.getAngle()); // power will be + on left turn.
+                drivetrain.setDrivePower(-power,power,-power,power);
+            } while (opModeIsActive() && !drivetrain.controller.onTarget());
+
+        // turn the motors off.
+        drivetrain.setDrivePower(0);
+
+        rotation = drivetrain.getAngle();
+
+        // wait for rotation to stop.
+        sleep(500);
+
+        // reset angle tracking on new heading.
+        drivetrain.resetAngle();
     }
 }

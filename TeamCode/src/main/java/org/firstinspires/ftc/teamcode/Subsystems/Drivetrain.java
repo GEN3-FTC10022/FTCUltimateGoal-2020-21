@@ -14,6 +14,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
+import org.firstinspires.ftc.teamcode.Util.PIDController;
 
 import static org.firstinspires.ftc.teamcode.Util.Constants.motorTicksPerRev;
 
@@ -50,6 +51,11 @@ public class Drivetrain {
     public final double DRIVE_STRAFE_CORRECTION = (double)5.0/4.25;
     public final double DRIVE_TRACK_WIDTH = 12.2047; //temp
 
+    // PID
+    public PIDController controller = new PIDController(0,0,0);
+    Orientation lastAngles = new Orientation();
+    double globalAngle, power = .80, correction, rotation;
+
     /**
      * Constructs a drive train object.
      */
@@ -79,6 +85,7 @@ public class Drivetrain {
 
         // IMU
         BNO055IMU.Parameters imuParameters = new BNO055IMU.Parameters();
+        imuParameters.mode = BNO055IMU.SensorMode.IMU;
         imuParameters.angleUnit = BNO055IMU.AngleUnit.DEGREES;
         imuParameters.accelUnit = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
         imu.initialize(imuParameters);
@@ -313,5 +320,33 @@ public class Drivetrain {
      */
     public void setMode(DriveMode driveMode) {
         this.driveMode = driveMode;
+    }
+
+    public double getAngle() {
+        // We experimentally determined the Z axis is the axis we want to use for heading angle.
+        // We have to process the angle because the imu works in euler angles so the Z axis is
+        // returned as 0 to +180 or 0 to -180 rolling back to -179 or +179 when rotation passes
+        // 180 degrees. We detect this transition and track the total cumulative angle of rotation.
+
+        Orientation angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+
+        double deltaAngle = angles.firstAngle - lastAngles.firstAngle;
+
+        if (deltaAngle < -180)
+            deltaAngle += 360;
+        else if (deltaAngle > 180)
+            deltaAngle -= 360;
+
+        globalAngle += deltaAngle;
+
+        lastAngles = angles;
+
+        return globalAngle;
+    }
+
+    public void resetAngle()
+    {
+        lastAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+        globalAngle = 0;
     }
 }
