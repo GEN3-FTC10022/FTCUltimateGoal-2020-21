@@ -13,7 +13,7 @@ public class TestingAuto extends TestingSuperclass {
 
         waitForStart();
 
-        // vuforiaScanStack(false, false);
+        vuforiaScanStack(false, false);
 
         shooter.setTargetVelocity(3);
         shooter.runShooter();
@@ -21,50 +21,39 @@ public class TestingAuto extends TestingSuperclass {
         // Move to launch line
         forward(0.8, 57);
         sleep(250);
-        rotateToAngle(0.8,0,true);
-        sleep(250);
         strafeRight(0.8,20);
         sleep(250);
-
         shootAll();
+        shooter.setVelocity(0);
 
-        /*
-        if (vision.stackHeight == 0) {
-            forward(0.5, 50);
+        if (vision.stackHeight == 0) { // Target Zone A
+            strafeLeft(0.8, 10);
             sleep(500);
-        } else if (vision.getStackHeight() == 1) {
-            forward(0.5, 35);
+            rotateRight(0.5, 90);
+            // rotate(0.5,-90);
+            // rotateToAnglePID(0.5, -90);
             sleep(500);
-            rotateLeft(0.5,45);
+            place();
             sleep(500);
-            forward(0.5,5);
+
+            // Rotate to zero
+            rotateLeft(0.5, 90);
+            // rotate(0.5, 90);
+            // rotateToAnglePID(0.5, 0);
+
+        } else if (vision.getStackHeight() == 1) { // Target Zone B
+            strafeLeft(0.8, 27);
             sleep(500);
-        } else {
-            forward(0.5, 50);
+            place();
+
+        } else { // Target Zone C
+            forward(0.8, 45);
+            sleep(500);
+            strafeLeft(0.8, 6);
+            sleep(500);
+            place();
+            backward(0.8, 40);
             sleep(500);
         }
-
-        // Drop
-        drop();
-
-        if (vision.getStackHeight() == 0) {
-            forward(0.5, 35);
-            sleep(500);
-        } else if (vision.getStackHeight() == 1) {
-            forward(0.5, 35);
-            sleep(500);
-            rotateLeft(0.5,45);
-            sleep(500);
-            forward(0.5,5);
-            sleep(500);
-        } else {
-            forward(0.5, 50);
-            sleep(500);
-        }
-         */
-
-        sleep(30000);
-
-        stop();
     }
 }

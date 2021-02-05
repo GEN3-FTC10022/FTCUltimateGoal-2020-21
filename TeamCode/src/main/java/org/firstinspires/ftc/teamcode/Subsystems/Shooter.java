@@ -31,9 +31,9 @@ public class Shooter {
     public final double VELOCITY_MODIFIER = 20;
     private int targetVelocity;
     public int ringsLoaded;
-    private final double LOW_SHOT_VELOCITY = 1300; // temp
-    private final double MID_SHOT_VELOCITY = 1340; // temp
-    private final double POWER_SHOT_VELOCITY = 1440; // temp
+    private final double LOW_SHOT_VELOCITY = 0; // temp
+    private final double MID_SHOT_VELOCITY = 0; // temp
+    private final double POWER_SHOT_VELOCITY = 0; // temp
     private final double HIGH_SHOT_VELOCITY = 1460; // tested
     public final double[] VELOCITIES = {LOW_SHOT_VELOCITY,MID_SHOT_VELOCITY,POWER_SHOT_VELOCITY,HIGH_SHOT_VELOCITY};
 
@@ -115,6 +115,10 @@ public class Shooter {
 
     public void setTargetVelocity(int setting) {
         targetVelocity = setting;
+    }
+
+    public void setVelocity(double velocity) {
+        launcherTwo.setVelocity(velocity);
     }
 
     /**

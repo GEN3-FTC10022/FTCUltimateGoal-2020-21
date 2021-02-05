@@ -140,14 +140,14 @@ public class TestShooter extends LinearOpMode {
             if (gamepad1.dpad_up && constants.up == 0)
                 constants.up++;
             else if (!gamepad1.dpad_up && constants.up == 1) {
-                adjustVelocity(1);
+                // adjustVelocity(1);
                 constants.up--;
             }
             // down
             else if (gamepad1.dpad_down && constants.down == 0)
                 constants.down++;
             else if (!gamepad1.dpad_down && constants.down == 1) {
-                adjustVelocity(-1);
+                // adjustVelocity(-1);
                 constants.down--;
             }
 
@@ -211,7 +211,7 @@ public class TestShooter extends LinearOpMode {
 
         double newVelocity = shooter.getTargetVelocity() + (shooter.VELOCITY_MODIFIER * signModifier);
 
-        shooter.setTargetVelocity(newVelocity);
+        // shooter.setTargetVelocity(newVelocity);
 
         if (state == 3){
             shooter.launcherOne.setVelocity(shooter.getTargetVelocity());

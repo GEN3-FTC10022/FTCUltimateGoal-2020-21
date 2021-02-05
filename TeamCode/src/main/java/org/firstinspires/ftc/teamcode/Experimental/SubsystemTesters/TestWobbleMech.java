@@ -108,49 +108,6 @@ public class TestWobbleMech extends LinearOpMode {
         telemetry.update();
         sleep(500);
 
-        if (isAuto) {
-
-            telemetry.addLine();
-            telemetry.addLine("Load wobble goal and press 'A', or press 'B' to cancel...");
-            telemetry.update();
-
-            while (wobbleMech.initK == 0) {
-
-                if (gamepad1.a) {
-                    // Set wobble goal to pre-loaded position
-                    wobbleMech.clawClose();
-                    sleep(1000);
-                    wobbleMech.setArmPosition(WobbleMech.ArmPosition.REST);
-
-                    telemetry.addLine("Wobble goal loaded");
-                    telemetry.update();
-
-                    wobbleMech.initK++;
-                    sleep(500);
-                }
-
-                // Cancel wobble goal pre-load
-                if (gamepad1.b) {
-                    // Reset wobble mech
-                    resetWobbleMech();
-
-                    telemetry.addLine("Wobble goal not loaded");
-                    telemetry.update();
-
-                    wobbleMech.initK++;
-                    sleep(500);
-                }
-
-                // Break out of loop if initialization is stopped to prevent forced restart
-                if (isStopRequested()) {
-                    break;
-                }
-            }
-
-        } else {
-            resetWobbleMech();
-        }
-
         // Display telemetry
         telemetry.setAutoClear(true);
         while(!isStarted())
@@ -176,7 +133,7 @@ public class TestWobbleMech extends LinearOpMode {
 
     public void collect() {
         wobbleMech.clawClose();
-        sleep(500);
+        sleep(1000);
         wobbleMech.setArmPosition(WobbleMech.ArmPosition.REST);
     }
 
