@@ -7,152 +7,264 @@ import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
+import org.firstinspires.ftc.teamcode.Util.Subsystem;
 
 import static org.firstinspires.ftc.robotcore.external.BlocksOpModeCompanion.telemetry;
 import static org.firstinspires.ftc.teamcode.Util.Constants.YELLOWJACKET_5202_MAX_RPM;
+import static org.firstinspires.ftc.teamcode.Util.Constants.YELLOWJACKET_5202_TICKS_PER_REV;
 import static org.firstinspires.ftc.teamcode.Util.Constants.motorTicksPerRev;
 
-public class Shooter {
+public abstract class Shooter extends Subsystem {
 
-    // Shooter Objects
-    public DcMotorEx launcherOne, launcherTwo;
-    public Servo trigger;
-    public TriggerPosition triggerPosition;
+    // Devices
+    public static DcMotorEx launcherOne, launcherTwo;
+    public static Servo trigger;
 
-    // Servo Constants
-    private final double retract = 0; // temp
-    private final double push = 0.15; // temp
+    // Constants
+    private static final double TRIGGER_MIN = 0;
+    private static final double TRIGGER_MAX = 0.15;
+    private static TriggerPosition triggerPosition;
 
-    // Shooter Constants
-    private final double SHOOTER_TICKS_PER_REV = motorTicksPerRev[3];
-    private final double SHOOTER_MAX_REV_PER_MIN = 0.8 * YELLOWJACKET_5202_MAX_RPM; // Max Shooter Vel @ 80% of motor max
-    public final double SHOOTER_MAX_TICKS_PER_SECOND = SHOOTER_MAX_REV_PER_MIN * (SHOOTER_TICKS_PER_REV/60.0);
+    private static final double LAUNCHER_TICKS_PER_REV = YELLOWJACKET_5202_TICKS_PER_REV;
+    private static final double LAUNCHER_MAX_REV_PER_MIN = 0.8 * YELLOWJACKET_5202_MAX_RPM; // Max Shooter Vel @ 80% of motor max
+    private static final double LAUNCHER_MAX_TICKS_PER_SECOND = LAUNCHER_MAX_REV_PER_MIN * (LAUNCHER_TICKS_PER_REV/60.0);
 
-    public final double VELOCITY_MODIFIER = 20;
-    private int targetVelocity;
-    public int ringsLoaded;
-    private final double LOW_SHOT_VELOCITY = 0; // temp
-    private final double MID_SHOT_VELOCITY = 0; // temp
-    private final double POWER_SHOT_VELOCITY = 0; // temp
-    private final double HIGH_SHOT_VELOCITY = 1460; // tested
-    public final double[] VELOCITIES = {LOW_SHOT_VELOCITY,MID_SHOT_VELOCITY,POWER_SHOT_VELOCITY,HIGH_SHOT_VELOCITY};
+    public static final int LOW_GOAL_VELOCITY = 0; // temp
+    public static final int MID_GOAL_VELOCITY = 0; // temp
+    public static final int POWER_SHOT_VELOCITY = 0; // temp
+    public static final int HIGH_GOAL_VELOCITY = 1460; // tested
+    private static final int[] VELOCITIES = {LOW_GOAL_VELOCITY,MID_GOAL_VELOCITY,POWER_SHOT_VELOCITY,HIGH_GOAL_VELOCITY};
+    private static int targetSetting;
 
-    // PID
-    public PIDFCoefficients launcherEncoderPIDF = new PIDFCoefficients(7.5,3,3.5,0);
-    public PIDFCoefficients launcherPositionPIDF = new PIDFCoefficients(0,0,0,0);
+    private static VelocityControlMode velocityControlMode;
+    private static final double VELOCITY_MODIFIER = 20;
+    private static double targetVelocity;
+    private static final PIDFCoefficients launcherVelocityPID = new PIDFCoefficients(7.5,3,3.5,0);
 
     /**
-     * Creates a shooter object
+     * Configures the hardware map, sets the trigger to the retracted position, and sets the preset
+     * target setting and manual target velocity to high goal.
      */
-    public Shooter() { }
+    public static void initialize(String hmLauncher, String hmTrigger) {
 
-    /**
-     * Contains the position of the trigger as one of two options: push or retract
-     */
-    public enum TriggerPosition {
-        PUSH,
-        RETRACT;
-    }
+        // Hardware Map
+        launcherOne = hm.get(DcMotorEx.class, hmLauncher);
+        launcherTwo = hm.get(DcMotorEx.class, hmLauncher);
+        trigger = hm.get(Servo.class, hmTrigger);
 
-    /**
-     * Initializes the shooter by retracting the trigger, reversing the motor, setting it's
-     * zeroPowerBehavior to BRAKE, and putting it in run mode to travel at a targeted
-     * velocity using PID.
-     */
-    public void initialize() {
+        // Launcher
+        launcherOne.setDirection(DcMotorSimple.Direction.REVERSE);
+        launcherTwo.setDirection(DcMotorSimple.Direction.REVERSE);
+        launcherOne.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        launcherTwo.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        launcherOne.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        launcherTwo.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        launcherOne.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, launcherVelocityPID);
+        launcherTwo.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, launcherVelocityPID);
 
         // Trigger
+        trigger.scaleRange(TRIGGER_MIN, TRIGGER_MAX);
+
+        velocityControlMode = VelocityControlMode.PRESET;
         retractTrigger();
+        targetSetting = 3;
+        targetVelocity = HIGH_GOAL_VELOCITY;
 
-        // Shooter
-        // launcherOne.setDirection(DcMotorSimple.Direction.REVERSE);
-        launcherTwo.setDirection(DcMotorSimple.Direction.REVERSE);
-
-        // launcherOne.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        launcherTwo.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-
-        // launcherOne.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        launcherTwo.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-
-        // launcherOne.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, launcherEncoderPIDF);
-        launcherTwo.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, launcherEncoderPIDF);
-        // launcherOne.setPIDFCoefficients(DcMotor.RunMode.RUN_TO_POSITION, launcherPositionPIDF);
-        launcherTwo.setPIDFCoefficients(DcMotor.RunMode.RUN_TO_POSITION, launcherPositionPIDF);
-
-        setTargetVelocity(3);
-        ringsLoaded = 3;
+        telemetry.addLine("Shooter initialized");
+        telemetry.update();
+        sleep(500);
     }
 
     /**
-     * Puts the trigger in the push position and updates the triggerPosition variable
+     * Trigger Postions - EXTENDED, RETRACTED
      */
-    public void pushTrigger() {
-        trigger.setPosition(push);
-        triggerPosition = TriggerPosition.PUSH;
+    public enum TriggerPosition {
+        EXTENDED,
+        RETRACTED
     }
 
     /**
-     * Puts the trigger in the retract position and updates the triggerPosition variable
+     * @return Current position of the trigger
      */
-    public void retractTrigger() {
-        trigger.setPosition(retract);
-        triggerPosition = TriggerPosition.RETRACT;
-    }
-
-    /**
-     * @return the trigger position as either push or retract
-     */
-    public TriggerPosition getTriggerPosition() {
+    public static TriggerPosition getTriggerPosition() {
         return triggerPosition;
     }
 
     /**
-     * @return the current velocity of the second launcher
+     * Puts the trigger in the push position and updates the trigger position
+     * @see Shooter.TriggerPosition
      */
-    public double getVelocity() {
-        return launcherTwo.getVelocity();
-    }
-
-    public void setTargetVelocity(int setting) {
-        targetVelocity = setting;
-    }
-
-    public void setVelocity(double velocity) {
-        launcherTwo.setVelocity(velocity);
+    public static void pushTrigger() {
+        trigger.setPosition(1);
+        triggerPosition = TriggerPosition.EXTENDED;
     }
 
     /**
-     * @return the current target velocity
+     * Puts the trigger in the retract position and updates the trigger position
+     * @see Shooter.TriggerPosition
      */
-    public double getTargetVelocity() {
-        return VELOCITIES[targetVelocity];
+    public static void retractTrigger() {
+        trigger.setPosition(0);
+        triggerPosition = TriggerPosition.RETRACTED;
     }
 
     /**
-     * Increases the target velocity by a decided upon value and updates the
-     * target velocity for the launcher
+     * Velocity Control Mode - PRESET, MANUAL
      */
-    public void increaseVelocity() {
-        if (targetVelocity < VELOCITIES.length-1)
-            targetVelocity++;
-        runShooter();
+    public enum VelocityControlMode {
+        /**
+         * Adjusting the launcher velocity in this mode will cycle through the 4 preset velocities.
+         * @see #VELOCITIES
+         */
+        PRESET,
+
+        /**
+         * Adjusting the launcher velocity in this mode will apply a direct modifier to the target
+         * velocity.
+         * @see #VELOCITY_MODIFIER
+         */
+        MANUAL
     }
 
     /**
-     * Decreases the target velocity by a decided upon value and updates the
-     * target velocity for the launcher
+     * @return Current velocity control mode of the shooter
      */
-    public void decreaseVelocity() {
-        if (targetVelocity > 0)
-            targetVelocity--;
-        runShooter();
+    public static VelocityControlMode getVelocityControlMode() {
+        return velocityControlMode;
     }
 
     /**
-     * Sets the velocity of the launcher to the specified target speed
+     * Sets the active velocity control mode to the argument
+     * @param velocityControlMode The desired velocity control mode.
+     * @see Shooter.VelocityControlMode
      */
-    public void runShooter() {
-        // launcherOne.setVelocity(targetVelocity);
-        launcherTwo.setVelocity(VELOCITIES[targetVelocity]);
+    public static void setVelocityControlMode(VelocityControlMode velocityControlMode) {
+        Shooter.velocityControlMode = velocityControlMode;
+    }
+
+    /**
+     * Sets the target velocity or target setting of the launcher depending on the active velocity
+     * control mode.
+     * @param k The desired target velocity in ticks per second or target setting.
+     */
+    public static void setTarget(int k) {
+        if (velocityControlMode == VelocityControlMode.PRESET && k >= 0 && k <= VELOCITIES.length-1)
+            targetSetting = k;
+        else if (velocityControlMode == VelocityControlMode.MANUAL && targetVelocity <= LAUNCHER_MAX_TICKS_PER_SECOND-VELOCITY_MODIFIER)
+            targetVelocity = k;
+    }
+
+    /**
+     * @return Current target velocity in ticks per second or the current target setting depending
+     * on the active velocity control mode. Returns -1 if the velocity control mode has not been
+     * initialized.
+     */
+    public static double getTarget() {
+        if (velocityControlMode == VelocityControlMode.PRESET)
+            return targetSetting;
+        else if (velocityControlMode == VelocityControlMode.MANUAL)
+            return targetVelocity;
+        else
+            return -1;
+    }
+
+    /**
+     * Increments the target setting or the target velocity depending on the active velocity control
+     * mode.
+     */
+    public static void increaseVelocity() {
+        if (velocityControlMode == VelocityControlMode.PRESET && targetSetting <= VELOCITIES.length-1)
+            targetSetting++;
+        else if (velocityControlMode == VelocityControlMode.MANUAL && targetVelocity <= LAUNCHER_MAX_TICKS_PER_SECOND-VELOCITY_MODIFIER)
+            targetVelocity += VELOCITY_MODIFIER;
+    }
+
+    /**
+     * Decrements the target setting or the target velocity depending on the active velocity control
+     * mode.
+     */
+    public static void decreaseVelocity() {
+        if (velocityControlMode == VelocityControlMode.PRESET && targetSetting > 0)
+            targetSetting--;
+        else if (velocityControlMode == VelocityControlMode.MANUAL && targetVelocity >= -LAUNCHER_MAX_TICKS_PER_SECOND+VELOCITY_MODIFIER)
+            targetVelocity -= VELOCITY_MODIFIER;
+    }
+
+    /**
+     * @return Current velocity of the launcher; launcherOne by default
+     */
+    public static double getVelocity() {
+        return launcherOne.getVelocity();
+    }
+
+    /**
+     * Runs the launcher at the target setting or the target velocity depending on the active
+     * velocity control mode.
+     */
+    public static void runLauncher() {
+        if (velocityControlMode == VelocityControlMode.PRESET) {
+            launcherOne.setVelocity(VELOCITIES[targetSetting]);
+            launcherTwo.setVelocity(VELOCITIES[targetSetting]);
+        } else if (velocityControlMode == VelocityControlMode.MANUAL) {
+            launcherOne.setVelocity(targetVelocity);
+            launcherTwo.setVelocity(targetVelocity);
+        }
+    }
+
+    /**
+     * Launches one ring
+     */
+    public static void shootSingle() {
+        pushTrigger();
+        sleep(100);
+        retractTrigger();
+    }
+
+    /**
+     * Launches three rings
+     */
+    public static void shootAll() {
+        for (int i = 0; i < 3; i++) {
+            shootSingle();
+            sleep(500);
+        }
+    }
+
+    /**
+     * Appends Shooter data to telemetry. For the launcher, the data is displayed for launcherOne
+     * @param expanded Shows expanded data for troubleshooting.
+     */
+    public static void appendTelemetry(boolean expanded) {
+        tm.addLine("=== SHOOTER ===");
+        tm.addData("Current Velocity", getVelocity());
+        tm.addData("Target", getTarget());
+        tm.addData("VCM", getVelocityControlMode());
+        tm.addLine();
+
+        if (expanded) {
+            tm.addLine("\n:: Launcher ::");
+            tm.addData("Motor Type", launcherOne.getMotorType());
+            tm.addData("Controller", launcherOne.getController());
+            tm.addData("Port Number", launcherOne.getPortNumber());
+            tm.addData("Current", launcherOne.getCurrent(CurrentUnit.AMPS));
+            tm.addData("Current Alert", launcherOne.getCurrentAlert(CurrentUnit.AMPS));
+            tm.addData("Over Current", launcherOne.isOverCurrent());
+            tm.addData("Run Mode", launcherOne.getMode());
+            tm.addData("Encoder PID", launcherOne.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER));
+
+            tm.addLine("\nVelocities");
+            tm.addData("Low Goal", LOW_GOAL_VELOCITY);
+            tm.addData("Mid Goal", MID_GOAL_VELOCITY);
+            tm.addData("Power Shot", POWER_SHOT_VELOCITY);
+            tm.addData("High Goal", HIGH_GOAL_VELOCITY);
+
+            tm.addLine("\n:: Trigger ::");
+            tm.addData("Min Position", trigger.MIN_POSITION);
+            tm.addData("Max Position", trigger.MAX_POSITION);
+            tm.addData("Current Position", trigger.getPosition());
+            tm.addData("Controller", trigger.getController());
+            tm.addData("Port Number", trigger.getPortNumber());
+        }
     }
 }

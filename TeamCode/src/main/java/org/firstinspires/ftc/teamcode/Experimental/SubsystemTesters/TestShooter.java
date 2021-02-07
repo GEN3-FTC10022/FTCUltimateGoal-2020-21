@@ -7,163 +7,81 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 
 import org.firstinspires.ftc.robotcore.external.Const;
 import org.firstinspires.ftc.teamcode.Subsystems.Shooter;
+import org.firstinspires.ftc.teamcode.Subsystems.WobbleMech;
 import org.firstinspires.ftc.teamcode.Util.Constants;
+import org.firstinspires.ftc.teamcode.Util.Subsystem;
 
 /**
- * Feb. 1, 2021
- *
- * Tests shooter motors individually (or combined, driver can control)
- *
- * x - launcher1 - second press - off
- * a - launcher2 - second press - off
- * b - both off
- * y - both on
- *
- * dpad up - increase launcher velocity
- * dpad down - decrease launcher velocity
- * this velocity will apply to whichever launcher motors are 'on';
- * any motors turned 'on' after this point will use this velocity
- *
- * rBumper - single shot
- * lBumper - shootAll()
+ * Gamepad 1 -
+ * B:           Switch Velocity Control Mode
+ * Up:          Increase Shooter Velocity
+ * Down:        Decrease Shooter Velocity
+ * L. Bumper:   Launch Multiple
+ * R. Bumper:   Launch Single
  */
 
 @TeleOp(name = "Subsystems: Shooter Test")
 public class TestShooter extends LinearOpMode {
 
-    int state;
-    private Shooter shooter = new Shooter();
+    private boolean isAuto;
 
     @Override
     public void runOpMode() {
 
-        initialize();
-
-        telemetry.setAutoClear(true);
+        initialize(false);
 
         waitForStart();
 
-        doTeleOp();
+        if (isAuto)
+            doAuto();
+        else
+            doTeleOp();
     }
 
     private void doTeleOp(){
-
         while (opModeIsActive()) {
 
-            displayTeleOpTelemetry();
+            Shooter.appendTelemetry(true);
+            telemetry.update();
 
-            // Launcher 1 ==========================================================================
+            Shooter.runLauncher();
 
-            // on
-            if (gamepad1.x && Constants.x == 0)
-                Constants.x++;
-            else if (!gamepad1.x && Constants.x == 1){
-                shooter.launcherOne.setVelocity(shooter.getTargetVelocity());
-                Constants.x++;
-
-                // update state
-                if (state == 0) state = 1;
-                else if (state == 2) state = 3;
-            }
-            // off
-            else if (gamepad1.x && Constants.x == 2)
-                Constants.x++;
-            else if (!gamepad1.x && Constants.x == 3){
-                shooter.launcherOne.setVelocity(0);
-                Constants.x = 0;
-
-                // update state
-                if (state == 1) state = 0;
-                else if (state == 3) state = 2;
-            }
-
-            // Launcher 2 ==========================================================================
-
-            // on
-            if (gamepad1.a && Constants.a == 0)
-                Constants.a++;
-            else if (!gamepad1.a && Constants.a == 1){
-                shooter.launcherTwo.setVelocity(shooter.getTargetVelocity());
-                Constants.a++;
-
-                // update state
-                if (state == 0) state = 2;
-                else if (state == 1) state = 3;
-            }
-            // off
-            else if (gamepad1.a && Constants.a == 2)
-                Constants.a++;
-            else if (!gamepad1.a && Constants.a == 3){
-                shooter.launcherTwo.setVelocity(0);
-                Constants.a = 0;
-
-                // update state
-                if (state == 2) state = 0;
-                else if (state == 3) state = 1;
-            }
-
-            // Both on & off =======================================================================
-
-            // on
-            if (gamepad1.y && Constants.y == 0)
-                Constants.y++;
-            else if (!gamepad1.y && Constants.y == 1){
-                shooter.launcherOne.setVelocity(shooter.getTargetVelocity());
-                shooter.launcherTwo.setVelocity(shooter.getTargetVelocity());
-                Constants.y++;
-                // fix individual toggle states
-                Constants.x = 2;
-                Constants.a = 2;
-
-                // update state
-                state = 3;
-            }
-            // off
-            else if (gamepad1.b && Constants.y == 2)
-                Constants.y ++;
-            else if (!gamepad1.b && Constants.y == 3){
-                shooter.launcherOne.setVelocity(0);
-                shooter.launcherTwo.setVelocity(0);
-                Constants.y = 0;
-                // fix individual toggle states
-                Constants.x = 0;
-                Constants.a = 0;
-
-                // update state
-                state = 0;
-            }
-
-            // Velocity ============================================================================
-
-            // up
+            // Velocity
             if (gamepad1.dpad_up && Constants.up == 0)
                 Constants.up++;
             else if (!gamepad1.dpad_up && Constants.up == 1) {
-                // adjustVelocity(1);
+                Shooter.increaseVelocity();
                 Constants.up--;
-            }
-            // down
-            else if (gamepad1.dpad_down && Constants.down == 0)
+            } else if (gamepad1.dpad_down && Constants.down == 0)
                 Constants.down++;
             else if (!gamepad1.dpad_down && Constants.down == 1) {
-                // adjustVelocity(-1);
+                Shooter.decreaseVelocity();
                 Constants.down--;
             }
 
-            // Launching ===========================================================================
-
+            // Launching
             if (gamepad1.right_bumper && Constants.rBumper == 0)
                 Constants.rBumper++;
             else if (!gamepad1.right_bumper && Constants.rBumper == 1) {
-                shootSingle();
+                Shooter.shootSingle();
                 Constants.rBumper--;
             } else if (gamepad1.left_bumper && Constants.lBumper == 0)
                 Constants.lBumper++;
             else if (!gamepad1.left_bumper && Constants.lBumper == 1) {
-                shootAll();
+                Shooter.shootAll();
                 Constants.lBumper--;
             }
 
+            // Velocity Control Mode
+            if (gamepad1.back && Constants.back == 0)
+                Constants.back++;
+            else if (!gamepad1.back && Constants.back == 1) {
+                if (Shooter.getVelocityControlMode() == Shooter.VelocityControlMode.PRESET)
+                    Shooter.setVelocityControlMode(Shooter.VelocityControlMode.MANUAL);
+                else if (Shooter.getVelocityControlMode() == Shooter.VelocityControlMode.MANUAL)
+                    Shooter.setVelocityControlMode(Shooter.VelocityControlMode.PRESET);
+                Constants.back--;
+            }
         }
 
     }
@@ -172,73 +90,26 @@ public class TestShooter extends LinearOpMode {
 
     }
 
-    public void initialize() {
+    public void initialize(boolean isAuto) {
 
-        // Telemetry ===============================================================================
+        this.isAuto = isAuto;
+
         telemetry.setAutoClear(false);
+
         telemetry.addLine("Initializing Robot...");
         telemetry.update();
         sleep(500);
 
-        // Shooter =============================================================================
-        shooter.launcherOne = (DcMotorEx)hardwareMap.dcMotor.get("launcherOne");
-        shooter.launcherTwo = (DcMotorEx)hardwareMap.dcMotor.get("launcherTwo");
-        shooter.trigger = hardwareMap.servo.get("trigger");
-        shooter.initialize();
-        telemetry.addLine("Shooter initialized");
-        telemetry.update();
-        sleep(500);
+        Subsystem.initialize(hardwareMap, telemetry);
 
-        // Display telemetry
-        telemetry.setAutoClear(true);
-        while(!isStarted())
-            displayTeleOpTelemetry();
+        Shooter.initialize("launcher", "trigger");
 
-        state = 0;  // 0 = none, 1 = launcher1 is on, 2= launcher 2 is on, 3 = both are on
-    }
-
-    public void displayTeleOpTelemetry() {
-
-        telemetry.addLine("=== SHOOTER ===");
-        telemetry.addData("Velocity Motor 1 (ticks/s)", shooter.launcherOne.getVelocity());
-        telemetry.addData("Velocity Motor 2 (ticks/s)", shooter.launcherTwo.getVelocity());
-        telemetry.addData("Target Velocity (ticks/s)", shooter.getTargetVelocity());
-        telemetry.update();
-    }
-
-    public void adjustVelocity(double signModifier){
-
-        double newVelocity = shooter.getTargetVelocity() + (shooter.VELOCITY_MODIFIER * signModifier);
-
-        // shooter.setTargetVelocity(newVelocity);
-
-        if (state == 3){
-            shooter.launcherOne.setVelocity(shooter.getTargetVelocity());
-            shooter.launcherTwo.setVelocity(shooter.getTargetVelocity());
-
-        } else if (state == 1){
-            shooter.launcherOne.setVelocity(shooter.getTargetVelocity());
-
-        } else if (state == 2){
-            shooter.launcherTwo.setVelocity(shooter.getTargetVelocity());
-        }
-    }
-
-    // shooter methods =============================================================================
-
-    public void shootSingle() {
-        shooter.pushTrigger();
-        sleep(100);
-        shooter.retractTrigger();
-        shooter.ringsLoaded--;
-        if (shooter.ringsLoaded == 0)
-            shooter.ringsLoaded = 3;
-    }
-
-    public void shootAll() {
-        for (int i = 0; i < 3; i++) {
-            shootSingle();
-            sleep(100);
+        if (!isAuto) {
+            telemetry.setAutoClear(true);
+            while(!isStarted()) {
+                Shooter.appendTelemetry(true);
+                telemetry.update();
+            }
         }
     }
 }

@@ -33,7 +33,7 @@ public abstract class WobbleMech extends Subsystem {
     public static void initialize(String hmArm, String hmClawL, String hmClawR) {
 
         // Hardware Map
-        arm = hm.get(DcMotorEx.class, "hmArm");
+        arm = hm.get(DcMotorEx.class, hmArm);
         lClaw = hm.get(Servo.class, hmClawL);
         rClaw = hm.get(Servo.class, hmClawR);
 
@@ -59,8 +59,21 @@ public abstract class WobbleMech extends Subsystem {
      * Arm Positions - REST, HIGH, LOW
      */
     public enum ArmPosition {
+
+        /**
+         * This is the zero position of the wobble mech; the arm is rested against the mechanical
+         * stop.
+         */
         REST,
+
+        /**
+         * This is the position to drop the wobble goal over the field walls.
+         */
         HIGH,
+
+        /**
+         * This is the position where the arm is parallel to the ground to collect the wobble goal.
+         */
         LOW;
     }
 

@@ -4,11 +4,13 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.teamcode.Subsystems.Drivetrain;
 import org.firstinspires.ftc.teamcode.Subsystems.Intake;
+import org.firstinspires.ftc.teamcode.Subsystems.WobbleMech;
 import org.firstinspires.ftc.teamcode.Util.Constants;
 
 /**
  * CONTROLS:
  *
+ * Gamepad 1 -
  * A:           Intake In/Off
  * B:           Intake Out/Off
  * X:           Reset WobbleMech
@@ -30,6 +32,29 @@ import org.firstinspires.ftc.teamcode.Util.Constants;
  *
  * Start:       -
  * Back:        Switch Drive Mode
+ *
+ * Gamepad 2 -
+ * A:           Switch Drive Mode
+ * B:           Switch Velocity Control Mode
+ * X:           Switch Wobble Mech Control Mode
+ * Y:           -
+ *
+ * Up:          -
+ * Down:        -
+ * Left:        -
+ * Right:       -
+ *
+ * L. Bumper:   -
+ * R. Bumper:   -
+ *
+ * L. Trigger:  -
+ * R. Trigger:  -
+ *
+ * L. Stick:    -
+ * R. Stick:    -
+ *
+ * Start:       -
+ * Back:        -
  *
  * Last Updated: 2/5/21
  * Update Log:
@@ -105,22 +130,22 @@ public class TestTeleOp extends TestSuperclass {
             if (gamepad1.y && Constants.y == 0) {
                 Constants.y++;
             } else if (!gamepad1.y && Constants.y == 1) { // Aim wobble mech
-                aim();
+                WobbleMech.aim();
                 Constants.y++;
             } else if (gamepad1.y && Constants.y == 2) {
                 Constants.y++;
             } else if (!gamepad1.y && Constants.y == 3) { // Collect wobble goal
-                collect();
+                WobbleMech.collect();
                 Constants.y++;
             } else if (gamepad1.y && Constants.y == 4) {
                 Constants.y++;
             } else if (gamepad1.y && Constants.y == 5) { // Drop wobble goal
-                drop();
+                WobbleMech.drop();
                 Constants.y = 0;
             } else if (gamepad1.x && Constants.x == 0) {
                 Constants.x++;
             } else if (!gamepad1.x && Constants.x == 1) { // Reset wobble mech
-                resetWobbleMech();
+                WobbleMech.resetWobbleMech();
                 Constants.y = 0;
                 Constants.x = 0;
             }
@@ -129,7 +154,7 @@ public class TestTeleOp extends TestSuperclass {
             if (gamepad1.dpad_right && Constants.right == 0)
                 Constants.right++;
             else if (!gamepad1.dpad_right && Constants.right == 1) {
-                place();
+                WobbleMech.place();
                 Constants.y = 0;
                 Constants.right--;
             }

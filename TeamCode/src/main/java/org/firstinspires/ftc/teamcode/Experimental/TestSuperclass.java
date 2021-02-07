@@ -23,9 +23,6 @@ public abstract class TestSuperclass extends LinearOpMode {
 
     // ROBOT OBJECTS -------------------------------------------------------------------------------
 
-    // Shooter
-    public Shooter shooter = new Shooter();
-
     // Drivetrain
     public Drivetrain drivetrain = new Drivetrain();
     public double vertical, horizontal, rotation, max, kSlow;
@@ -40,21 +37,10 @@ public abstract class TestSuperclass extends LinearOpMode {
     public void initialize(boolean isAuto) {
 
         telemetry.setAutoClear(false);
-
         Subsystem.initialize(hardwareMap, telemetry);
-
         WobbleMech.initialize("arm", "lClaw", "rClaw");
-
         Intake.initialize("rollers", "release");
-
-        // Shooter =================================================================================
-        shooter.launcherOne = (DcMotorEx)hardwareMap.dcMotor.get("launcherOne");
-        shooter.launcherTwo = (DcMotorEx)hardwareMap.dcMotor.get("launcherTwo");
-        shooter.trigger = hardwareMap.servo.get("trigger");
-        shooter.initialize();
-        telemetry.addLine("Shooter initialized");
-        telemetry.update();
-        sleep(500);
+        Shooter.initialize("launcher", "trigger");
 
         // Drivetrain ==============================================================================
 
@@ -114,21 +100,9 @@ public abstract class TestSuperclass extends LinearOpMode {
         telemetry.addData("Drive Mode", drivetrain.driveMode);
         telemetry.addLine();
 
-        telemetry.addLine("=== SHOOTER ===");
-        telemetry.addData("Velocity (ticks/s)", shooter.getVelocity());
-        telemetry.addData("Target Velocity (ticks/s)", shooter.getTargetVelocity());
-        telemetry.addLine();
-
-        telemetry.addLine("=== WOBBLE MECH ===");
-        telemetry.addData("Arm Position", WobbleMech.getArmPosition());
-        telemetry.addData("Arm RunMOde", WobbleMech.arm.getMode());
-        telemetry.addData("Claw Position", WobbleMech.getClawPosition());
-        telemetry.addLine();
-
-        telemetry.addLine("=== INTAKE ===");
-        telemetry.addData("Direction", Intake.getDirection());
-        telemetry.addData("Position", Intake.getPosition());
-        telemetry.addLine();
+        Shooter.appendTelemetry(false);
+        WobbleMech.appendTelemetry(false);
+        Intake.appendTelemetry(false);
 
         telemetry.update();
     }
@@ -552,24 +526,6 @@ public abstract class TestSuperclass extends LinearOpMode {
 
         // reset angle tracking on new heading.
         drivetrain.resetAngle();
-    }
-
-    // Shooter Methods =============================================================================
-
-    public void shootSingle() {
-        shooter.pushTrigger();
-        sleep(100);
-        shooter.retractTrigger();
-        shooter.ringsLoaded--;
-        if (shooter.ringsLoaded == 0)
-            shooter.ringsLoaded = 3;
-    }
-
-    public void shootAll() {
-        for (int i = 0; i < 3; i++) {
-            shootSingle();
-            sleep(500);
-        }
     }
 
     // Vision Methods ==============================================================================
