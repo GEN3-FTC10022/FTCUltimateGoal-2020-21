@@ -50,6 +50,34 @@ public abstract class TestingSuperclass extends LinearOpMode {
 
         telemetry.setAutoClear(false);
 
+        // Wobble Mech =============================================================================
+        wobbleMech.arm = (DcMotorEx)hardwareMap.dcMotor.get("arm");
+        wobbleMech.lClaw = hardwareMap.servo.get("lClaw");
+        wobbleMech.rClaw = hardwareMap.servo.get("rClaw");
+        wobbleMech.initialize();
+        telemetry.addLine("Wobble Mech initialized");
+        telemetry.update();
+        sleep(500);
+
+        // Intake ==================================================================================
+        intake.roller = (DcMotorEx)hardwareMap.dcMotor.get("rollers");
+        intake.release = hardwareMap.servo.get("release");
+        intake.initialize();
+        telemetry.addLine("Intake initialized");
+        telemetry.update();
+        sleep(500);
+
+        // Shooter =================================================================================
+        shooter.launcherOne = (DcMotorEx)hardwareMap.dcMotor.get("launcherOne");
+        shooter.launcherTwo = (DcMotorEx)hardwareMap.dcMotor.get("launcherTwo");
+        shooter.trigger = hardwareMap.servo.get("trigger");
+        shooter.initialize();
+        telemetry.addLine("Shooter initialized");
+        telemetry.update();
+        sleep(500);
+
+        // Drivetrain ==============================================================================
+
         drivetrain.imu = hardwareMap.get(BNO055IMU.class, "imu");
         drivetrain.frontLeft = (DcMotorEx)hardwareMap.dcMotor.get("frontLeft");
         drivetrain.frontRight = (DcMotorEx)hardwareMap.dcMotor.get("frontRight");
@@ -77,32 +105,6 @@ public abstract class TestingSuperclass extends LinearOpMode {
         telemetry.update();
         sleep(500);
 
-        // Shooter =================================================================================
-        shooter.launcherOne = (DcMotorEx)hardwareMap.dcMotor.get("launcherOne");
-        shooter.launcherTwo = (DcMotorEx)hardwareMap.dcMotor.get("launcherTwo");
-        shooter.trigger = hardwareMap.servo.get("trigger");
-        shooter.initialize();
-        telemetry.addLine("Shooter initialized");
-        telemetry.update();
-        sleep(500);
-
-        // Intake ==================================================================================
-        intake.roller = (DcMotorEx)hardwareMap.dcMotor.get("rollers");
-        intake.release = hardwareMap.servo.get("release");
-        intake.initialize();
-        telemetry.addLine("Intake initialized");
-        telemetry.update();
-        sleep(500);
-
-        // Wobble Mech =============================================================================
-        wobbleMech.arm = (DcMotorEx)hardwareMap.dcMotor.get("arm");
-        wobbleMech.lClaw = hardwareMap.servo.get("lClaw");
-        wobbleMech.rClaw = hardwareMap.servo.get("rClaw");
-        wobbleMech.initialize();
-        telemetry.addLine("Wobble Mech initialized");
-        telemetry.update();
-        sleep(500);
-
         if (isAuto) {
 
             // Vision ==============================================================================
@@ -112,6 +114,16 @@ public abstract class TestingSuperclass extends LinearOpMode {
             telemetry.update();
             sleep(500);
         }
+
+        // Telemetry ===============================================================================
+        telemetry.addLine("Initialization Finished");
+        telemetry.update();
+        sleep(2000);
+
+        // Display telemetry
+        telemetry.setAutoClear(true);
+        while(!isStarted())
+            displayTeleOpTelemetry();
     }
 
     public void displayTeleOpTelemetry() {
@@ -621,16 +633,16 @@ public abstract class TestingSuperclass extends LinearOpMode {
 
     private void scanBitmap(boolean showPixelData) {
 
-        int heightMid = (int)(vision.cropHeight/2.0);
-        int[] yPos = {heightMid-9,heightMid-6,heightMid-3,heightMid,heightMid+3,heightMid+6,heightMid+9}; // 7 pixels top to bottom
-        int[] xPos = {vision.cropWidth-1,0}; // Ring 1 (Rightmost pixel), Ring 4 (Leftmost pixel)
+        int widthMid = (int)(vision.cropWidth/2.0);
+        int[] xPos = {widthMid-9,widthMid-6,widthMid-3,widthMid,widthMid+3,widthMid+6,widthMid+9}; // 7 pixels left to right
+        int[] yPos = {vision.cropHeight-1,0}; // Ring 1 (Bottom pixel), Ring 4 (Top pixel)
         int pixel, r, g, b, total;
 
-        for (int i = 0; i < xPos.length; i++) {
+        for (int i = 0; i < yPos.length; i++) {
 
-            for (int j = 0; j < yPos.length; j++) {
+            for (int j = 0; j < xPos.length; j++) {
 
-                pixel = vision.croppedBitmap.getPixel(xPos[i],yPos[j]);
+                pixel = vision.croppedBitmap.getPixel(xPos[j],yPos[i]);
                 r = Color.red(pixel);
                 g = Color.green(pixel);
                 b = Color.blue(pixel);
@@ -682,7 +694,7 @@ public abstract class TestingSuperclass extends LinearOpMode {
             telemetry.addLine();
             telemetry.update();
 
-            if (vision.check >= 5) {
+            if (vision.check >= 4) {
                 vision.ringsDetected++;
             }
 

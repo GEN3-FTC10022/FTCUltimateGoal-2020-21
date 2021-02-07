@@ -21,39 +21,40 @@ public class TestingAuto extends TestingSuperclass {
         // Move to launch line
         forward(0.8, 57);
         sleep(250);
-        strafeRight(0.8,20);
+        strafeRight(0.8,27);
         sleep(250);
         shootAll();
         shooter.setVelocity(0);
 
-        if (vision.stackHeight == 0) { // Target Zone A
-            strafeLeft(0.8, 10);
+        if (vision.getStackHeight() == 0) { // Target Zone A
+            strafeLeft(0.8, 25);
+            sleep(500);
+            forward(0.8, 12);
             sleep(500);
             rotateRight(0.5, 90);
-            // rotate(0.5,-90);
-            // rotateToAnglePID(0.5, -90);
             sleep(500);
             place();
             sleep(500);
 
             // Rotate to zero
             rotateLeft(0.5, 90);
-            // rotate(0.5, 90);
-            // rotateToAnglePID(0.5, 0);
 
         } else if (vision.getStackHeight() == 1) { // Target Zone B
-            strafeLeft(0.8, 27);
+            strafeLeft(0.8, 40);
             sleep(500);
+            forward(0.8, 15);
             place();
 
         } else { // Target Zone C
-            forward(0.8, 45);
+            forward(0.8, 37);
             sleep(500);
-            strafeLeft(0.8, 6);
+            strafeLeft(0.8, 8);
             sleep(500);
             place();
-            backward(0.8, 40);
+            backward(0.8, 32);
             sleep(500);
         }
+
+        sleep(30000);
     }
 }

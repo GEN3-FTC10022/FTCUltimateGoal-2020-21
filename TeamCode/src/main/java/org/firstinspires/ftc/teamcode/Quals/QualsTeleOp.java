@@ -13,35 +13,34 @@ import org.firstinspires.ftc.teamcode.Util.Constants;
 
 import java.util.concurrent.TimeUnit;
 
-/*
-        Controls:
-        A: Intake In/Off
-        B: Intake Out/Off
-        X: Reset Wobble Mech
-        Y: Advance Wobble Mech
-
-        Up: Increase Shooter Speed
-        Down: Decrease Shooter Speed
-        Left:
-        Right: Claw Toggle
-
-        Left Stick X: Left/Right Strafe
-        Left Stick Y: Forward/Reverse
-        Left Stick Button:
-        Right Stick X: Rotate
-        Right Stick Y:
-        Right Stick Button:
-
-        Left Bumper: Multi-Fire
-        Left Trigger:
-        Right Bumper: Single-Fire
-        Right Trigger: Drive Speed Modifier
-
-        Start:
-        Back: Toggle Drive Mode
+/**
+ * 2/5/21
+ * CONTROLS:
+ *
+ * A:           Intake In/Off
+ * B:           Intake Out/Off
+ * X:           Reset WobbleMech
+ * Y:           Advance WobbleMech
+ *
+ * Up:          Increase Shooter Velocity
+ * Down:        Decrease Shooter Velocity
+ * Left:        -
+ * Right:       Place Wobble Goal
+ *
+ * L. Bumper:   Launch Multiple
+ * R. Bumper:   Launch Single
+ *
+ * L. Trigger:  -
+ * R. Trigger:  Slow Drive
+ *
+ * L. Stick:    Omnidirectional Drive
+ * R. Stick:    Drive Rotation
+ *
+ * Start:       -
+ * Back:        Switch Drive Mode
  */
 
-@TeleOp(name = "Quals TeleOp")
+@TeleOp(name = "Quals: TeleOp")
 public class QualsTeleOp extends QualsSuperclass {
 
     @Override
@@ -51,76 +50,16 @@ public class QualsTeleOp extends QualsSuperclass {
 
         waitForStart();
 
-        shooter.setTargetVelocity(shooter.MID_SHOT_VELOCITY);
+        telemetry.setAutoClear(true);
+
+        intake.down();
 
         while (opModeIsActive()) {
 
-            // TELEMETRY ===========================================================================
+            // DRIVETRAIN ==========================================================================
 
-            displayTeleOpTelemetry();
-
-            // FIELD-CENTRIC DRIVE =================================================================
-
-            vertical = -gamepad1.left_stick_y;
-            horizontal= gamepad1.left_stick_x * drivetrain.DRIVE_STRAFE_CORRECTION; // Correction to counteract imperfect strafing
-            rotation = gamepad1.right_stick_x;
-
-            // Joystick deadzones
-            if (Math.abs(vertical) < 0.05)
-                vertical = 0;
-            if (Math.abs(horizontal) < 0.05)
-                horizontal= 0;
-            if (Math.abs(rotation) < 0.05)
-                rotation = 0;
-
-            if (drivetrain.driveMode == Drivetrain.DriveMode.FIELD_CENTRIC) {
-
-                // Math
-                if (drivetrain.getHeading(AngleUnit.RADIANS) < 0) {
-                // If theta is measured clockwise from zero reference
-
-                    drivetrain.temp = vertical * Math.cos(drivetrain.getHeading(AngleUnit.RADIANS))
-                            + horizontal * Math.sin(-drivetrain.getHeading(AngleUnit.RADIANS));
-                    horizontal = - vertical * Math.sin(-drivetrain.getHeading(AngleUnit.RADIANS))
-                            + horizontal * Math.cos(drivetrain.getHeading(AngleUnit.RADIANS));
-                    vertical = drivetrain.temp;
-                }
-
-                if (drivetrain.getHeading(AngleUnit.RADIANS) >= 0) {
-                // If theta is measured counterclockwise from zero reference
-
-                    drivetrain.temp = vertical * Math.cos(drivetrain.getHeading(AngleUnit.RADIANS))
-                            - horizontal * Math.sin(drivetrain.getHeading(AngleUnit.RADIANS));
-                    horizontal = vertical * Math.sin(drivetrain.getHeading(AngleUnit.RADIANS))
-                            + horizontal * Math.cos(drivetrain.getHeading(AngleUnit.RADIANS));
-                    vertical = drivetrain.temp;
-                }
-            }
-
-            // Assign calculated values to the power variables
-            drivetrain.flpower = vertical + horizontal + rotation;
-            drivetrain.frpower = vertical - horizontal - rotation;
-            drivetrain.blpower = vertical - horizontal + rotation;
-            drivetrain.brpower = vertical + horizontal - rotation;
-
-            // Find the greatest motor power
-            max = Math.max(Math.max(Math.abs(drivetrain.flpower), Math.abs(drivetrain.frpower)),
-                    Math.max(Math.abs(drivetrain.blpower), Math.abs(drivetrain.brpower)));
-            // Scale motor powers with the greatest motor power
-            drivetrain.flpower /= max;
-            drivetrain.frpower /= max;
-            drivetrain.blpower /= max;
-            drivetrain.brpower /= max;
-
-            // Motor power is decreased proportional to the horizontal trigger value to allow for more
-            // precise robot control.
-            kSlow = -2.0/3.0 * gamepad1.right_trigger + 1;
-            drivetrain.flpower *= kSlow;
-            drivetrain.frpower *= kSlow;
-            drivetrain.blpower *= kSlow;
-            drivetrain.brpower *= kSlow;
-
-            drivetrain.setDrivePower(drivetrain.flpower, drivetrain.frpower, drivetrain.blpower, drivetrain.brpower);
+            // Drive
+            drive();
 
             // Switch Modes
             if (gamepad1.back && constants.back == 0)
@@ -138,19 +77,6 @@ public class QualsTeleOp extends QualsSuperclass {
 
             shooter.runShooter();
 
-            // Launcher
-            if (gamepad1.right_bumper && constants.rBumper == 0)
-                constants.rBumper++;
-            else if (!gamepad1.right_bumper && constants.rBumper == 1) {
-                shootSingle();
-                constants.rBumper--;
-            } else if (gamepad1.left_bumper && constants.lBumper == 0)
-                constants.lBumper++;
-            else if (!gamepad1.left_bumper && constants.lBumper == 1) {
-                shootAll();
-                constants.lBumper--;
-            }
-
             // Velocity
             if (gamepad1.dpad_up && constants.up == 0)
                 constants.up++;
@@ -162,6 +88,19 @@ public class QualsTeleOp extends QualsSuperclass {
             else if (!gamepad1.dpad_down && constants.down == 1) {
                 shooter.decreaseVelocity();
                 constants.down--;
+            }
+
+            // Launching
+            if (gamepad1.right_bumper && constants.rBumper == 0)
+                constants.rBumper++;
+            else if (!gamepad1.right_bumper && constants.rBumper == 1) {
+                shootSingle();
+                constants.rBumper--;
+            } else if (gamepad1.left_bumper && constants.lBumper == 0)
+                constants.lBumper++;
+            else if (!gamepad1.left_bumper && constants.lBumper == 1) {
+                shootAll();
+                constants.lBumper--;
             }
 
             // WOBBLE MECH =========================================================================
@@ -187,17 +126,15 @@ public class QualsTeleOp extends QualsSuperclass {
             } else if (!gamepad1.x && constants.x == 1) { // Reset wobble mech
                 resetWobbleMech();
                 constants.y = 0;
-                constants.x--;
+                constants.x = 0;
             }
 
-            // Claw
+            // Place
             if (gamepad1.dpad_right && constants.right == 0)
                 constants.right++;
             else if (!gamepad1.dpad_right && constants.right == 1) {
-                if (wobbleMech.getClawPosition() == WobbleMech.ClawPosition.CLOSE)
-                    wobbleMech.clawOpen();
-                else
-                    wobbleMech.clawClose();
+                place();
+                constants.y = 0;
                 constants.right--;
             }
 
@@ -221,6 +158,10 @@ public class QualsTeleOp extends QualsSuperclass {
                     intake.out();
                 constants.b--;
             }
+
+            // TELEMETRY ===========================================================================
+
+            displayTeleOpTelemetry();
         }
     }
 }

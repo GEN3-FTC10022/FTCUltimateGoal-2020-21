@@ -8,27 +8,34 @@ import org.firstinspires.ftc.teamcode.Subsystems.Intake;
 import org.firstinspires.ftc.teamcode.Subsystems.WobbleMech;
 
 /**
- * Jan. 30, 2021
- * Tests shooter motors individually (or combined, driver can control)
+ * 2/5/21
+ * CONTROLS:
  *
- * x - launcher1 - second press - off
- * a - launcher2 - second press - off
- * b - both off
- * y - both on
+ * A:           Intake In/Off
+ * B:           Intake Out/Off
+ * X:           Reset WobbleMech
+ * Y:           Advance WobbleMech
  *
- * dpad up - increase launcher velocity
- * dpad down - decrease launcher velocity
- * this velocity will apply to whichever launcher motors are 'on';
- * any motors turned 'on' after this point will use this velocity
+ * Up:          Increase Shooter Velocity
+ * Down:        Decrease Shooter Velocity
+ * Left:        -
+ * Right:       Place Wobble Goal
  *
- * rBumper - single shot
- * lBumper - shootAll()
+ * L. Bumper:   Launch Multiple
+ * R. Bumper:   Launch Single
+ *
+ * L. Trigger:  -
+ * R. Trigger:  Slow Drive
+ *
+ * L. Stick:    Omnidirectional Drive
+ * R. Stick:    Drive Rotation
+ *
+ * Start:       -
+ * Back:        Switch Drive Mode
  */
 
 @TeleOp(name = "TeleOp: Test")
 public class TestingTeleOp extends TestingSuperclass {
-
-    int state;
 
     @Override
     public void runOpMode() {
@@ -116,14 +123,12 @@ public class TestingTeleOp extends TestingSuperclass {
                 constants.x = 0;
             }
 
-            // Claw
+            // Place
             if (gamepad1.dpad_right && constants.right == 0)
                 constants.right++;
             else if (!gamepad1.dpad_right && constants.right == 1) {
-                if (wobbleMech.getClawPosition() == WobbleMech.ClawPosition.CLOSE)
-                    wobbleMech.clawOpen();
-                else
-                    wobbleMech.clawClose();
+                place();
+                constants.y = 0;
                 constants.right--;
             }
 

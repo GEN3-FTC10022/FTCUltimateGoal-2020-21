@@ -48,52 +48,45 @@ public abstract class QualsSuperclass extends LinearOpMode {
 
     // Constants
     public Constants constants = new Constants();
-    public int initCurrent = 0;
-    public int initTotal;
-
-    // Drivetrain
-    public Drivetrain drivetrain = new Drivetrain();
-    public double vertical, horizontal, rotation;
-    public double max, kSlow;
-
-    // Wobble Mech
-    public WobbleMech wobbleMech = new WobbleMech();
-
-    // Intake
-    public Intake intake = new Intake();
 
     // Shooter
     public Shooter shooter = new Shooter();
 
+    // Intake
+    public Intake intake = new Intake();
+
+    // Wobble Mech
+    public WobbleMech wobbleMech = new WobbleMech();
+
+    // Drivetrain
+    public Drivetrain drivetrain = new Drivetrain();
+    public double vertical, horizontal, rotation, max, kSlow;
+
     // Vision
     public Vision vision = new Vision();
 
+
     // METHODS -------------------------------------------------------------------------------------
 
-    // General Robot Methods =======================================================================
-
+    // Robot Initialization
     public void initialize(boolean isAuto) {
 
-        // Telemetry ===============================================================================
         telemetry.setAutoClear(false);
-        telemetry.addLine("Initializing Robot...");
+
+        // Wobble Mech =============================================================================
+        wobbleMech.arm = (DcMotorEx)hardwareMap.dcMotor.get("arm");
+        wobbleMech.lClaw = hardwareMap.servo.get("lClaw");
+        wobbleMech.rClaw = hardwareMap.servo.get("rClaw");
+        wobbleMech.initialize();
+        telemetry.addLine("Wobble Mech initialized");
         telemetry.update();
         sleep(500);
 
-        if (isAuto)
-            initTotal = 5;
-        else
-            initTotal = 4;
-
-        // Drivetrain ==============================================================================
-        drivetrain.imu = hardwareMap.get(BNO055IMU.class, "imu");
-        drivetrain.frontLeft = (DcMotorEx)hardwareMap.dcMotor.get("frontLeft");
-        drivetrain.frontRight = (DcMotorEx)hardwareMap.dcMotor.get("frontRight");
-        drivetrain.backLeft = (DcMotorEx)hardwareMap.dcMotor.get("backLeft");
-        drivetrain.backRight = (DcMotorEx)hardwareMap.dcMotor.get("backRight");
-        drivetrain.initialize();
-        initCurrent++;
-        telemetry.addLine("Drivetrain initialized " + "(" + initCurrent + "/" + initTotal + ")");
+        // Intake ==================================================================================
+        intake.roller = (DcMotorEx)hardwareMap.dcMotor.get("rollers");
+        intake.release = hardwareMap.servo.get("release");
+        intake.initialize();
+        telemetry.addLine("Intake initialized");
         telemetry.update();
         sleep(500);
 
@@ -102,27 +95,36 @@ public abstract class QualsSuperclass extends LinearOpMode {
         shooter.launcherTwo = (DcMotorEx)hardwareMap.dcMotor.get("launcherTwo");
         shooter.trigger = hardwareMap.servo.get("trigger");
         shooter.initialize();
-        initCurrent++;
-        telemetry.addLine("Shooter initialized " + "(" + initCurrent + "/" + initTotal + ")");
+        telemetry.addLine("Shooter initialized");
         telemetry.update();
         sleep(500);
 
-        // Intake ==================================================================================
-        intake.roller = (DcMotorEx)hardwareMap.dcMotor.get("rollers");
-        intake.release = hardwareMap.servo.get("release");
-        intake.initialize();
-        initCurrent++;
-        telemetry.addLine("Intake initialized " + "(" + initCurrent + "/" + initTotal + ")");
+        // Drivetrain ==============================================================================
+
+        drivetrain.imu = hardwareMap.get(BNO055IMU.class, "imu");
+        drivetrain.frontLeft = (DcMotorEx)hardwareMap.dcMotor.get("frontLeft");
+        drivetrain.frontRight = (DcMotorEx)hardwareMap.dcMotor.get("frontRight");
+        drivetrain.backLeft = (DcMotorEx)hardwareMap.dcMotor.get("backLeft");
+        drivetrain.backRight = (DcMotorEx)hardwareMap.dcMotor.get("backRight");
+        drivetrain.initialize();
+
+        telemetry.addLine("Setting Correction...");
         telemetry.update();
         sleep(500);
 
-        // Wobble Mech =============================================================================
-        wobbleMech.arm = (DcMotorEx)hardwareMap.dcMotor.get("arm");
-        wobbleMech.lClaw = hardwareMap.servo.get("lClaw");
-        wobbleMech.rClaw = hardwareMap.servo.get("rClaw");
-        wobbleMech.initialize();
-        initCurrent++;
-        telemetry.addLine("Wobble Mech initialized " + "(" + initCurrent + "/" + initTotal + ")");
+        while (drivetrain.getHeading(AngleUnit.DEGREES) != 0) {
+            drivetrain.setHeadingCorrectionDegrees();
+            telemetry.addData("Correction", drivetrain.getHeadingCorrection(AngleUnit.DEGREES));
+            telemetry.update();
+            sleep(200);
+
+            // Break out of loop if initialization is stopped to prevent forced restart
+            if (isStopRequested()) {
+                break;
+            }
+        }
+
+        telemetry.addLine("Drivetrain initialized");
         telemetry.update();
         sleep(500);
 
@@ -131,98 +133,52 @@ public abstract class QualsSuperclass extends LinearOpMode {
             // Vision ==============================================================================
             vision.webcamName = hardwareMap.get(WebcamName.class, "Webcam");
             vision.initialize();
-            initCurrent++;
-            telemetry.addLine("Vision initialized " + "(" + initCurrent + "/" + initTotal + ")");
+            telemetry.addLine("Vision initialized");
             telemetry.update();
             sleep(500);
-
-            telemetry.addLine();
-            telemetry.addLine("Load wobble goal and press 'A', or press 'B' to cancel...");
-            telemetry.update();
-
-            while (wobbleMech.initK == 0) {
-
-                if (gamepad1.a) {
-                    // Set wobble goal to pre-loaded position
-                    wobbleMech.clawClose();
-                    sleep(2000);
-                    wobbleMech.setArmPosition(WobbleMech.ArmPosition.REST);
-
-                    telemetry.addLine("Wobble goal loaded");
-                    telemetry.update();
-
-                    wobbleMech.initK = 1;
-                    sleep(500);
-                }
-
-                // Cancel wobble goal pre-load
-                if (gamepad1.b) {
-                    // Reset wobble mech
-                    resetWobbleMech();
-
-                    telemetry.addLine("Wobble goal not loaded");
-                    telemetry.update();
-
-                    wobbleMech.initK = 1;
-                    sleep(500);
-                }
-
-                // Break out of loop if initialization is stopped to prevent forced restart
-                if (isStopRequested()) {
-                    break;
-                }
-            }
-
-        } else {
-            resetWobbleMech();
         }
 
         // Telemetry ===============================================================================
-        telemetry.addLine("Initialization Finished " + "(" + initCurrent + "/" + initTotal + ")");
+        telemetry.addLine("Initialization Finished");
         telemetry.update();
-        sleep(500);
+        sleep(2000);
 
         // Display telemetry
         telemetry.setAutoClear(true);
-
         while(!isStarted())
             displayTeleOpTelemetry();
     }
 
-    // Telemetry ===================================================================================
-
     public void displayTeleOpTelemetry() {
-        // Telemetry
+
         telemetry.addLine("=== DRIVETRAIN ===");
         telemetry.addData("Heading (Deg)", drivetrain.getHeading(AngleUnit.DEGREES));
+        telemetry.addData("Heading Correction (Deg)", drivetrain.getHeadingCorrection(AngleUnit.DEGREES));
         telemetry.addData("Drive Mode", drivetrain.driveMode);
         telemetry.addLine();
 
         telemetry.addLine("=== SHOOTER ===");
         telemetry.addData("Velocity (ticks/s)", shooter.getVelocity());
         telemetry.addData("Target Velocity (ticks/s)", shooter.getTargetVelocity());
-        telemetry.addData("Rings Loaded", shooter.ringsLoaded);
-        telemetry.addData("PID Encoder", shooter.launcherOne.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER));
-        telemetry.addData("PID Position", shooter.launcherOne.getPIDFCoefficients(DcMotor.RunMode.RUN_TO_POSITION));
         telemetry.addLine();
 
         telemetry.addLine("=== WOBBLE MECH ===");
         telemetry.addData("Arm Position", wobbleMech.getArmPosition());
+        telemetry.addData("Arm RunMOde", wobbleMech.arm.getMode());
         telemetry.addData("Claw Position", wobbleMech.getClawPosition());
         telemetry.addLine();
 
         telemetry.addLine("=== INTAKE ===");
         telemetry.addData("Rollers", intake.status);
+        telemetry.addData("Position", intake.position);
         telemetry.addLine();
 
         telemetry.update();
     }
 
-    // Drive Methods ===============================================================================
-
     public void drive() {
 
-        // FIELD-CENTRIC DRIVE -----------------------------------------------------------------
+        // FIELD-CENTRIC DRIVE =================================================================
 
         vertical = -gamepad1.left_stick_y;
         horizontal= gamepad1.left_stick_x * drivetrain.DRIVE_STRAFE_CORRECTION; // Correction to counteract imperfect strafing
@@ -239,17 +195,23 @@ public abstract class QualsSuperclass extends LinearOpMode {
         if (drivetrain.driveMode == Drivetrain.DriveMode.FIELD_CENTRIC) {
 
             // Math
-            if (drivetrain.getHeading(AngleUnit.RADIANS) < 0) {       // If theta is measured clockwise from zero reference
+            if (drivetrain.getHeading(AngleUnit.RADIANS) < 0) {
+                // If theta is measured clockwise from zero reference
 
-                drivetrain.temp = vertical * Math.cos(drivetrain.getHeading(AngleUnit.RADIANS)) + horizontal * Math.sin(-drivetrain.getHeading(AngleUnit.RADIANS));
-                horizontal= -vertical * Math.sin(-drivetrain.getHeading(AngleUnit.RADIANS)) + horizontal * Math.cos(drivetrain.getHeading(AngleUnit.RADIANS));
+                drivetrain.temp = vertical * Math.cos(drivetrain.getHeading(AngleUnit.RADIANS))
+                        + horizontal * Math.sin(-drivetrain.getHeading(AngleUnit.RADIANS));
+                horizontal = - vertical * Math.sin(-drivetrain.getHeading(AngleUnit.RADIANS))
+                        + horizontal * Math.cos(drivetrain.getHeading(AngleUnit.RADIANS));
                 vertical = drivetrain.temp;
             }
 
-            if (drivetrain.getHeading(AngleUnit.RADIANS) >= 0) {    // If theta is measured counterclockwise from zero reference
+            if (drivetrain.getHeading(AngleUnit.RADIANS) >= 0) {
+                // If theta is measured counterclockwise from zero reference
 
-                drivetrain.temp = vertical * Math.cos(drivetrain.getHeading(AngleUnit.RADIANS)) - horizontal * Math.sin(drivetrain.getHeading(AngleUnit.RADIANS));
-                horizontal= vertical * Math.sin(drivetrain.getHeading(AngleUnit.RADIANS)) + horizontal * Math.cos(drivetrain.getHeading(AngleUnit.RADIANS));
+                drivetrain.temp = vertical * Math.cos(drivetrain.getHeading(AngleUnit.RADIANS))
+                        - horizontal * Math.sin(drivetrain.getHeading(AngleUnit.RADIANS));
+                horizontal = vertical * Math.sin(drivetrain.getHeading(AngleUnit.RADIANS))
+                        + horizontal * Math.cos(drivetrain.getHeading(AngleUnit.RADIANS));
                 vertical = drivetrain.temp;
             }
         }
@@ -260,9 +222,10 @@ public abstract class QualsSuperclass extends LinearOpMode {
         drivetrain.blpower = vertical - horizontal + rotation;
         drivetrain.brpower = vertical + horizontal - rotation;
 
-        // Find the greatest motor power and scale motors accordingly
+        // Find the greatest motor power
         max = Math.max(Math.max(Math.abs(drivetrain.flpower), Math.abs(drivetrain.frpower)),
                 Math.max(Math.abs(drivetrain.blpower), Math.abs(drivetrain.brpower)));
+        // Scale motor powers with the greatest motor power
         drivetrain.flpower /= max;
         drivetrain.frpower /= max;
         drivetrain.blpower /= max;
@@ -279,7 +242,7 @@ public abstract class QualsSuperclass extends LinearOpMode {
         drivetrain.setDrivePower(drivetrain.flpower, drivetrain.frpower, drivetrain.blpower, drivetrain.brpower);
     }
 
-    public void driveTest() {
+    public void driveReading() {
 
         // FIELD-CENTRIC DRIVE -----------------------------------------------------------------
 
@@ -489,7 +452,7 @@ public abstract class QualsSuperclass extends LinearOpMode {
         }
     }
 
-    public void rotateToAngle(double power, double targetAngle) {
+    public void rotateToAngle(double power, double targetAngle, boolean displayInfo) {
 
         telemetry.setAutoClear(false);
         double initialAngle = drivetrain.getHeading(AngleUnit.DEGREES);
@@ -497,10 +460,13 @@ public abstract class QualsSuperclass extends LinearOpMode {
         if (Math.abs(deltaAngle) > 180) {
             deltaAngle = 360 - Math.abs(deltaAngle);
         }
-        telemetry.addData("Initial Angle", initialAngle);
-        telemetry.addData("Target Angle", targetAngle);
-        telemetry.addData("Delta Angle", deltaAngle);
-        telemetry.update();
+
+        if (displayInfo) {
+            telemetry.addData("Initial Angle", initialAngle);
+            telemetry.addData("Target Angle", targetAngle);
+            telemetry.addData("Delta Angle", deltaAngle);
+            telemetry.update();
+        }
 
         double target = deltaAngle * drivetrain.DRIVE_TICKS_PER_DEGREE;
 
@@ -516,28 +482,190 @@ public abstract class QualsSuperclass extends LinearOpMode {
                 drivetrain.setDrivePower(power);
             }
 
+            if (Math.abs(targetAngle - drivetrain.getHeading(AngleUnit.DEGREES)) > 0.3) {
+                rotateToAngle(power, targetAngle, false);
+            }
+
             drivetrain.setDrivePower(0);
             drivetrain.resetDriveMode();
         }
 
-        telemetry.addLine("Rotate Finished");
+        if (displayInfo) {
+            telemetry.addData("Final Angle", drivetrain.getHeading(AngleUnit.DEGREES));
+            telemetry.addLine("Rotate Finished");
+            telemetry.update();
+        }
+    }
+
+    public void rotateToAnglePID(double power, double targetAngle) {
+        telemetry.setAutoClear(false);
+        double initialAngle = drivetrain.getHeading(AngleUnit.DEGREES);
+        double deltaAngle = targetAngle - initialAngle;
+
+        telemetry.addLine("\n Rotating...");
+        telemetry.addData("Initial Angle", initialAngle);
+        telemetry.addData("Target Angle", targetAngle);
+        telemetry.addData("Delta Angle", deltaAngle);
         telemetry.update();
+
+        rotate(power,deltaAngle);
+
+        telemetry.addData("Rotate Finished", drivetrain.getHeading(AngleUnit.DEGREES));
+        telemetry.update();
+    }
+
+    /**
+     * Rotate left or right the number of degrees. Does not support turning more than 359 degrees.
+     * @param degrees Degrees to turn, + is left - is right
+     */
+    public void rotate(double power, double degrees) {
+        // restart imu angle tracking.
+        drivetrain.resetAngle();
+
+        // If input degrees > 359, we cap at 359 with same sign as input.
+        if (Math.abs(degrees) > 359) degrees = Math.copySign(359, degrees);
+
+        // start pid controller. PID controller will monitor the turn angle with respect to the
+        // target angle and reduce power as we approach the target angle. We compute the p and I
+        // values based on the input degrees and starting power level. We compute the tolerance %
+        // to yield a tolerance value of about 1 degree.
+        // Overshoot is dependant on the motor and gearing configuration, starting power, weight
+        // of the robot and the on target tolerance.
+
+        drivetrain.controller.reset();
+
+        // Proportional factor can be found by dividing the max desired pid output by
+        // the setpoint or target. Here 30% power is divided by 90 degrees (.30 / 90)
+        // to get a P factor of .003. This works for the robot we testing this code with.
+        // Your robot may vary but this way finding P works well in most situations.
+        double p = Math.abs(power/degrees);
+
+        // Integrative factor can be approximated by diving P by 100. Then you have to tune
+        // this value until the robot turns, slows down and stops accurately and also does
+        // not take too long to "home" in on the setpoint. Started with 100 but robot did not
+        // slow and overshot the turn. Increasing I slowed the end of the turn and completed
+        // the turn in a timely manner
+        double i = p / 100.0;
+
+        drivetrain.controller.setPID(p, i, 0);
+
+        drivetrain.controller.setSetpoint(degrees);
+        drivetrain.controller.setInputRange(0, degrees);
+        drivetrain.controller.setOutputRange(0, power);
+        drivetrain.controller.setTolerance(1.0 / Math.abs(degrees) * 100.0);
+        telemetry.addData("Tolerance", (1.0 / Math.abs(degrees) * 100.0));
+        telemetry.update();
+        sleep(2000);
+        drivetrain.controller.enable();
+
+        // drivetrain.getAngle() returns + when rotating counter clockwise (left) and - when rotating
+        // clockwise (right).
+
+        // rotate until turn is completed.
+
+        if (degrees < 0)
+        {
+            // On right turn we have to get off zero first.
+            while (opModeIsActive() && drivetrain.getAngle() == 0)
+            {
+                drivetrain.setDrivePower(power,-power,power,-power);
+                sleep(100);
+            }
+
+            do
+            {
+                power = drivetrain.controller.performPID(drivetrain.getAngle()); // power will be - on right turn.
+                drivetrain.setDrivePower(-power,power,-power,power);
+            } while (opModeIsActive() && !drivetrain.controller.onTarget());
+        }
+        else    // left turn.
+            do
+            {
+                power = drivetrain.controller.performPID(drivetrain.getAngle()); // power will be + on left turn.
+                drivetrain.setDrivePower(-power,power,-power,power);
+            } while (opModeIsActive() && !drivetrain.controller.onTarget());
+
+        // turn the motors off.
+        drivetrain.setDrivePower(0);
+
+        rotation = drivetrain.getAngle();
+
+        // wait for rotation to stop.
+        sleep(500);
+
+        // reset angle tracking on new heading.
+        drivetrain.resetAngle();
+    }
+
+    // Wobble Mech Methods =========================================================================
+
+    public void aim() {
+        wobbleMech.clawOpen();
+        sleep(500);
+        wobbleMech.setArmPosition(WobbleMech.ArmPosition.LOW);
+    }
+
+    public void collect() {
+        wobbleMech.clawClose();
+        sleep(1000);
+        wobbleMech.setArmPosition(WobbleMech.ArmPosition.REST);
+    }
+
+    public void place() {
+        wobbleMech.setArmPosition(WobbleMech.ArmPosition.LOW);
+        sleep(500);
+        wobbleMech.clawOpen();
+        sleep(500);
+        wobbleMech.setArmPosition(WobbleMech.ArmPosition.REST);
+    }
+
+    public void drop() {
+        wobbleMech.setArmPosition(WobbleMech.ArmPosition.HIGH);
+        sleep(500);
+        wobbleMech.clawOpen();
+        sleep(500);
+        resetWobbleMech();
+    }
+
+    public void resetWobbleMech() {
+        wobbleMech.setArmPosition(WobbleMech.ArmPosition.REST);
+        sleep(500);
+        wobbleMech.zeroArm();
+        wobbleMech.clawClose();
+    }
+
+    // Shooter Methods =============================================================================
+
+    public void shootSingle() {
+        shooter.pushTrigger();
+        sleep(100);
+        shooter.retractTrigger();
+        shooter.ringsLoaded--;
+        if (shooter.ringsLoaded == 0)
+            shooter.ringsLoaded = 3;
+    }
+
+    public void shootAll() {
+        for (int i = 0; i < 3; i++) {
+            shootSingle();
+            sleep(500);
+        }
     }
 
     // Vision Methods ==============================================================================
 
     private void scanBitmap(boolean showPixelData) {
 
-        int heightMid = (int)(vision.cropHeight/2.0);
-        int[] yPos = {heightMid-9,heightMid-6,heightMid-3,heightMid,heightMid+3,heightMid+6,heightMid+9}; // 7 pixels top to bottom
-        int[] xPos = {vision.cropWidth-1,0}; // Ring 1 (Rightmost pixel), Ring 4 (Leftmost pixel)
+        int widthMid = (int)(vision.cropWidth/2.0);
+        int[] xPos = {widthMid-9,widthMid-6,widthMid-3,widthMid,widthMid+3,widthMid+6,widthMid+9}; // 7 pixels left to right
+        int[] yPos = {vision.cropHeight-1,0}; // Ring 1 (Bottom pixel), Ring 4 (Top pixel)
         int pixel, r, g, b, total;
 
-        for (int i = 0; i < xPos.length; i++) {
+        for (int i = 0; i < yPos.length; i++) {
 
-            for (int j = 0; j < yPos.length; j++) {
+            for (int j = 0; j < xPos.length; j++) {
 
-                pixel = vision.croppedBitmap.getPixel(xPos[i],yPos[j]);
+                pixel = vision.croppedBitmap.getPixel(xPos[j],yPos[i]);
                 r = Color.red(pixel);
                 g = Color.green(pixel);
                 b = Color.blue(pixel);
@@ -589,7 +717,7 @@ public abstract class QualsSuperclass extends LinearOpMode {
             telemetry.addLine();
             telemetry.update();
 
-            if (vision.check >= 5) {
+            if (vision.check >= 4) {
                 vision.ringsDetected++;
             }
 
@@ -657,60 +785,5 @@ public abstract class QualsSuperclass extends LinearOpMode {
 
         // Disable Tracking when we are done;
         vision.targetsUltimateGoal.deactivate();
-    }
-
-    // Wobble Mech Methods =========================================================================
-
-    public void aim() {
-        wobbleMech.clawOpen();
-        sleep(750);
-        wobbleMech.setArmPosition(WobbleMech.ArmPosition.LOW);
-    }
-
-    public void collect() {
-        wobbleMech.clawClose();
-        sleep(750);
-        wobbleMech.setArmPosition(WobbleMech.ArmPosition.REST);
-    }
-
-    public void place() {
-        wobbleMech.setArmPosition(WobbleMech.ArmPosition.LOW);
-        sleep(750);
-        resetWobbleMech();
-    }
-
-    public void drop() {
-        wobbleMech.setArmPosition(WobbleMech.ArmPosition.HIGH);
-        sleep(750);
-        wobbleMech.clawOpen();
-        sleep(750);
-        resetWobbleMech();
-    }
-
-    public void resetWobbleMech() {
-        wobbleMech.setArmPosition(WobbleMech.ArmPosition.REST);
-        wobbleMech.arm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        wobbleMech.setArmPosition(WobbleMech.ArmPosition.REST);
-        wobbleMech.arm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        wobbleMech.clawClose();
-    }
-
-    // Shooter Methods =============================================================================
-
-    public void shootSingle() {
-        shooter.pushTrigger();
-        sleep(100);
-        shooter.retractTrigger();
-        shooter.ringsLoaded--;
-        if (shooter.ringsLoaded == 0)
-            shooter.ringsLoaded = 3;
-    }
-
-    public void shootAll() {
-        for (int i = 0; i < 3; i++) {
-            shootSingle();
-            sleep(100);
-            displayTeleOpTelemetry();
-        }
     }
 }
