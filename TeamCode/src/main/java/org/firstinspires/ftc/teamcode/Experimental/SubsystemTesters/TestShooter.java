@@ -32,7 +32,6 @@ import org.firstinspires.ftc.teamcode.Util.Constants;
 public class TestShooter extends LinearOpMode {
 
     int state;
-    private Constants constants = new Constants();
     private Shooter shooter = new Shooter();
 
     @Override
@@ -56,22 +55,22 @@ public class TestShooter extends LinearOpMode {
             // Launcher 1 ==========================================================================
 
             // on
-            if (gamepad1.x && constants.x == 0)
-                constants.x++;
-            else if (!gamepad1.x && constants.x == 1){
+            if (gamepad1.x && Constants.x == 0)
+                Constants.x++;
+            else if (!gamepad1.x && Constants.x == 1){
                 shooter.launcherOne.setVelocity(shooter.getTargetVelocity());
-                constants.x++;
+                Constants.x++;
 
                 // update state
                 if (state == 0) state = 1;
                 else if (state == 2) state = 3;
             }
             // off
-            else if (gamepad1.x && constants.x == 2)
-                constants.x++;
-            else if (!gamepad1.x && constants.x == 3){
+            else if (gamepad1.x && Constants.x == 2)
+                Constants.x++;
+            else if (!gamepad1.x && Constants.x == 3){
                 shooter.launcherOne.setVelocity(0);
-                constants.x = 0;
+                Constants.x = 0;
 
                 // update state
                 if (state == 1) state = 0;
@@ -81,22 +80,22 @@ public class TestShooter extends LinearOpMode {
             // Launcher 2 ==========================================================================
 
             // on
-            if (gamepad1.a && constants.a == 0)
-                constants.a++;
-            else if (!gamepad1.a && constants.a == 1){
+            if (gamepad1.a && Constants.a == 0)
+                Constants.a++;
+            else if (!gamepad1.a && Constants.a == 1){
                 shooter.launcherTwo.setVelocity(shooter.getTargetVelocity());
-                constants.a++;
+                Constants.a++;
 
                 // update state
                 if (state == 0) state = 2;
                 else if (state == 1) state = 3;
             }
             // off
-            else if (gamepad1.a && constants.a == 2)
-                constants.a++;
-            else if (!gamepad1.a && constants.a == 3){
+            else if (gamepad1.a && Constants.a == 2)
+                Constants.a++;
+            else if (!gamepad1.a && Constants.a == 3){
                 shooter.launcherTwo.setVelocity(0);
-                constants.a = 0;
+                Constants.a = 0;
 
                 // update state
                 if (state == 2) state = 0;
@@ -106,29 +105,29 @@ public class TestShooter extends LinearOpMode {
             // Both on & off =======================================================================
 
             // on
-            if (gamepad1.y && constants.y == 0)
-                constants.y++;
-            else if (!gamepad1.y && constants.y == 1){
+            if (gamepad1.y && Constants.y == 0)
+                Constants.y++;
+            else if (!gamepad1.y && Constants.y == 1){
                 shooter.launcherOne.setVelocity(shooter.getTargetVelocity());
                 shooter.launcherTwo.setVelocity(shooter.getTargetVelocity());
-                constants.y++;
+                Constants.y++;
                 // fix individual toggle states
-                constants.x = 2;
-                constants.a = 2;
+                Constants.x = 2;
+                Constants.a = 2;
 
                 // update state
                 state = 3;
             }
             // off
-            else if (gamepad1.b && constants.y == 2)
-                constants.y ++;
-            else if (!gamepad1.b && constants.y == 3){
+            else if (gamepad1.b && Constants.y == 2)
+                Constants.y ++;
+            else if (!gamepad1.b && Constants.y == 3){
                 shooter.launcherOne.setVelocity(0);
                 shooter.launcherTwo.setVelocity(0);
-                constants.y = 0;
+                Constants.y = 0;
                 // fix individual toggle states
-                constants.x = 0;
-                constants.a = 0;
+                Constants.x = 0;
+                Constants.a = 0;
 
                 // update state
                 state = 0;
@@ -137,32 +136,32 @@ public class TestShooter extends LinearOpMode {
             // Velocity ============================================================================
 
             // up
-            if (gamepad1.dpad_up && constants.up == 0)
-                constants.up++;
-            else if (!gamepad1.dpad_up && constants.up == 1) {
+            if (gamepad1.dpad_up && Constants.up == 0)
+                Constants.up++;
+            else if (!gamepad1.dpad_up && Constants.up == 1) {
                 // adjustVelocity(1);
-                constants.up--;
+                Constants.up--;
             }
             // down
-            else if (gamepad1.dpad_down && constants.down == 0)
-                constants.down++;
-            else if (!gamepad1.dpad_down && constants.down == 1) {
+            else if (gamepad1.dpad_down && Constants.down == 0)
+                Constants.down++;
+            else if (!gamepad1.dpad_down && Constants.down == 1) {
                 // adjustVelocity(-1);
-                constants.down--;
+                Constants.down--;
             }
 
             // Launching ===========================================================================
 
-            if (gamepad1.right_bumper && constants.rBumper == 0)
-                constants.rBumper++;
-            else if (!gamepad1.right_bumper && constants.rBumper == 1) {
+            if (gamepad1.right_bumper && Constants.rBumper == 0)
+                Constants.rBumper++;
+            else if (!gamepad1.right_bumper && Constants.rBumper == 1) {
                 shootSingle();
-                constants.rBumper--;
-            } else if (gamepad1.left_bumper && constants.lBumper == 0)
-                constants.lBumper++;
-            else if (!gamepad1.left_bumper && constants.lBumper == 1) {
+                Constants.rBumper--;
+            } else if (gamepad1.left_bumper && Constants.lBumper == 0)
+                Constants.lBumper++;
+            else if (!gamepad1.left_bumper && Constants.lBumper == 1) {
                 shootAll();
-                constants.lBumper--;
+                Constants.lBumper--;
             }
 
         }

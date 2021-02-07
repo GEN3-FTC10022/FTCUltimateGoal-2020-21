@@ -15,7 +15,6 @@ import org.firstinspires.ftc.teamcode.Util.Constants;
 @TeleOp(name = "Subsystems: WobbleMech Test")
 public class TestWobbleMech extends LinearOpMode {
 
-    private Constants constants = new Constants();
     private WobbleMech wobbleMech = new WobbleMech();
 
     @Override
@@ -42,46 +41,46 @@ public class TestWobbleMech extends LinearOpMode {
             // WOBBLE MECH =========================================================================
 
             // Arm
-            if (gamepad1.y && constants.y == 0) {
-                constants.y++;
-            } else if (!gamepad1.y && constants.y == 1) { // Aim wobble mech
+            if (gamepad1.y && Constants.y == 0) {
+                Constants.y++;
+            } else if (!gamepad1.y && Constants.y == 1) { // Aim wobble mech
                 aim();
-                constants.y++;
-            } else if (gamepad1.y && constants.y == 2) {
-                constants.y++;
-            } else if (!gamepad1.y && constants.y == 3) { // Collect wobble goal
+                Constants.y++;
+            } else if (gamepad1.y && Constants.y == 2) {
+                Constants.y++;
+            } else if (!gamepad1.y && Constants.y == 3) { // Collect wobble goal
                 collect();
-                constants.y++;
-            } else if (gamepad1.y && constants.y == 4) {
-                constants.y++;
-            } else if (gamepad1.y && constants.y == 5) { // Drop wobble goal
+                Constants.y++;
+            } else if (gamepad1.y && Constants.y == 4) {
+                Constants.y++;
+            } else if (gamepad1.y && Constants.y == 5) { // Drop wobble goal
                 drop();
-                constants.y = 0;
-            } else if (gamepad1.x && constants.x == 0) {
-                constants.x++;
-            } else if (!gamepad1.x && constants.x == 1) { // Reset wobble mech
+                Constants.y = 0;
+            } else if (gamepad1.x && Constants.x == 0) {
+                Constants.x++;
+            } else if (!gamepad1.x && Constants.x == 1) { // Reset wobble mech
                 resetWobbleMech();
-                constants.y = 0;
-                constants.x = 0;
+                Constants.y = 0;
+                Constants.x = 0;
             }
 
             // Place Temp
-            if (gamepad1.left_bumper && constants.lBumper == 0)
-                constants.lBumper++;
-            else if (!gamepad1.dpad_left && constants.lBumper == 1) {
+            if (gamepad1.left_bumper && Constants.lBumper == 0)
+                Constants.lBumper++;
+            else if (!gamepad1.dpad_left && Constants.lBumper == 1) {
                 place();
-                constants.lBumper--;
+                Constants.lBumper--;
             }
 
             // Claw
-            if (gamepad1.dpad_right && constants.right == 0)
-                constants.right++;
-            else if (!gamepad1.dpad_right && constants.right == 1) {
+            if (gamepad1.dpad_right && Constants.right == 0)
+                Constants.right++;
+            else if (!gamepad1.dpad_right && Constants.right == 1) {
                 if (wobbleMech.getClawPosition() == WobbleMech.ClawPosition.CLOSE)
                     wobbleMech.clawOpen();
                 else
                     wobbleMech.clawClose();
-                constants.right--;
+                Constants.right--;
             }
 
         }

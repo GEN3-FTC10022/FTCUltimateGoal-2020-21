@@ -11,19 +11,14 @@ import org.firstinspires.ftc.teamcode.Util.Constants;
 @TeleOp(name = "Subsystems: Intake Test")
 public class TestIntake extends LinearOpMode {
 
-    private Constants constants = new Constants();
-    private Intake intake = new Intake();
-
     @Override
     public void runOpMode() {
 
         initialize(false);
 
-        telemetry.setAutoClear(true);
-
         waitForStart();
 
-        intake.down();
+        Intake.drop();
 
         doTeleOp();
 
@@ -35,38 +30,39 @@ public class TestIntake extends LinearOpMode {
 
             // TELEMETRY ===========================================================================
 
-            displayTeleOpTelemetry();
+            Intake.appendTelemetry(true);
+            telemetry.update();
 
             // INTAKE ==============================================================================
 
             // Release
-            if (gamepad1.x && constants.x == 0)
-                constants.x++;
-            else if (!gamepad1.x && constants.x == 1) {
-                if (intake.position == Intake.Position.UP)
-                    intake.down();
+            if (gamepad1.x && Constants.x == 0)
+                Constants.x++;
+            else if (!gamepad1.x && Constants.x == 1) {
+                if (Intake.getPosition() == Intake.Position.LOCKED)
+                    Intake.drop();
                 else
-                    intake.up();
-                constants.x--;
+                    Intake.lock();
+                Constants.x--;
             }
 
             // Rollers
-            if (gamepad1.a && constants.a == 0)
-                constants.a++;
-            else if (!gamepad1.a && constants.a == 1) {
-                if (intake.status == Intake.Status.IN)
-                    intake.off();
+            if (gamepad1.a && Constants.a == 0)
+                Constants.a++;
+            else if (!gamepad1.a && Constants.a == 1) {
+                if (Intake.getDirection() == Intake.Direction.IN)
+                    Intake.off();
                 else
-                    intake.in();
-                constants.a--;
-            } else if (gamepad1.b && constants.b == 0)
-                constants.b++;
-            else if (!gamepad1.b && constants.b == 1) {
-                if (intake.status == Intake.Status.OUT)
-                    intake.off();
+                    Intake.in();
+                Constants.a--;
+            } else if (gamepad1.b && Constants.b == 0)
+                Constants.b++;
+            else if (!gamepad1.b && Constants.b == 1) {
+                if (Intake.getDirection() == Intake.Direction.OUT)
+                    Intake.off();
                 else
-                    intake.out();
-                constants.b--;
+                    Intake.out();
+                Constants.b--;
             }
 
         }
@@ -78,28 +74,11 @@ public class TestIntake extends LinearOpMode {
 
     public void initialize(boolean isAuto) {
 
-        // Telemetry ===============================================================================
         telemetry.setAutoClear(false);
-        telemetry.addLine("Initializing Robot...");
-        telemetry.update();
+
+        Intake.initialize("rollers", "release");
         sleep(500);
 
-        // Intake ==================================================================================
-        intake.roller = (DcMotorEx)hardwareMap.dcMotor.get("rollers");
-        intake.release = hardwareMap.servo.get("release");
-        intake.initialize();
-        telemetry.addLine("Intake initialized");
-        telemetry.update();
-        sleep(500);
+        telemetry.setAutoClear(true);
     }
-
-    public void displayTeleOpTelemetry() {
-
-        telemetry.addLine("=== INTAKE ===");
-        telemetry.addData("Rollers", intake.status);
-        telemetry.addData("Position", intake.position);
-        telemetry.addLine();
-    }
-
-
 }

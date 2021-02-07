@@ -4,7 +4,7 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
 @Autonomous (name = "Test: Auto")
 
-public class TestingAuto extends TestingSuperclass {
+public class TestAuto extends TestSuperclass {
 
     @Override
     public void runOpMode() {

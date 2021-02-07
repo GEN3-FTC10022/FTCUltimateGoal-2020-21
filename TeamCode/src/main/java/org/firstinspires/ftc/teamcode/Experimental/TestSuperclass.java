@@ -4,7 +4,6 @@ import android.graphics.Color;
 
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
@@ -15,22 +14,17 @@ import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackableDefau
 import org.firstinspires.ftc.teamcode.Subsystems.Drivetrain;
 import org.firstinspires.ftc.teamcode.Subsystems.Intake;
 import org.firstinspires.ftc.teamcode.Subsystems.Shooter;
+import org.firstinspires.ftc.teamcode.Util.Subsystem;
 import org.firstinspires.ftc.teamcode.Subsystems.Vision;
 import org.firstinspires.ftc.teamcode.Subsystems.WobbleMech;
 import org.firstinspires.ftc.teamcode.Util.Constants;
 
-public abstract class TestingSuperclass extends LinearOpMode {
+public abstract class TestSuperclass extends LinearOpMode {
 
     // ROBOT OBJECTS -------------------------------------------------------------------------------
 
-    // Constants
-    public Constants constants = new Constants();
-
     // Shooter
     public Shooter shooter = new Shooter();
-
-    // Intake
-    public Intake intake = new Intake();
 
     // Wobble Mech
     public WobbleMech wobbleMech = new WobbleMech();
@@ -50,6 +44,8 @@ public abstract class TestingSuperclass extends LinearOpMode {
 
         telemetry.setAutoClear(false);
 
+        Subsystem.initialize(hardwareMap, telemetry);
+
         // Wobble Mech =============================================================================
         wobbleMech.arm = (DcMotorEx)hardwareMap.dcMotor.get("arm");
         wobbleMech.lClaw = hardwareMap.servo.get("lClaw");
@@ -60,9 +56,7 @@ public abstract class TestingSuperclass extends LinearOpMode {
         sleep(500);
 
         // Intake ==================================================================================
-        intake.roller = (DcMotorEx)hardwareMap.dcMotor.get("rollers");
-        intake.release = hardwareMap.servo.get("release");
-        intake.initialize();
+        Intake.initialize("rollers", "release");
         telemetry.addLine("Intake initialized");
         telemetry.update();
         sleep(500);
@@ -146,8 +140,8 @@ public abstract class TestingSuperclass extends LinearOpMode {
         telemetry.addLine();
 
         telemetry.addLine("=== INTAKE ===");
-        telemetry.addData("Rollers", intake.status);
-        telemetry.addData("Position", intake.position);
+        telemetry.addData("Direction", Intake.getDirection());
+        telemetry.addData("Position", Intake.getPosition());
         telemetry.addLine();
 
         telemetry.update();

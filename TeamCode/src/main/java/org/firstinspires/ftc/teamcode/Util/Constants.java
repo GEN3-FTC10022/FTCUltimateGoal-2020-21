@@ -1,8 +1,6 @@
 package org.firstinspires.ftc.teamcode.Util;
 
-public class Constants {
-
-    public Constants() { }
+public abstract class Constants {
 
     // Motor Constants
     public static final double YELLOWJACKET_5202_MAX_RPM = 5400; // tested value
@@ -17,6 +15,6 @@ public class Constants {
             YELLOWJACKET_5202_TICKS_PER_REV};
 
     // Controller Constants
-    public int a = 0, b = 0, x = 0, y = 0, lBumper = 0, rBumper = 0, up = 0, down = 0, left = 0,
+    public static int a = 0, b = 0, x = 0, y = 0, lBumper = 0, rBumper = 0, up = 0, down = 0, left = 0,
             right = 0, lStick = 0, rStick = 0, start = 0, back = 0;
 }

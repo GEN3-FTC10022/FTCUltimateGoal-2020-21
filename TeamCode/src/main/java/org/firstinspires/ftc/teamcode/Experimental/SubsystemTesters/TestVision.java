@@ -17,7 +17,6 @@ import org.firstinspires.ftc.teamcode.Util.Constants;
 @TeleOp(name = "Subsystems: Vision Test")
 public class TestVision extends LinearOpMode {
 
-    private Constants constants = new Constants();
     private Vision vision = new Vision();
 
     @Override
