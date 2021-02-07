@@ -1,69 +1,83 @@
 package org.firstinspires.ftc.teamcode.Subsystems;
 
-import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 
-import static org.firstinspires.ftc.robotcore.external.BlocksOpModeCompanion.gamepad1;
-import static org.firstinspires.ftc.teamcode.Util.Constants.motorTicksPerRev;
+import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
+import org.firstinspires.ftc.teamcode.Util.Subsystem;
 
-public class WobbleMech {
+import static org.firstinspires.ftc.teamcode.Util.Constants.NEVEREST_CLASSIC_60_TICKS_PER_REV;
 
-    // Objects
-    public DcMotorEx arm;
-    public Servo lClaw, rClaw;
+public abstract class WobbleMech extends Subsystem {
+
+    // Devices
+    public static DcMotorEx arm;
+    public static Servo lClaw, rClaw;
 
     // Constants
-    private final double WOBBLE_TICKS_PER_REV = motorTicksPerRev[2];
-    public final double WOBBLE_GEAR_REDUCTION = 2;
-    private final double WOBBLE_TICKS_PER_DEGREE = (WOBBLE_TICKS_PER_REV * WOBBLE_GEAR_REDUCTION)/360.0;
-    public double armPower = 0.8;
+    private static final double WOBBLE_TICKS_PER_REV = NEVEREST_CLASSIC_60_TICKS_PER_REV;
+    private static final double WOBBLE_GEAR_REDUCTION = 2;
+    private static final double WOBBLE_TICKS_PER_DEGREE = (WOBBLE_TICKS_PER_REV * WOBBLE_GEAR_REDUCTION)/360.0;
+    private static final double ARM_POWER = 0.8;
+    private static final double[] WOBBLE_ANGLES = {0, 60, 125};
+    private static ArmPosition armPosition;
+    private static final double CLAW_MIN = 0;
+    private static final double CLAW_MAX = 0.5225;
+    private static ClawPosition clawPosition;
 
-    // Arm Angle Positions
-    private final double[] wobbleAngles =
-            {0, 60, 125}; // temp
-    private ArmPosition armPosition;
+    /**
+     * Configures the hardware map, sets the arm to the rest position and opens the claw.
+     */
+    public static void initialize(String hmArm, String hmClawL, String hmClawR) {
 
-    // Claw Positions
-    private final double open = 0.0; // temp
-    private final double close = 0.5225; // temp
-    private ClawPosition clawPosition;
+        // Hardware Map
+        arm = hm.get(DcMotorEx.class, "hmArm");
+        lClaw = hm.get(Servo.class, hmClawL);
+        rClaw = hm.get(Servo.class, hmClawR);
 
-    public WobbleMech() { }
+        // Arm
+        arm.setDirection(DcMotorSimple.Direction.REVERSE);
+        arm.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        arm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
+        // Claw
+        rClaw.setDirection(Servo.Direction.REVERSE);
+        rClaw.scaleRange(CLAW_MIN, CLAW_MAX);
+        lClaw.scaleRange(CLAW_MIN, CLAW_MAX);
+
+        setArmPosition(ArmPosition.REST);
+        clawClose();
+
+        tm.addLine("Wobble Mech initialized");
+        tm.update();
+        sleep(500);
+    }
+
+    /**
+     * Arm Positions - REST, HIGH, LOW
+     */
     public enum ArmPosition {
         REST,
         HIGH,
         LOW;
     }
 
-    public enum ClawPosition {
-        OPEN,
-        CLOSE;
+    /**
+     * @return Current position of the arm
+     * @see WobbleMech.ArmPosition
+     */
+    public static ArmPosition getArmPosition() {
+        return armPosition;
     }
 
-    /** Sets the arm to the rest position and opens the claw.
-     * @see org.firstinspires.ftc.teamcode.Quals.QualsSuperclass
+    /**
+     * Moves the arm to the specified position.
+     * @param armPosition Target arm position
+     * @see WobbleMech.ArmPosition
      */
-    public void initialize() {
-
-        // Arm
-        arm.setDirection(DcMotorSimple.Direction.REVERSE);
-        arm.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        arm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        setArmPosition(ArmPosition.REST);
-
-        // Claw
-        rClaw.setDirection(Servo.Direction.REVERSE);
-        clawClose();
-    }
-
-    /** Sets the arm to the speicified position at the given power.
-     * @param armPosition Positions of the Wobble Mech (REST/HIGH/LOW)
-     */
-    public void setArmPosition(ArmPosition armPosition) {
+    private static void setArmPosition(ArmPosition armPosition) {
         int index;
         switch (armPosition) {
             case HIGH:
@@ -75,42 +89,134 @@ public class WobbleMech {
             default: // REST
                 index = 0;
         }
-        arm.setTargetPosition((int)Math.round(wobbleAngles[index] * WOBBLE_TICKS_PER_DEGREE));
-        arm.setPower(armPower);
+        arm.setTargetPosition((int)Math.round(WOBBLE_ANGLES[index] * WOBBLE_TICKS_PER_DEGREE));
+        arm.setPower(ARM_POWER);
         arm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        this.armPosition = armPosition;
+        WobbleMech.armPosition = armPosition;
     }
 
-    public void zeroArm() {
+    /**
+     * @deprecated Currently causes zeroing error
+     */
+    @Deprecated
+    private static void zeroArm() {
         arm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         arm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
     }
 
     /**
-     * Outputs the current position of the arm.
-     *
-     * @return armPosition The position of the arm (REST/HIGH/LOW).
+     * Claw Positions - OPEN, CLOSED
      */
-    public ArmPosition getArmPosition() {
-        return armPosition;
+    public enum ClawPosition {
+        OPEN,
+        CLOSED;
+    }
+
+    /**
+     * @return Current position of the claw
+     * @see WobbleMech.ClawPosition
+     */
+    public static ClawPosition getClawPosition() {
+        return clawPosition;
     }
 
     /**
      * Opens the claws
      */
-    public void clawOpen() {
-        lClaw.setPosition(open);
-        rClaw.setPosition(open);
+    public static void clawOpen() {
+        lClaw.setPosition(0);
+        rClaw.setPosition(0);
         clawPosition = ClawPosition.OPEN;
     }
 
-    public void clawClose() {
-        lClaw.setPosition(close);
-        rClaw.setPosition(close);
-        clawPosition = ClawPosition.CLOSE;
+    /**
+     * Closes the claws
+     */
+    public static void clawClose() {
+        lClaw.setPosition(1);
+        rClaw.setPosition(1);
+        clawPosition = ClawPosition.CLOSED;
     }
 
-    public ClawPosition getClawPosition() {
-        return clawPosition;
+    /**
+     * Moves the arm to the low position and opens the claws.
+     */
+    public static void aim() {
+        WobbleMech.clawOpen();
+        sleep(500);
+        WobbleMech.setArmPosition(WobbleMech.ArmPosition.LOW);
+    }
+
+    /**
+     * Closes the claws resets the wobble mech.
+     */
+    public static void collect() {
+        WobbleMech.clawClose();
+        sleep(1000);
+        resetWobbleMech();
+    }
+
+    /**
+     * Moves the arm to the low position and opens the claws. Then, resets the wobble mech.
+     */
+    public static void place() {
+        WobbleMech.setArmPosition(WobbleMech.ArmPosition.LOW);
+        sleep(500);
+        WobbleMech.clawOpen();
+        sleep(500);
+        resetWobbleMech();
+    }
+
+    /**
+     * Moves the arm to the high position and opens the claws. Then, resets the wobble mech.
+     */
+    public static void drop() {
+        WobbleMech.setArmPosition(WobbleMech.ArmPosition.HIGH);
+        sleep(500);
+        WobbleMech.clawOpen();
+        sleep(500);
+        resetWobbleMech();
+    }
+
+    /**
+     * Moves the arm to the rest position and closes the claws.
+     */
+    public static void resetWobbleMech() {
+        WobbleMech.setArmPosition(WobbleMech.ArmPosition.REST);
+        sleep(500);
+        WobbleMech.clawClose();
+    }
+
+    /**
+     * Appends Wobble Mech data to telemetry. For the claw, the data is displayed for the left
+     * servo unless otherwise specified.
+     * @param expanded Shows expanded data for troubleshooting.
+     */
+    public static void appendTelemetry(boolean expanded) {
+        tm.addLine("=== Wobble Mech ===");
+        tm.addData("Arm Position", getArmPosition());
+        tm.addData("Claw Position", getClawPosition());
+
+        if (expanded) {
+            tm.addLine("\n:: Arm ::");
+            tm.addData("Motor Type", arm.getMotorType());
+            tm.addData("Controller", arm.getController());
+            tm.addData("Port Number", arm.getPortNumber());
+            tm.addData("Current", arm.getCurrent(CurrentUnit.AMPS));
+            tm.addData("Current Alert", arm.getCurrentAlert(CurrentUnit.AMPS));
+            tm.addData("Over Current", arm.isOverCurrent());
+            tm.addData("Run Mode", arm.getMode());
+            tm.addData("Encoder PID", arm.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER));
+            tm.addData("Position PID", arm.getPIDFCoefficients(DcMotor.RunMode.RUN_TO_POSITION));
+
+            tm.addLine("\n:: Claw ::");
+            tm.addData("Min Position", lClaw.MIN_POSITION);
+            tm.addData("Max Position", lClaw.MAX_POSITION);
+            tm.addData("Current Position", lClaw.getPosition());
+            tm.addData("L.Claw Controller", lClaw.getController());
+            tm.addData("R.Claw Controller", lClaw.getController());
+            tm.addData("L.Claw Port Number", lClaw.getPortNumber());
+            tm.addData("R.Claw Port Number", lClaw.getPortNumber());
+        }
     }
 }

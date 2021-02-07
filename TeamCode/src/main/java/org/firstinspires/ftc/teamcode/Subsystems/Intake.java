@@ -12,16 +12,42 @@ import static org.firstinspires.ftc.robotcore.external.BlocksOpModeCompanion.tel
 
 public abstract class Intake extends Subsystem {
 
-    // Objects
+    // Devices
     public static DcMotorEx rollers;
     public static Servo release;
 
-    // Constants
+    // Variables
     private static Direction direction;
     private static Position position;
-    private static final double POWER = 1;
 
-    public Intake() { }
+    // Constants
+    private static final double POWER = 1;
+    private static final double RELEASE_MIN = 0;
+    private static final double RELEASE_MAX = 0.3;
+
+    /**
+     * Configures the hardware map, locks the intake and turns off the rollers
+     */
+    public static void initialize(String hmRollers, String hmRelease) {
+
+        // Hardware Map
+        rollers = hm.get(DcMotorEx.class, hmRollers);
+        release = hm.get(Servo.class, hmRelease);
+
+        // Rollers
+        rollers.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        rollers.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+        // Release
+        release.scaleRange(RELEASE_MIN, RELEASE_MAX);
+
+        lock();
+        off();
+
+        tm.addLine("Intake initialized");
+        tm.update();
+        sleep(500);
+    }
 
     /**
      * Roller Directions - IN, OUT, OFF
@@ -38,29 +64,6 @@ public abstract class Intake extends Subsystem {
      */
     public static Direction getDirection() {
         return direction;
-    }
-
-    /**
-     * Locks the intake and turns off the rollers
-     */
-    public static void initialize(String hmRollers, String hmRelease) {
-
-        // Hardware Map
-        rollers = hm.get(DcMotorEx.class, hmRollers);
-        release = hm.get(Servo.class, hmRelease);
-
-        // Rollers
-        rollers.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        rollers.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-
-        // Release
-        release.scaleRange(0, 0.3);
-
-        lock();
-        off();
-
-        tm.addLine("Intake initialized");
-        tm.update();
     }
 
     /**
@@ -119,6 +122,10 @@ public abstract class Intake extends Subsystem {
         position = Position.DROPPED;
     }
 
+    /**
+     * Appends Intake data to telemetry.
+     * @param expanded Shows expanded data for troubleshooting.
+     */
     public static void appendTelemetry(boolean expanded) {
         tm.addLine("=== INTAKE ===");
         tm.addData("Direction", getDirection());

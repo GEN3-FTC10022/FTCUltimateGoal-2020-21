@@ -7,9 +7,12 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import org.firstinspires.ftc.teamcode.Subsystems.Intake;
 import org.firstinspires.ftc.teamcode.Subsystems.WobbleMech;
 import org.firstinspires.ftc.teamcode.Util.Constants;
+import org.firstinspires.ftc.teamcode.Util.Subsystem;
 
 @TeleOp(name = "Subsystems: Intake Test")
 public class TestIntake extends LinearOpMode {
+
+    private boolean isAuto;
 
     @Override
     public void runOpMode() {
@@ -18,17 +21,17 @@ public class TestIntake extends LinearOpMode {
 
         waitForStart();
 
-        Intake.drop();
-
-        doTeleOp();
-
-        // doAuto();
+        if (isAuto)
+            doAuto();
+        else
+            doTeleOp();
     }
 
     public void doTeleOp() {
-        while (opModeIsActive()) {
 
-            // TELEMETRY ===========================================================================
+        Intake.drop();
+
+        while (opModeIsActive()) {
 
             Intake.appendTelemetry(true);
             telemetry.update();
@@ -74,11 +77,24 @@ public class TestIntake extends LinearOpMode {
 
     public void initialize(boolean isAuto) {
 
+        this.isAuto = isAuto;
+
         telemetry.setAutoClear(false);
 
-        Intake.initialize("rollers", "release");
+        telemetry.addLine("Initializing Robot...");
+        telemetry.update();
         sleep(500);
 
-        telemetry.setAutoClear(true);
+        Subsystem.initialize(hardwareMap,telemetry);
+
+        Intake.initialize("rollers", "release");
+
+        if (!isAuto) {
+            telemetry.setAutoClear(true);
+            while(!isStarted()) {
+                Intake.appendTelemetry(true);
+                telemetry.update();
+            }
+        }
     }
 }

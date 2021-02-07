@@ -2,6 +2,8 @@ package org.firstinspires.ftc.teamcode.Experimental;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
+import org.firstinspires.ftc.teamcode.Subsystems.WobbleMech;
+
 @Autonomous (name = "Test: Auto")
 
 public class TestAuto extends TestSuperclass {
@@ -33,8 +35,7 @@ public class TestAuto extends TestSuperclass {
             sleep(500);
             rotateRight(0.5, 90);
             sleep(500);
-            place();
-            sleep(500);
+            WobbleMech.place();
 
             // Rotate to zero
             rotateLeft(0.5, 90);
@@ -43,14 +44,14 @@ public class TestAuto extends TestSuperclass {
             strafeLeft(0.8, 40);
             sleep(500);
             forward(0.8, 15);
-            place();
+            WobbleMech.place();
 
         } else { // Target Zone C
             forward(0.8, 37);
             sleep(500);
             strafeLeft(0.8, 8);
             sleep(500);
-            place();
+            WobbleMech.place();
             backward(0.8, 32);
             sleep(500);
         }
