@@ -4,6 +4,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.teamcode.Subsystems.Drivetrain;
 import org.firstinspires.ftc.teamcode.Subsystems.Intake;
+import org.firstinspires.ftc.teamcode.Subsystems.Shooter;
 import org.firstinspires.ftc.teamcode.Subsystems.WobbleMech;
 import org.firstinspires.ftc.teamcode.Util.Constants;
 
@@ -13,25 +14,25 @@ import org.firstinspires.ftc.teamcode.Util.Constants;
  * Gamepad 1 -
  * A:           Intake In/Off
  * B:           Intake Out/Off
- * X:           Reset WobbleMech
- * Y:           Advance WobbleMech
+ * X:           Reset WobbleMech || Arm Down
+ * Y:           Advance WobbleMech || Arm Up
  *
- * Up:          Increase Shooter Velocity
- * Down:        Decrease Shooter Velocity
+ * Up:          -
+ * Down:        -
  * Left:        -
- * Right:       Place Wobble Goal
+ * Right:       Place Wobble Goal || Claw Open/Close
  *
  * L. Bumper:   Launch Multiple
  * R. Bumper:   Launch Single
  *
  * L. Trigger:  -
- * R. Trigger:  Slow Drive
+ * R. Trigger:  Slow Drive Modifier
  *
  * L. Stick:    Omnidirectional Drive
  * R. Stick:    Drive Rotation
  *
  * Start:       -
- * Back:        Switch Drive Mode
+ * Back:        -
  *
  * Gamepad 2 -
  * A:           Switch Drive Mode
@@ -39,8 +40,8 @@ import org.firstinspires.ftc.teamcode.Util.Constants;
  * X:           Switch Wobble Mech Control Mode
  * Y:           -
  *
- * Up:          -
- * Down:        -
+ * Up:          Increase Shooter Velocity
+ * Down:        Decrease Shooter Velocity
  * Left:        -
  * Right:       -
  *
@@ -96,18 +97,18 @@ public class TestTeleOp extends TestSuperclass {
 
             // SHOOTER =============================================================================
 
-            shooter.runShooter();
+            Shooter.runLauncher();
 
             // Velocity
             if (gamepad1.dpad_up && Constants.up == 0)
                 Constants.up++;
             else if (!gamepad1.dpad_up && Constants.up == 1) {
-                shooter.increaseVelocity();
+                Shooter.increaseVelocity();
                 Constants.up--;
             } else if (gamepad1.dpad_down && Constants.down == 0)
                 Constants.down++;
             else if (!gamepad1.dpad_down && Constants.down == 1) {
-                shooter.decreaseVelocity();
+                Shooter.decreaseVelocity();
                 Constants.down--;
             }
 
@@ -115,12 +116,12 @@ public class TestTeleOp extends TestSuperclass {
             if (gamepad1.right_bumper && Constants.rBumper == 0)
                 Constants.rBumper++;
             else if (!gamepad1.right_bumper && Constants.rBumper == 1) {
-                shootSingle();
+                Shooter.shootSingle();
                 Constants.rBumper--;
             } else if (gamepad1.left_bumper && Constants.lBumper == 0)
                 Constants.lBumper++;
             else if (!gamepad1.left_bumper && Constants.lBumper == 1) {
-                shootAll();
+                Shooter.shootAll();
                 Constants.lBumper--;
             }
 
@@ -145,7 +146,7 @@ public class TestTeleOp extends TestSuperclass {
             } else if (gamepad1.x && Constants.x == 0) {
                 Constants.x++;
             } else if (!gamepad1.x && Constants.x == 1) { // Reset wobble mech
-                WobbleMech.resetWobbleMech();
+                WobbleMech.reset();
                 Constants.y = 0;
                 Constants.x = 0;
             }

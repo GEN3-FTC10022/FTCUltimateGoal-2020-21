@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.Experimental;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
+import org.firstinspires.ftc.teamcode.Subsystems.Shooter;
 import org.firstinspires.ftc.teamcode.Subsystems.WobbleMech;
 
 @Autonomous (name = "Test: Auto")
@@ -17,16 +18,16 @@ public class TestAuto extends TestSuperclass {
 
         vuforiaScanStack(false, false);
 
-        shooter.setTargetVelocity(3);
-        shooter.runShooter();
+        Shooter.setTarget(4);
+        Shooter.runLauncher();
 
         // Move to launch line
         forward(0.8, 57);
         sleep(250);
         strafeRight(0.8,27);
         sleep(250);
-        shootAll();
-        shooter.setVelocity(0);
+        Shooter.shootAll();
+        Shooter.setTarget(0);
 
         if (vision.getStackHeight() == 0) { // Target Zone A
             strafeLeft(0.8, 25);

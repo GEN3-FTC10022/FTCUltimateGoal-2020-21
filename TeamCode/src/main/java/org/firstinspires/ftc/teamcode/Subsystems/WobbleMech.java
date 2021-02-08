@@ -13,8 +13,8 @@ import static org.firstinspires.ftc.teamcode.Util.Constants.NEVEREST_CLASSIC_60_
 public abstract class WobbleMech extends Subsystem {
 
     // Devices
-    public static DcMotorEx arm;
-    public static Servo lClaw, rClaw;
+    private static DcMotorEx arm;
+    private static Servo lClaw, rClaw;
 
     // Constants
     private static final double WOBBLE_TICKS_PER_REV = NEVEREST_CLASSIC_60_TICKS_PER_REV;
@@ -23,12 +23,16 @@ public abstract class WobbleMech extends Subsystem {
     private static final double ARM_POWER = 0.8;
     private static final double[] WOBBLE_ANGLES = {0, 60, 125};
     private static ArmPosition armPosition;
+
     private static final double CLAW_MIN = 0;
     private static final double CLAW_MAX = 0.5225;
     private static ClawPosition clawPosition;
 
+    private static ControlMode controlMode;
+
     /**
-     * Configures the hardware map, sets the arm to the rest position and opens the claw.
+     * Configures the hardware map, sets the control mode to assisted, sets the arm to the rest
+     * position, and opens the claw.
      */
     public static void initialize(String hmArm, String hmClawL, String hmClawR) {
 
@@ -47,12 +51,38 @@ public abstract class WobbleMech extends Subsystem {
         rClaw.scaleRange(CLAW_MIN, CLAW_MAX);
         lClaw.scaleRange(CLAW_MIN, CLAW_MAX);
 
+        controlMode = ControlMode.ASSISTED;
         setArmPosition(ArmPosition.REST);
         clawClose();
 
         tm.addLine("Wobble Mech initialized");
         tm.update();
         sleep(500);
+    }
+
+    /**
+     * Control Modes - ASSISTED, MANUAL
+     */
+    public enum ControlMode {
+        ASSISTED,
+        MANUAL;
+    }
+
+    /**
+     * @return Current system control mode
+     * @see WobbleMech.ControlMode
+     */
+    public static ControlMode getControlMode() {
+        return controlMode;
+    }
+
+    /**
+     * Sets the active control mode to the argument
+     * @param controlMode The desired system control mode.
+     * @see WobbleMech.ControlMode
+     */
+    public static void setControlMode(ControlMode controlMode) {
+        WobbleMech.controlMode = controlMode;
     }
 
     /**
@@ -166,7 +196,7 @@ public abstract class WobbleMech extends Subsystem {
     public static void collect() {
         WobbleMech.clawClose();
         sleep(1000);
-        resetWobbleMech();
+        reset();
     }
 
     /**
@@ -177,7 +207,7 @@ public abstract class WobbleMech extends Subsystem {
         sleep(500);
         WobbleMech.clawOpen();
         sleep(500);
-        resetWobbleMech();
+        reset();
     }
 
     /**
@@ -188,16 +218,37 @@ public abstract class WobbleMech extends Subsystem {
         sleep(500);
         WobbleMech.clawOpen();
         sleep(500);
-        resetWobbleMech();
+        reset();
     }
 
     /**
      * Moves the arm to the rest position and closes the claws.
      */
-    public static void resetWobbleMech() {
+    public static void reset() {
         WobbleMech.setArmPosition(WobbleMech.ArmPosition.REST);
         sleep(500);
         WobbleMech.clawClose();
+    }
+
+    /**
+     * Applies positive power to the arm motor.
+     */
+    public static void armUp() {
+        arm.setPower(ARM_POWER);
+    }
+
+    /**
+     * Applies negative power to the arm motor.
+     */
+    public static void armDown() {
+        arm.setPower(-ARM_POWER);
+    }
+
+    /**
+     * Applies zero power to the arm motor.
+     */
+    public static void armStop() {
+        arm.setPower(0);
     }
 
     /**

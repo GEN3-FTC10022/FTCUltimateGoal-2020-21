@@ -13,11 +13,11 @@ import org.firstinspires.ftc.teamcode.Util.Subsystem;
 
 /**
  * Gamepad 1 -
- * B:           Switch Velocity Control Mode
- * Up:          Increase Shooter Velocity
- * Down:        Decrease Shooter Velocity
+ * Up:          Increase Target Setting || Increase Target Velocity
+ * Down:        Decrease Target Setting || Decrease Target Velocity
  * L. Bumper:   Launch Multiple
  * R. Bumper:   Launch Single
+ * Back:        Switch Velocity Control Mode
  */
 
 @TeleOp(name = "Subsystems: Shooter Test")
@@ -46,6 +46,17 @@ public class TestShooter extends LinearOpMode {
 
             Shooter.runLauncher();
 
+            // Velocity Control Mode
+            if (gamepad1.back && Constants.back == 0)
+                Constants.back++;
+            else if (!gamepad1.back && Constants.back == 1) {
+                if (Shooter.getVelocityControlMode() == Shooter.VelocityControlMode.PRESET)
+                    Shooter.setVelocityControlMode(Shooter.VelocityControlMode.MANUAL);
+                else if (Shooter.getVelocityControlMode() == Shooter.VelocityControlMode.MANUAL)
+                    Shooter.setVelocityControlMode(Shooter.VelocityControlMode.PRESET);
+                Constants.back--;
+            }
+
             // Velocity
             if (gamepad1.dpad_up && Constants.up == 0)
                 Constants.up++;
@@ -71,23 +82,17 @@ public class TestShooter extends LinearOpMode {
                 Shooter.shootAll();
                 Constants.lBumper--;
             }
-
-            // Velocity Control Mode
-            if (gamepad1.back && Constants.back == 0)
-                Constants.back++;
-            else if (!gamepad1.back && Constants.back == 1) {
-                if (Shooter.getVelocityControlMode() == Shooter.VelocityControlMode.PRESET)
-                    Shooter.setVelocityControlMode(Shooter.VelocityControlMode.MANUAL);
-                else if (Shooter.getVelocityControlMode() == Shooter.VelocityControlMode.MANUAL)
-                    Shooter.setVelocityControlMode(Shooter.VelocityControlMode.PRESET);
-                Constants.back--;
-            }
         }
 
     }
 
     public void doAuto() {
-
+        Shooter.setTarget(4);
+        Shooter.runLauncher();
+        sleep(2000);
+        Shooter.shootAll();
+        Shooter.setTarget(0);
+        sleep(30000);
     }
 
     public void initialize(boolean isAuto) {

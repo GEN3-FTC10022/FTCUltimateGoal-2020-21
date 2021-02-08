@@ -1,8 +1,10 @@
 package org.firstinspires.ftc.teamcode.Util;
 
+import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.robotcore.internal.ui.GamepadUser;
 
 public abstract class Subsystem {
 
@@ -22,7 +24,7 @@ public abstract class Subsystem {
         hm = hardwareMap;
         tm = telemetry;
 
-        tm.addLine("Hardware Map and Telemetry initialized");
+        tm.addLine("Subsystem Hardware Map and Telemetry initialized");
         tm.update();
         sleep(500);
     }

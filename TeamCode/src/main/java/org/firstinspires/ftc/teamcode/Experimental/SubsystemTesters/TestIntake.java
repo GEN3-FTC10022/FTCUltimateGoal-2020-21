@@ -9,6 +9,13 @@ import org.firstinspires.ftc.teamcode.Subsystems.WobbleMech;
 import org.firstinspires.ftc.teamcode.Util.Constants;
 import org.firstinspires.ftc.teamcode.Util.Subsystem;
 
+/**
+ * Gamepad 1 -
+ * A:           Intake In/Off
+ * B:           Intake Out/Off
+ * Back:        Intake Lock/Drop
+ */
+
 @TeleOp(name = "Subsystems: Intake Test")
 public class TestIntake extends LinearOpMode {
 
@@ -44,7 +51,7 @@ public class TestIntake extends LinearOpMode {
             else if (!gamepad1.x && Constants.x == 1) {
                 if (Intake.getPosition() == Intake.Position.LOCKED)
                     Intake.drop();
-                else
+                else if (Intake.getPosition() == Intake.Position.DROPPED)
                     Intake.lock();
                 Constants.x--;
             }
@@ -72,7 +79,7 @@ public class TestIntake extends LinearOpMode {
     }
 
     public void doAuto() {
-
+        sleep(30000);
     }
 
     public void initialize(boolean isAuto) {

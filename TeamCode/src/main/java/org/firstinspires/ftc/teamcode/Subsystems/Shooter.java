@@ -18,8 +18,8 @@ import static org.firstinspires.ftc.teamcode.Util.Constants.motorTicksPerRev;
 public abstract class Shooter extends Subsystem {
 
     // Devices
-    public static DcMotorEx launcherOne, launcherTwo;
-    public static Servo trigger;
+    private static DcMotorEx launcherOne, launcherTwo;
+    private static Servo trigger;
 
     // Constants
     private static final double TRIGGER_MIN = 0;
@@ -30,21 +30,22 @@ public abstract class Shooter extends Subsystem {
     private static final double LAUNCHER_MAX_REV_PER_MIN = 0.8 * YELLOWJACKET_5202_MAX_RPM; // Max Shooter Vel @ 80% of motor max
     private static final double LAUNCHER_MAX_TICKS_PER_SECOND = LAUNCHER_MAX_REV_PER_MIN * (LAUNCHER_TICKS_PER_REV/60.0);
 
+    public static final int ZERO_VELOCITY = 0;
     public static final int LOW_GOAL_VELOCITY = 0; // temp
     public static final int MID_GOAL_VELOCITY = 0; // temp
     public static final int POWER_SHOT_VELOCITY = 0; // temp
     public static final int HIGH_GOAL_VELOCITY = 1460; // tested
-    private static final int[] VELOCITIES = {LOW_GOAL_VELOCITY,MID_GOAL_VELOCITY,POWER_SHOT_VELOCITY,HIGH_GOAL_VELOCITY};
+    private static final int[] VELOCITIES = {ZERO_VELOCITY,LOW_GOAL_VELOCITY,MID_GOAL_VELOCITY,POWER_SHOT_VELOCITY,HIGH_GOAL_VELOCITY};
     private static int targetSetting;
 
     private static VelocityControlMode velocityControlMode;
     private static final double VELOCITY_MODIFIER = 20;
-    private static double targetVelocity;
+    private static int targetVelocity;
     private static final PIDFCoefficients launcherVelocityPID = new PIDFCoefficients(7.5,3,3.5,0);
 
     /**
-     * Configures the hardware map, sets the trigger to the retracted position, and sets the preset
-     * target setting and manual target velocity to high goal.
+     * Configures the hardware map, sets the VCM to preset, sets the trigger to the retracted
+     * position, and sets the defualt target setting and manual target velocity to high goal.
      */
     public static void initialize(String hmLauncher, String hmTrigger) {
 
@@ -68,7 +69,7 @@ public abstract class Shooter extends Subsystem {
 
         velocityControlMode = VelocityControlMode.PRESET;
         retractTrigger();
-        targetSetting = 3;
+        targetSetting = 4;
         targetVelocity = HIGH_GOAL_VELOCITY;
 
         telemetry.addLine("Shooter initialized");

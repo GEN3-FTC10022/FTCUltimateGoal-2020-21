@@ -13,8 +13,8 @@ import static org.firstinspires.ftc.robotcore.external.BlocksOpModeCompanion.tel
 public abstract class Intake extends Subsystem {
 
     // Devices
-    public static DcMotorEx rollers;
-    public static Servo release;
+    private static DcMotorEx rollers;
+    private static Servo release;
 
     // Variables
     private static Direction direction;
