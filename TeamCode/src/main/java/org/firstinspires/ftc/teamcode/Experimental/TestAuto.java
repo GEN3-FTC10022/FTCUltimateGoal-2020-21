@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.Experimental;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
 import org.firstinspires.ftc.teamcode.Subsystems.Shooter;
+import org.firstinspires.ftc.teamcode.Subsystems.Vision;
 import org.firstinspires.ftc.teamcode.Subsystems.WobbleMech;
 
 @Autonomous (name = "Test: Auto")
@@ -16,7 +17,7 @@ public class TestAuto extends TestSuperclass {
 
         waitForStart();
 
-        vuforiaScanStack(false, false);
+        Vision.vuforiaScanStack(false, false);
 
         Shooter.setTarget(4);
         Shooter.runLauncher();
@@ -29,7 +30,7 @@ public class TestAuto extends TestSuperclass {
         Shooter.shootAll();
         Shooter.setTarget(0);
 
-        if (vision.getStackHeight() == 0) { // Target Zone A
+        if (Vision.ringsFound == 0) { // Target Zone A
             strafeLeft(0.8, 25);
             sleep(500);
             forward(0.8, 12);
@@ -41,7 +42,7 @@ public class TestAuto extends TestSuperclass {
             // Rotate to zero
             rotateLeft(0.5, 90);
 
-        } else if (vision.getStackHeight() == 1) { // Target Zone B
+        } else if (Vision.ringsFound == 1) { // Target Zone B
             strafeLeft(0.8, 40);
             sleep(500);
             forward(0.8, 15);

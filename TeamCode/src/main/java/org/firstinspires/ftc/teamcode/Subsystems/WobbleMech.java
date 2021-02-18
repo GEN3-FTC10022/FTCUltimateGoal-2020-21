@@ -33,6 +33,9 @@ public abstract class WobbleMech extends Subsystem {
     /**
      * Configures the hardware map, sets the control mode to assisted, sets the arm to the rest
      * position, and opens the claw.
+     * @param hmArm Arm hardware map name
+     * @param hmClawL Left Claw hardware map name
+     * @param hmClawR Right Claw hardware map name
      */
     public static void initialize(String hmArm, String hmClawL, String hmClawR) {
 

@@ -11,19 +11,16 @@ import com.vuforia.Vuforia;
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
-import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackable;
-import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
+import org.firstinspires.ftc.teamcode.Util.Subsystem;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 import static android.graphics.Bitmap.createBitmap;
 import static org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer.CameraDirection.BACK;
 
-public class Vision {
+public abstract class Vision extends Subsystem {
 
     // Vuforia
     // IMPORTANT: If you are using a USB WebCam, camera choice "BACK" and phone portrait "false"
@@ -37,14 +34,11 @@ public class Vision {
             "TmXG7Iq15ugKdyFwzgpWf6IueyoTKkwOczEiGALV2lObz+fyFLob4rq6HtpkCpL4gkh4xy";
 
     // Class Members
-    public VuforiaLocalizer vuforia;
+    private static VuforiaLocalizer vuforia;
 
     // This is the webcam we are to use. As with other hardware devices such as motors and
     // servos, this device is identified using the robot configuration tool in the FTC application.
-
-    public WebcamName webcamName;
-
-    public boolean targetVisible;
+    private static WebcamName webcamName;
 
     // Configure Vuforia by creating a Parameter object, and passing it to the Vuforia engine.
     // We can pass Vuforia the handle to a camera preview resource (on the RC phone);
@@ -52,81 +46,48 @@ public class Vision {
 
     // int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
     // VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters(cameraMonitorViewId);
-    public VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters();
+    private static VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters();
 
-    public VuforiaTrackables targetsUltimateGoal;
-
-    public List<VuforiaTrackable> allTrackables;
-
-    public Image rgbImage = null;
-    public VuforiaLocalizer.CloseableFrame closeableFrame = null;
-    public Bitmap bitmap = null;
-    public Bitmap croppedBitmap = null;
+    private static Image rgbImage = null;
+    private static VuforiaLocalizer.CloseableFrame closeableFrame = null;
+    private static Bitmap bitmap = null;
+    private static Bitmap croppedBitmap = null;
 
     // Crop Variables
-    public final int cropInitialX = 35;
-    public final int cropFinalX = 55;
-    public final int cropInitialY = 100;
-    public final int cropFinalY = 145;
-    public final int cropWidth = cropFinalX-cropInitialX; // 30
-    public final int cropHeight = cropFinalY-cropInitialY; // 50
+    private static final int CROP_INITIAL_X = 35;
+    private static final int CROP_FINAL_X = 55;
+    private static final int CROP_INITIAL_Y = 100;
+    private static final int CROP_FINAL_Y = 145;
+    private static final int CROP_WIDTH = CROP_FINAL_X - CROP_INITIAL_X;
+    private static final int CROP_HEIGHT = CROP_FINAL_Y - CROP_INITIAL_Y;
 
     // Detection Constants
-    public int check = 0;
-    public int ringsDetected = 0;
-    public int stackHeight = 0;
+    private static int check = 0;
+    public static int ringsFound = 0;
 
-    public Vision() { }
+    /**
+     * Configures the hardware map and initializes vuforia parameters.
+     * @param hmWebcam Webcam hardware map name
+     */
+    public static void initialize(String hmWebcam) {
 
-    public void initialize() {
+        // Hardware Map
+        webcamName = hm.get(WebcamName.class, hmWebcam);
 
         parameters.vuforiaLicenseKey = VUFORIA_KEY;
-
-        // We also indicate which camera on the RC we wish to use.
-
         parameters.cameraName = webcamName;
-
-        // Make sure extended tracking is disabled for this example.
         parameters.useExtendedTracking = false;
-
-        //  Instantiate the Vuforia engine
         vuforia = ClassFactory.getInstance().createVuforia(parameters);
 
-        // Load the data sets for the trackable objects. These particular data
-        // sets are stored in the 'assets' part of our application.
-        targetsUltimateGoal = vuforia.loadTrackablesFromAsset("UltimateGoal");
-        VuforiaTrackable blueTowerGoalTarget = targetsUltimateGoal.get(0);
-        blueTowerGoalTarget.setName("Blue Tower Goal Target");
-        VuforiaTrackable redTowerGoalTarget = targetsUltimateGoal.get(1);
-        redTowerGoalTarget.setName("Red Tower Goal Target");
-        VuforiaTrackable redAllianceTarget = targetsUltimateGoal.get(2);
-        redAllianceTarget.setName("Red Alliance Target");
-        VuforiaTrackable blueAllianceTarget = targetsUltimateGoal.get(3);
-        blueAllianceTarget.setName("Blue Alliance Target");
-        VuforiaTrackable frontWallTarget = targetsUltimateGoal.get(4);
-        frontWallTarget.setName("Front Wall Target");
-
-        // For convenience, gather together all the trackable objects in one easily-iterable collection
-        allTrackables = new ArrayList<VuforiaTrackable>();
-        allTrackables.addAll(targetsUltimateGoal);
+        tm.addLine("Vision initialized");
+        tm.update();
+        sleep(500);
     }
 
-    public int getStackHeight() {
-        switch(ringsDetected) {
-            case 0:
-                stackHeight = 0;
-                break;
-            case 1:
-                stackHeight = 1;
-                break;
-            case 2:
-                stackHeight = 4;
-                break;
-        }
-        return stackHeight;
-    }
-
-    public void captureFrame() {
+    /**
+     * Captures a single frame in RGB565 pixel format and saves it.
+     */
+    private static void captureFrame() {
 
         Vuforia.setFrameFormat(PIXEL_FORMAT.RGB565, true); // Enables RGB565 format for image
         vuforia.setFrameQueueCapacity(1); // Store only one frame at a time
@@ -137,7 +98,6 @@ public class Vision {
                 long numImages = closeableFrame.getNumImages();
 
                 for (int i = 0; i < numImages; i++) {
-
                     if (closeableFrame.getImage(i).getFormat() == PIXEL_FORMAT.RGB565) {
                         rgbImage = closeableFrame.getImage(i);
                         if (rgbImage != null)
@@ -154,7 +114,10 @@ public class Vision {
         }
     }
 
-    public void setBitmaps() {
+    /**
+     * Creates a bitmap and a cropped bitmap from the captured frame and the crop variables.
+     */
+    private static void setBitmaps() {
 
         // Create bitmap based on image dimensions
         bitmap = createBitmap(rgbImage.getWidth(), rgbImage.getHeight(), Bitmap.Config.RGB_565);
@@ -164,10 +127,15 @@ public class Vision {
         bitmap.copyPixelsFromBuffer(rgbImage.getPixels());
 
         // Create cropped bitmap to focus
-        croppedBitmap = createBitmap(bitmap, cropInitialX, cropInitialY, cropWidth, cropHeight);
+        croppedBitmap = createBitmap(bitmap, CROP_INITIAL_X, CROP_INITIAL_Y, CROP_WIDTH, CROP_HEIGHT);
     }
 
-    public void saveBitmap(String name, Bitmap bMap) {
+    /**
+     * Stores a bitmap object in the device storage as a png file.
+     * @param name Output file name
+     * @param bMap Bitmap object to save
+     */
+    private static void saveBitmap(String name, Bitmap bMap) {
 
         // Find directory
         String path = Environment.getExternalStorageDirectory().toString();
@@ -191,6 +159,120 @@ public class Vision {
             } catch (IOException e) {
                 e.printStackTrace();
             }
+        }
+    }
+
+    /**
+     * Cycles between 14 pixels to test for RGB values and determine the number of rings
+     * @param showPixelData Shows extended information about individual RGB values for each pixel scan
+     */
+    private static void scanBitmap(boolean showPixelData) {
+
+        int widthMid = (int)(CROP_WIDTH/2.0);
+        int[] xPos = {widthMid-9,widthMid-6,widthMid-3,widthMid,widthMid+3,widthMid+6,widthMid+9}; // 7 pixels left to right
+        int[] yPos = {CROP_HEIGHT-1,0}; // Ring 1 (Bottom pixel), Ring 4 (Top pixel)
+        int pixel, r, g, b, total;
+
+        for (int i = 0; i < yPos.length; i++) {
+
+            for (int j = 0; j < xPos.length; j++) {
+
+                pixel = croppedBitmap.getPixel(xPos[j],yPos[i]);
+                r = Color.red(pixel);
+                g = Color.green(pixel);
+                b = Color.blue(pixel);
+                total = r + g + b;
+
+                // Print per pixel RGB to telemetry
+                if (showPixelData) {
+                    tm.addData("Red", r);
+                    tm.addData("Green", g);
+                    tm.addData("Blue", b);
+                    tm.addData("Total", total);
+                    tm.update();
+                }
+
+                // If lighting is too bright, increment check if r > g > b with noticeable difference
+                // Else if under normal lighting, check if b < 17.5% of r+g
+                // Else fail check (too dark)
+                if (total > 375) {
+                    if (r > g+40 && g > b && b > 70) {
+                        tm.addLine("(" + i + "," + j + "): " + "*Bright Check Successful*");
+                        tm.addLine();
+                        tm.update();
+                        check++;
+                    } else {
+                        tm.addLine("(" + i + "," + j + "): " + "~Bright Check Failed~");
+                        tm.addLine();
+                        tm.update();
+                    }
+                } else if (total > 50) {
+                    if ((17.5/100.0)*(r+g) > b) {
+                        tm.addLine("(" + i + "," + j + "): " + "*Normal Check Successful*");
+                        tm.addLine();
+                        tm.update();
+                        check++;
+                    } else {
+                        tm.addLine("(" + i + "," + j + "): " + "~Normal Check Failed~");
+                        tm.addLine();
+                        tm.update();
+                    }
+                } else {
+                    tm.addLine("(" + i + "," + j + "): " + "~Too Dark, Check Failed~");
+                    tm.addLine();
+                    tm.update();
+                }
+            }
+
+            tm.addLine();
+            tm.addData("Ring " + (i+1) + " Check Count",check + "/7");
+            tm.addLine();
+            tm.update();
+
+            if (check >= 4)
+                ringsFound++;
+
+            check = 0;
+        }
+    }
+
+    /**
+     * Scans the height of the starter stack and updates the number of rings found.
+     * @param saveBitmaps Stores the bitmap and the cropped bitmap as png files in the device storage
+     * @param showPixelData Shows extended information about individual RGB values for each pixel scan
+     */
+    public static void vuforiaScanStack(boolean saveBitmaps, boolean showPixelData) {
+
+        tm.setAutoClear(false);
+
+        // Capture frame from camera
+        captureFrame();
+        tm.addLine("Frame captured");
+        tm.addLine();
+        tm.update();
+
+        if (rgbImage != null) {
+
+            // Transpose frame into bitmaps
+            setBitmaps();
+            tm.addLine("Frame converted to bitmaps");
+            tm.addLine();
+            tm.update();
+
+            // Save bitmaps to .png files
+            if (saveBitmaps) {
+                saveBitmap("Bitmap", bitmap);
+                saveBitmap("CroppedBitmap", croppedBitmap);
+                tm.addLine("Bitmaps saved to device");
+                tm.addLine();
+                tm.update();
+            }
+
+            // Scan bitmap for starter stack height
+            scanBitmap(showPixelData);
+            tm.addLine("Bitmap scan finished");
+            tm.addData("Num Rings", ringsFound);
+            tm.update();
         }
     }
 }

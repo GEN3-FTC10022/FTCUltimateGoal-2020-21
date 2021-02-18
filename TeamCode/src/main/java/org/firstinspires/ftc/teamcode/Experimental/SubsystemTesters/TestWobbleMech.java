@@ -9,8 +9,6 @@ import org.firstinspires.ftc.teamcode.Util.Subsystem;
 
 /**
  * Gamepad 1 -
- * A:           Intake In/Off
- * B:           Intake Out/Off
  * X:           Reset WobbleMech || Arm Down
  * Y:           Advance WobbleMech || Arm Up
  * Right:       Place Wobble Goal || Claw Open/Close
