@@ -27,7 +27,7 @@ public abstract class Shooter extends Subsystem {
     private static TriggerPosition triggerPosition;
 
     private static final double LAUNCHER_TICKS_PER_REV = YELLOWJACKET_5202_TICKS_PER_REV;
-    private static final double LAUNCHER_MAX_REV_PER_MIN = 0.8 * YELLOWJACKET_5202_MAX_RPM; // Max Shooter Vel @ 80% of motor max
+    private static final double LAUNCHER_MAX_REV_PER_MIN = 0.9 * YELLOWJACKET_5202_MAX_RPM; // Max Shooter Vel @ 90% of motor max
     private static final double LAUNCHER_MAX_TICKS_PER_SECOND = LAUNCHER_MAX_REV_PER_MIN * (LAUNCHER_TICKS_PER_REV/60.0);
 
     public static final int ZERO_VELOCITY = 0;
@@ -47,11 +47,11 @@ public abstract class Shooter extends Subsystem {
      * Configures the hardware map, sets the VCM to preset, sets the trigger to the retracted
      * position, and sets the defualt target setting and manual target velocity to high goal.
      */
-    public static void initialize(String hmLauncher, String hmTrigger) {
+    public static void initialize(String hmLauncherOne, String hmLauncherTwo, String hmTrigger) {
 
         // Hardware Map
-        launcherOne = hm.get(DcMotorEx.class, hmLauncher);
-        launcherTwo = hm.get(DcMotorEx.class, hmLauncher);
+        launcherOne = hm.get(DcMotorEx.class, hmLauncherOne);
+        launcherTwo = hm.get(DcMotorEx.class, hmLauncherTwo);
         trigger = hm.get(Servo.class, hmTrigger);
 
         // Launcher
@@ -72,8 +72,8 @@ public abstract class Shooter extends Subsystem {
         targetSetting = 4;
         targetVelocity = HIGH_GOAL_VELOCITY;
 
-        telemetry.addLine("Shooter initialized");
-        telemetry.update();
+        tm.addLine("Shooter initialized");
+        tm.update();
         sleep(500);
     }
 
@@ -175,7 +175,7 @@ public abstract class Shooter extends Subsystem {
      * mode.
      */
     public static void increaseVelocity() {
-        if (velocityControlMode == VelocityControlMode.PRESET && targetSetting <= VELOCITIES.length-1)
+        if (velocityControlMode == VelocityControlMode.PRESET && targetSetting < VELOCITIES.length-1)
             targetSetting++;
         else if (velocityControlMode == VelocityControlMode.MANUAL && targetVelocity <= LAUNCHER_MAX_TICKS_PER_SECOND-VELOCITY_MODIFIER)
             targetVelocity += VELOCITY_MODIFIER;
@@ -190,13 +190,6 @@ public abstract class Shooter extends Subsystem {
             targetSetting--;
         else if (velocityControlMode == VelocityControlMode.MANUAL && targetVelocity >= -LAUNCHER_MAX_TICKS_PER_SECOND+VELOCITY_MODIFIER)
             targetVelocity -= VELOCITY_MODIFIER;
-    }
-
-    /**
-     * @return Current velocity of the launcher; launcherOne by default
-     */
-    public static double getVelocity() {
-        return launcherOne.getVelocity();
     }
 
     /**
@@ -238,22 +231,13 @@ public abstract class Shooter extends Subsystem {
      */
     public static void appendTelemetry(boolean expanded) {
         tm.addLine("=== SHOOTER ===");
-        tm.addData("Current Velocity", getVelocity());
+        tm.addData("L1 Velocity", launcherOne.getVelocity());
+        tm.addData("L2 Velocity", launcherTwo.getVelocity());
         tm.addData("Target", getTarget());
         tm.addData("VCM", getVelocityControlMode());
         tm.addLine();
 
         if (expanded) {
-            tm.addLine("\n:: Launcher ::");
-            tm.addData("Motor Type", launcherOne.getMotorType());
-            tm.addData("Controller", launcherOne.getController());
-            tm.addData("Port Number", launcherOne.getPortNumber());
-            tm.addData("Current", launcherOne.getCurrent(CurrentUnit.AMPS));
-            tm.addData("Current Alert", launcherOne.getCurrentAlert(CurrentUnit.AMPS));
-            tm.addData("Over Current", launcherOne.isOverCurrent());
-            tm.addData("Run Mode", launcherOne.getMode());
-            tm.addData("Encoder PID", launcherOne.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER));
-
             tm.addLine("\nVelocities");
             tm.addData("Low Goal", LOW_GOAL_VELOCITY);
             tm.addData("Mid Goal", MID_GOAL_VELOCITY);
@@ -266,6 +250,13 @@ public abstract class Shooter extends Subsystem {
             tm.addData("Current Position", trigger.getPosition());
             tm.addData("Controller", trigger.getController());
             tm.addData("Port Number", trigger.getPortNumber());
+
+            tm.addLine("\n:: Launcher ::");
+            tm.addData("Current", launcherOne.getCurrent(CurrentUnit.AMPS));
+            tm.addData("Current Alert", launcherOne.getCurrentAlert(CurrentUnit.AMPS));
+            tm.addData("Over Current", launcherOne.isOverCurrent());
+            tm.addData("Run Mode", launcherOne.getMode());
+            tm.addData("Encoder PID", launcherOne.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER));
         }
     }
 }

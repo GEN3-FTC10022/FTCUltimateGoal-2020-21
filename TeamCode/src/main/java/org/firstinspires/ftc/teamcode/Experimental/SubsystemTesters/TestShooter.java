@@ -107,7 +107,7 @@ public class TestShooter extends LinearOpMode {
 
         Subsystem.initialize(hardwareMap, telemetry);
 
-        Shooter.initialize("launcher", "trigger");
+        Shooter.initialize("launcherOne", "launcherTwo", "trigger");
 
         if (!isAuto) {
             telemetry.setAutoClear(true);

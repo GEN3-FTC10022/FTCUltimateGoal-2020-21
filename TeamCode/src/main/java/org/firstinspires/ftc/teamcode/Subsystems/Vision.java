@@ -22,7 +22,6 @@ import static org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocaliz
 
 public abstract class Vision extends Subsystem {
 
-    // Vuforia
     // IMPORTANT: If you are using a USB WebCam, camera choice "BACK" and phone portrait "false"
     private static final VuforiaLocalizer.CameraDirection CAMERA_CHOICE = BACK;
     private static final boolean PHONE_IS_PORTRAIT = false;
@@ -36,17 +35,8 @@ public abstract class Vision extends Subsystem {
     // Class Members
     private static VuforiaLocalizer vuforia;
 
-    // This is the webcam we are to use. As with other hardware devices such as motors and
-    // servos, this device is identified using the robot configuration tool in the FTC application.
-    private static WebcamName webcamName;
-
-    // Configure Vuforia by creating a Parameter object, and passing it to the Vuforia engine.
-    // We can pass Vuforia the handle to a camera preview resource (on the RC phone);
-    // If no camera monitor is desired, use the parameter-less constructor instead (commented out below).
-
-    // int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
-    // VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters(cameraMonitorViewId);
-    private static VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters();
+    private static int cameraMonitorViewId;
+    private static VuforiaLocalizer.Parameters parameters;
 
     private static Image rgbImage = null;
     private static VuforiaLocalizer.CloseableFrame closeableFrame = null;
@@ -62,8 +52,11 @@ public abstract class Vision extends Subsystem {
     private static final int CROP_HEIGHT = CROP_FINAL_Y - CROP_INITIAL_Y;
 
     // Detection Constants
-    private static int check = 0;
+    private static final int ONE_RING_MAX_PIXELS = 0;
+    private static final int ONE_RING_MIN_PIXELS = 0;
     public static int ringsFound = 0;
+
+    private static final Exception BrightnessException = new Exception();
 
     /**
      * Configures the hardware map and initializes vuforia parameters.
@@ -72,11 +65,23 @@ public abstract class Vision extends Subsystem {
     public static void initialize(String hmWebcam) {
 
         // Hardware Map
-        webcamName = hm.get(WebcamName.class, hmWebcam);
+        parameters.cameraName = hm.get(WebcamName.class, hmWebcam);
+
+        /*
+         * Configure Vuforia by creating a Parameter object, and passing it to the Vuforia engine.
+         * We can pass Vuforia the handle to a camera preview resource (on the RC phone);
+         * If no camera monitor is desired, use the parameter-less constructor instead (commented out below).
+         */
+        cameraMonitorViewId = hm.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hm.appContext.getPackageName());
+        parameters = new VuforiaLocalizer.Parameters(cameraMonitorViewId);
+        // parameters = new VuforiaLocalizer.Parameters();
 
         parameters.vuforiaLicenseKey = VUFORIA_KEY;
-        parameters.cameraName = webcamName;
+
+        // Make sure extended tracking is disabled.
         parameters.useExtendedTracking = false;
+
+        // Instantiate the Vuforia engine
         vuforia = ClassFactory.getInstance().createVuforia(parameters);
 
         tm.addLine("Vision initialized");
@@ -164,14 +169,17 @@ public abstract class Vision extends Subsystem {
 
     /**
      * Cycles between 14 pixels to test for RGB values and determine the number of rings
-     * @param showPixelData Shows extended information about individual RGB values for each pixel scan
+     * @param showPixelData Shows extended information about individual RGB values for each pixel scan.
+     * @deprecated Use {@link #scanBitmapEx(boolean)} instead.
      */
+    @Deprecated
     private static void scanBitmap(boolean showPixelData) {
 
         int widthMid = (int)(CROP_WIDTH/2.0);
         int[] xPos = {widthMid-9,widthMid-6,widthMid-3,widthMid,widthMid+3,widthMid+6,widthMid+9}; // 7 pixels left to right
         int[] yPos = {CROP_HEIGHT-1,0}; // Ring 1 (Bottom pixel), Ring 4 (Top pixel)
         int pixel, r, g, b, total;
+        int check = 0;
 
         for (int i = 0; i < yPos.length; i++) {
 
@@ -235,6 +243,86 @@ public abstract class Vision extends Subsystem {
             check = 0;
         }
     }
+    
+    private static void scanBitmapEx(boolean showPixelData) {
+        int targetPixels = 0;
+        int pixel, r, g, b, total;
+        int xPos = 0;
+
+        for (int i = 0; i < CROP_HEIGHT; i+=2) {
+
+            // Set pixel and get RGB values
+            pixel = croppedBitmap.getPixel(xPos,i);
+            r = Color.red(pixel);
+            g = Color.green(pixel);
+            b = Color.blue(pixel);
+            total = r + g + b;
+
+            // Print per pixel RGB to telemetry
+            if (showPixelData) {
+                tm.addData("Red", r);
+                tm.addData("Green", g);
+                tm.addData("Blue", b);
+                tm.addData("Total", total);
+                tm.update();
+            }
+
+            if (isTargetPixel(total, r, g, b))
+                targetPixels++;
+        }
+        
+        tm.addData("Target Pixels",targetPixels);
+        tm.addLine();
+        tm.update();
+
+        /*
+        if (targetPixels > ONE_RING_MAX_PIXELS)
+            ringsFound = 4;
+        else if (targetPixels < ONE_RING_MIN_PIXELS)
+            ringsFound = 0;
+        else
+            ringsFound = 1;
+         */
+    }
+
+    private static boolean isTargetPixel(int total, int r, int g, int b) {
+
+        try {
+            if (total < 50)
+                throw BrightnessException;
+            else if (total > 375) {
+                if (r > g+40 && g > b && b > 70) {
+                    tm.addLine("Bright Check:\tSuccessful");
+                    tm.addLine();
+                    tm.update();
+                    return true;
+                } else {
+                    tm.addLine("Bright Check:\tFailed");
+                    tm.addLine();
+                    tm.update();
+                    return false;
+                }
+            } else {
+                if ((17.5/100.0)*(r+g) > b) {
+                    tm.addLine("Normal Check:\tSuccessful");
+                    tm.addLine();
+                    tm.update();
+                    return true;
+                } else {
+                    tm.addLine("Normal Check:\tFailed");
+                    tm.addLine();
+                    tm.update();
+                    return false;
+                }
+            }
+
+        } catch(Exception e) {
+            tm.addLine("Poor lighting condition. Unable to detect pixel.");
+            tm.addLine();
+            tm.update();
+            return false;
+        }
+    }
 
     /**
      * Scans the height of the starter stack and updates the number of rings found.
@@ -269,7 +357,7 @@ public abstract class Vision extends Subsystem {
             }
 
             // Scan bitmap for starter stack height
-            scanBitmap(showPixelData);
+            scanBitmapEx(false);
             tm.addLine("Bitmap scan finished");
             tm.addData("Num Rings", ringsFound);
             tm.update();
