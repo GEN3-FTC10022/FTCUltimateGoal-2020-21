@@ -42,7 +42,7 @@ public class TestVision extends LinearOpMode {
     }
 
     public void doAuto() {
-        Vision.vuforiaScanStack(true, false);
+        Vision.vuforiaScanStack(false, false);
         sleep(30000);
     }
 

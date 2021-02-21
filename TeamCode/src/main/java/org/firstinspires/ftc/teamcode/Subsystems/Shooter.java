@@ -31,10 +31,10 @@ public abstract class Shooter extends Subsystem {
     private static final double LAUNCHER_MAX_TICKS_PER_SECOND = LAUNCHER_MAX_REV_PER_MIN * (LAUNCHER_TICKS_PER_REV/60.0);
 
     public static final int ZERO_VELOCITY = 0;
-    public static final int LOW_GOAL_VELOCITY = 0; // temp
-    public static final int MID_GOAL_VELOCITY = 0; // temp
-    public static final int POWER_SHOT_VELOCITY = 0; // temp
-    public static final int HIGH_GOAL_VELOCITY = 1460; // tested
+    public static final int LOW_GOAL_VELOCITY = 1000; // temp
+    public static final int MID_GOAL_VELOCITY = 1200; // temp
+    public static final int POWER_SHOT_VELOCITY = 1400; // temp
+    public static final int HIGH_GOAL_VELOCITY = 1640; // tested
     private static final int[] VELOCITIES = {ZERO_VELOCITY,LOW_GOAL_VELOCITY,MID_GOAL_VELOCITY,POWER_SHOT_VELOCITY,HIGH_GOAL_VELOCITY};
     private static int targetSetting;
 
@@ -60,7 +60,7 @@ public abstract class Shooter extends Subsystem {
         launcherOne.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         launcherTwo.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         launcherOne.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        launcherTwo.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        launcherTwo.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         launcherOne.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, launcherVelocityPID);
         launcherTwo.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, launcherVelocityPID);
 
@@ -199,10 +199,10 @@ public abstract class Shooter extends Subsystem {
     public static void runLauncher() {
         if (velocityControlMode == VelocityControlMode.PRESET) {
             launcherOne.setVelocity(VELOCITIES[targetSetting]);
-            launcherTwo.setVelocity(VELOCITIES[targetSetting]);
+            launcherTwo.setPower(launcherOne.getPower());
         } else if (velocityControlMode == VelocityControlMode.MANUAL) {
             launcherOne.setVelocity(targetVelocity);
-            launcherTwo.setVelocity(targetVelocity);
+            launcherTwo.setPower(launcherOne.getPower());
         }
     }
 
@@ -211,7 +211,7 @@ public abstract class Shooter extends Subsystem {
      */
     public static void shootSingle() {
         pushTrigger();
-        sleep(100);
+        sleep(75);
         retractTrigger();
     }
 
@@ -221,7 +221,7 @@ public abstract class Shooter extends Subsystem {
     public static void shootAll() {
         for (int i = 0; i < 3; i++) {
             shootSingle();
-            sleep(500);
+            sleep(180);
         }
     }
 

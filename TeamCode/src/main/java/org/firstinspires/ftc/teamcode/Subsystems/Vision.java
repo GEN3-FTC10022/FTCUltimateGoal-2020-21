@@ -37,6 +37,7 @@ public abstract class Vision extends Subsystem {
 
     private static int cameraMonitorViewId;
     private static VuforiaLocalizer.Parameters parameters;
+    private static WebcamName webcamName = null;
 
     private static Image rgbImage = null;
     private static VuforiaLocalizer.CloseableFrame closeableFrame = null;
@@ -44,18 +45,17 @@ public abstract class Vision extends Subsystem {
     private static Bitmap croppedBitmap = null;
 
     // Crop Variables
-    private static final int CROP_INITIAL_X = 35;
-    private static final int CROP_FINAL_X = 55;
-    private static final int CROP_INITIAL_Y = 100;
-    private static final int CROP_FINAL_Y = 145;
+    private static final int CROP_INITIAL_X = 0;
+    private static final int CROP_FINAL_X = 85;
+    private static final int CROP_INITIAL_Y = 180;
+    private static final int CROP_FINAL_Y = 260;
     private static final int CROP_WIDTH = CROP_FINAL_X - CROP_INITIAL_X;
     private static final int CROP_HEIGHT = CROP_FINAL_Y - CROP_INITIAL_Y;
 
     // Detection Constants
-    private static final int ONE_RING_MAX_PIXELS = 0;
-    private static final int ONE_RING_MIN_PIXELS = 0;
+    private static final int ONE_RING_MAX_PIXELS = 18;
+    private static final int ONE_RING_MIN_PIXELS = 5;
     public static int ringsFound = 0;
-
     private static final Exception BrightnessException = new Exception();
 
     /**
@@ -64,8 +64,10 @@ public abstract class Vision extends Subsystem {
      */
     public static void initialize(String hmWebcam) {
 
+        sleep(1000);
+
         // Hardware Map
-        parameters.cameraName = hm.get(WebcamName.class, hmWebcam);
+        webcamName = hm.get(WebcamName.class, hmWebcam);
 
         /*
          * Configure Vuforia by creating a Parameter object, and passing it to the Vuforia engine.
@@ -75,6 +77,8 @@ public abstract class Vision extends Subsystem {
         cameraMonitorViewId = hm.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hm.appContext.getPackageName());
         parameters = new VuforiaLocalizer.Parameters(cameraMonitorViewId);
         // parameters = new VuforiaLocalizer.Parameters();
+
+        parameters.cameraName = webcamName;
 
         parameters.vuforiaLicenseKey = VUFORIA_KEY;
 
@@ -243,11 +247,16 @@ public abstract class Vision extends Subsystem {
             check = 0;
         }
     }
-    
+
+    /**
+     * Checks RGB values in a vertical row in the middle of the cropped bitmap to determine the
+     * number of rings.
+     * @param showPixelData Shows extended information about individual RGB values for each pixel scan.
+     */
     private static void scanBitmapEx(boolean showPixelData) {
         int targetPixels = 0;
         int pixel, r, g, b, total;
-        int xPos = 0;
+        int xPos = CROP_WIDTH/2;
 
         for (int i = 0; i < CROP_HEIGHT; i+=2) {
 
@@ -256,41 +265,45 @@ public abstract class Vision extends Subsystem {
             r = Color.red(pixel);
             g = Color.green(pixel);
             b = Color.blue(pixel);
-            total = r + g + b;
 
             // Print per pixel RGB to telemetry
             if (showPixelData) {
                 tm.addData("Red", r);
                 tm.addData("Green", g);
                 tm.addData("Blue", b);
-                tm.addData("Total", total);
                 tm.update();
             }
 
-            if (isTargetPixel(total, r, g, b))
+            if (isTargetPixel(r, g, b))
                 targetPixels++;
         }
-        
+
         tm.addData("Target Pixels",targetPixels);
         tm.addLine();
         tm.update();
 
-        /*
         if (targetPixels > ONE_RING_MAX_PIXELS)
             ringsFound = 4;
         else if (targetPixels < ONE_RING_MIN_PIXELS)
             ringsFound = 0;
         else
             ringsFound = 1;
-         */
     }
 
-    private static boolean isTargetPixel(int total, int r, int g, int b) {
-
+    /**
+     * Checks whether the pixel satisfies the target thresholds for a ring pixel.
+     * @param r Amount of Red
+     * @param g Amount of Green
+     * @param b Amount of Blue
+     * @return If the pixel is a ring pixel.
+     */
+    private static boolean isTargetPixel(int r, int g, int b) {
+        int total = r+g+b;
         try {
             if (total < 50)
                 throw BrightnessException;
-            else if (total > 375) {
+
+            if (total > 375) {
                 if (r > g+40 && g > b && b > 70) {
                     tm.addLine("Bright Check:\tSuccessful");
                     tm.addLine();
