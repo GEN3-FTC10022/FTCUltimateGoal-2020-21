@@ -1,7 +1,9 @@
 package org.firstinspires.ftc.teamcode.Subsystems;
 
 import com.qualcomm.robotcore.hardware.DcMotor;
+import org.firstinspires.ftc.robotcore.external.navigation.Position;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
@@ -35,6 +37,7 @@ public abstract class Intake extends Subsystem {
         release = hm.get(Servo.class, hmRelease);
 
         // Rollers
+        rollers.setDirection(DcMotorSimple.Direction.REVERSE);
         rollers.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         rollers.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 

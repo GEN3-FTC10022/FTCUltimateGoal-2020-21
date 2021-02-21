@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.Experimental.SubsystemTesters;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.DcMotor;
 
 import org.firstinspires.ftc.teamcode.Subsystems.WobbleMech;
 import org.firstinspires.ftc.teamcode.Util.Constants;
@@ -45,8 +46,10 @@ public class TestWobbleMech extends LinearOpMode {
             if (gamepad1.back && Constants.back == 0)
                 Constants.back++;
             else if (!gamepad1.back && Constants.back == 1) {
-                if (WobbleMech.getControlMode() == WobbleMech.ControlMode.ASSISTED)
+                if (WobbleMech.getControlMode() == WobbleMech.ControlMode.ASSISTED) {
                     WobbleMech.setControlMode(WobbleMech.ControlMode.MANUAL);
+                    WobbleMech.setRunMode(DcMotor.RunMode.RUN_USING_ENCODER);
+                }
                 else if (WobbleMech.getControlMode() == WobbleMech.ControlMode.MANUAL) {
                     WobbleMech.setControlMode(WobbleMech.ControlMode.ASSISTED);
                     WobbleMech.reset();
@@ -122,6 +125,8 @@ public class TestWobbleMech extends LinearOpMode {
     public void initialize(boolean isAuto) {
 
         this.isAuto = isAuto;
+
+        Constants.reset();
 
         telemetry.setAutoClear(false);
 

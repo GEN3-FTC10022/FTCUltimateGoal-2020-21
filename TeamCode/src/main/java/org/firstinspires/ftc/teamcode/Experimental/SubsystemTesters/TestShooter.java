@@ -30,6 +30,8 @@ public class TestShooter extends LinearOpMode {
 
         initialize(false);
 
+        Constants.reset();
+
         waitForStart();
 
         if (isAuto)

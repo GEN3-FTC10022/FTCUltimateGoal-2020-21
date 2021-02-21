@@ -50,6 +50,8 @@ public class TestVision extends LinearOpMode {
 
         this.isAuto = isAuto;
 
+        Constants.reset();
+
         telemetry.setAutoClear(false);
 
         telemetry.addLine("Initializing Robot...");

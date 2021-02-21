@@ -1,71 +1,53 @@
 package org.firstinspires.ftc.teamcode.Subsystems;
 
-import android.graphics.Color;
-
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
-import com.qualcomm.robotcore.hardware.Gamepad;
-import com.qualcomm.robotcore.util.ElapsedTime;
 
-import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
+import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.firstinspires.ftc.teamcode.Util.PIDController;
+import org.firstinspires.ftc.teamcode.Util.Subsystem;
 
 import static org.firstinspires.ftc.teamcode.Util.Constants.motorTicksPerRev;
 
-public class Drivetrain {
+public abstract class Drivetrain extends Subsystem {
 
     // Objects
-    public DcMotorEx frontLeft, frontRight, backLeft, backRight;
-    public DcMotor leftEncoder, rightEncoder, horzEncoder;
-    public DriveMode driveMode;
+    private static DcMotorEx frontLeft, frontRight, backLeft, backRight;
+    private static DcMotor lEncoder, rEncoder, hEncoder;
+    public static ControlMode controlMode;
 
     // REV IMU
-    public BNO055IMU imu;
-    private Orientation orientation;
-    private double heading;
-    private double headingZeroCorrectionDegrees; // Initial Angle Correction
+    private static BNO055IMU imu;
+    private static Orientation orientation;
+    private static double heading;
+    private static double headingZeroCorrectionDegrees; // Initial Angle Correction
 
-    // TeleOp variables
-    public double temp;
-    public double flpower, frpower, blpower, brpower;
+    // Odometry Variables
+    private static int leftPos = 0, rightPos = 0, horzPos = 0;
+    private static double leftChange = 0, rightChange = 0, horzChange = 0;
+    private static double x = 0, y = 0;
+    private static double odoAngle = 0;
 
-    // Odometry variables
-    public int leftPos = 0, rightPos = 0, horzPos = 0;
-    public double leftChange = 0, rightChange = 0, horzChange = 0;
-    public double x = 0, y = 0;
-    public double odoAngle = 0;
-
-    // CONSTANTS
-    public final double WHEEL_DIAMETER_INCHES = 4;
-    public final double WHEEL_CIRCUMFERENCE_INCHES = WHEEL_DIAMETER_INCHES * Math.PI;
-    public final double DRIVE_TICKS_PER_REV = motorTicksPerRev[0];
-    public final double DRIVE_GEAR_REDUCTION = 1;
-    public final double DRIVE_TICKS_PER_INCH = (((DRIVE_TICKS_PER_REV * DRIVE_GEAR_REDUCTION) / WHEEL_CIRCUMFERENCE_INCHES));
-    public final double DRIVE_TICKS_PER_DEGREE = (double)3600.0/360.0; // temp
-    public final double DRIVE_STRAFE_CORRECTION = (double)5.0/4.25;
-    public final double DRIVE_TRACK_WIDTH = 12.2047; //temp
-
-    // PID
-    public PIDController controller = new PIDController(0,0,0);
-    Orientation lastAngles = new Orientation();
-    double globalAngle, power = .80, correction, rotation;
-
-    /**
-     * Constructs a drive train object.
-     */
-    public Drivetrain() { }
+    // Constants
+    private static final double WHEEL_DIAMETER_INCHES = 4;
+    private static final double WHEEL_CIRCUMFERENCE_INCHES = WHEEL_DIAMETER_INCHES * Math.PI;
+    private static final double TICKS_PER_REV = motorTicksPerRev[0];
+    private static final double GEAR_REDUCTION = 1;
+    private static final double TICKS_PER_INCH = (((TICKS_PER_REV * GEAR_REDUCTION) / WHEEL_CIRCUMFERENCE_INCHES));
+    private static final double TICKS_PER_DEGREE = 3600.0 /360.0; // temp
+    private static final double TRACK_WIDTH = 12.2047; //temp
+    public static double STRAFE_CORRECTION = 5.0 /4.25;
 
     /**
      * Contains the drive mode of the object as either field- or robot-centric, to determine
      * TeleOp joystick interpretation.
      */
-    public enum DriveMode {
+    public enum ControlMode {
         FIELD_CENTRIC,
         ROBOT_CENTRIC
     }
@@ -75,13 +57,19 @@ public class Drivetrain {
      * drive train's ZeroPowerBehavior to BRAKE, setting IMU parameters to degrees and m/s/s, and
      * setting driveMode to FIELD_CENTRIC.
      */
-    public void initialize() {
+    public static void initialize(String hmFL, String hmFR, String hmBL, String hmBR, String hmIMU) {
+
+        // Hardware Map
+        frontLeft = hm.get(DcMotorEx.class, hmFL);
+        frontRight = hm.get(DcMotorEx.class, hmFR);
+        backLeft = hm.get(DcMotorEx.class, hmBL);
+        backRight = hm.get(DcMotorEx.class, hmBR);
+        imu = hm.get(BNO055IMU.class, hmIMU);
 
         // Drive
-        backLeft.setDirection(DcMotor.Direction.REVERSE); // fix
         frontRight.setDirection(DcMotor.Direction.REVERSE);
         backRight.setDirection(DcMotor.Direction.REVERSE);
-        setDriveZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         // IMU
         BNO055IMU.Parameters imuParameters = new BNO055IMU.Parameters();
@@ -91,51 +79,30 @@ public class Drivetrain {
         imu.initialize(imuParameters);
         headingZeroCorrectionDegrees = 0;
 
-        // Mode
-        driveMode = DriveMode.FIELD_CENTRIC;
+        // Control Mode
+        controlMode = ControlMode.FIELD_CENTRIC;
 
         // Odometry
-        //resetTicks();
-    }
+        //updateTicks();
 
-    /**
-     * @deprecated Not in use, may need updates.
-     * Performs the math necessary to obtain field-centric horizontal and vertical values.
-     *
-     * @param vertical the y axis left joystick input
-     * @param horizontal the x axis left joystick input
-     * @param rotation the x axis right joystick input, used to rotate the bot
-     */
-    public void applyFieldCentricConversion(double vertical, double horizontal, double rotation) {
-        // Math
-        if (getHeading(AngleUnit.RADIANS) < 0) {       // If theta is measured clockwise from zero reference
-
-            temp = vertical * Math.cos(getHeading(AngleUnit.RADIANS)) + horizontal * Math.sin(-getHeading(AngleUnit.RADIANS));
-            horizontal = -vertical * Math.sin(-getHeading(AngleUnit.RADIANS)) + horizontal * Math.cos(getHeading(AngleUnit.RADIANS));
-            vertical = temp;
-        }
-
-        if (getHeading(AngleUnit.RADIANS) >= 0) {    // If theta is measured counterclockwise from zero reference
-
-            temp = vertical * Math.cos(getHeading(AngleUnit.RADIANS)) - horizontal * Math.sin(getHeading(AngleUnit.RADIANS));
-            horizontal = vertical * Math.sin(getHeading(AngleUnit.RADIANS)) + horizontal * Math.cos(getHeading(AngleUnit.RADIANS));
-            vertical = temp;
-        }
+        tm.addLine("Drivetrain initialized");
+        tm.update();
+        sleep(500);
     }
 
     /**
      * Updates the x, y, and odoAngle variables for odometry localization to determine the
      * robot's current displacement from its starting position.
      */
-    public void updatePosition() {
+    private static void updatePosition() {
 
-        leftChange = getLeftTicks() / DRIVE_TICKS_PER_INCH;
-        rightChange = getRightTicks() / DRIVE_TICKS_PER_INCH;
-        horzChange = getHorzTicks() / DRIVE_TICKS_PER_INCH;
+        leftChange = getLeftTicks() / TICKS_PER_INCH;
+        rightChange = getRightTicks() / TICKS_PER_INCH;
+        horzChange = getHorzTicks() / TICKS_PER_INCH;
 
         x  += (((leftChange + rightChange) / 2.0)) * Math.cos(odoAngle);
         y  += (((leftChange + rightChange) / 2.0)) * Math.sin(odoAngle);
-        odoAngle  += (leftChange - rightChange) / DRIVE_TRACK_WIDTH;
+        odoAngle  += (leftChange - rightChange) / TRACK_WIDTH;
 
         // alternate math that didn't seem to make sense
         /*
@@ -143,29 +110,28 @@ public class Drivetrain {
         y  += (((leftChange + rightChange) / 2.0)) * Math.cos(odoAngle) + horzChange*Math.sin(odoAngle);
         */
 
-        resetTicks();
+        updateTicks();
     }
 
     /**
      * Sets the current positions (left, right, & horizontal) to the respective odometers' current
      * positions.
      */
-    public void resetTicks(){
-        rightPos = rightEncoder.getCurrentPosition();
-        leftPos = leftEncoder.getCurrentPosition();
-        horzPos = horzEncoder.getCurrentPosition();
+    private static void updateTicks(){
+        rightPos = rEncoder.getCurrentPosition();
+        leftPos = lEncoder.getCurrentPosition();
+        horzPos = hEncoder.getCurrentPosition();
     }
 
     /**
-     * Changes all drive train motors to STOP_AND_RESET_ENCODER, which stops the drive train motors
-     * and sets their current position to zero.
+     * Set RunMode of all drivetrain motors to the desired RunMode
+     * @param runMode The desired RunMode
      */
-    public void resetDriveEncoders() {
-
-        frontLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        backLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        frontRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        backRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+    private static void setRunMode(DcMotor.RunMode runMode) {
+        frontLeft.setMode(runMode);
+        backLeft.setMode(runMode);
+        frontRight.setMode(runMode);
+        backRight.setMode(runMode);
     }
 
     /**
@@ -177,7 +143,7 @@ public class Drivetrain {
      * @param bl the modifier for the back left motor (usually 1 or -1 to show direction)
      * @param br the modifier for the back right motor (usually 1 or -1 to show direction)
      */
-    public void setDriveTarget(double dist, double fl, double fr, double bl, double br) {
+    private static void setTargetPosition(double dist, double fl, double fr, double bl, double br) {
 
         frontLeft.setTargetPosition((int) (fl * dist));
         backLeft.setTargetPosition((int) (bl * dist));
@@ -186,38 +152,14 @@ public class Drivetrain {
     }
 
     /**
-     * Sets all motors in the drive train to RUN_TO_POSITION RunMode.
-     */
-    public void setDriveRunMode() {
-        frontLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        backLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        frontRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        backRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-    }
-
-    /**
      * Determines if all the motors in the drive train are busy, where busy means that they are
      * moving towards a set target.
      *
      * @return whether or not all the motors are busy
      */
-    public boolean driveIsBusy() {
+    private static boolean isBusy() {
 
-        if (frontLeft.isBusy() && backLeft.isBusy() && frontRight.isBusy() && backRight.isBusy())
-            return true;
-        else
-            return false;
-    }
-
-    /**
-     * Sets all motors in the drive train to RUN_USING_ENCODER RunMode.
-     */
-    public void resetDriveMode() {
-
-        frontLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        backLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        frontRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        backRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        return frontLeft.isBusy() && backLeft.isBusy() && frontRight.isBusy() && backRight.isBusy();
     }
 
     /**
@@ -225,7 +167,7 @@ public class Drivetrain {
      *
      * @param behavior the ZeroPowerBehavior that will be applied to each drive train motor
      */
-    public void setDriveZeroPowerBehavior(DcMotor.ZeroPowerBehavior behavior) {
+    private static void setZeroPowerBehavior(DcMotor.ZeroPowerBehavior behavior) {
         frontLeft.setZeroPowerBehavior(behavior);
         frontRight.setZeroPowerBehavior(behavior);
         backLeft.setZeroPowerBehavior(behavior);
@@ -240,7 +182,7 @@ public class Drivetrain {
      * @param blpower the power to be assigned to the back left motor
      * @param brpower the power to be assigned to the back right motor
      */
-    public void setDrivePower(double flpower, double frpower, double blpower, double brpower) {
+    public static void setPower(double flpower, double frpower, double blpower, double brpower) {
         frontLeft.setPower(flpower);
         frontRight.setPower(frpower);
         backLeft.setPower(blpower);
@@ -252,7 +194,7 @@ public class Drivetrain {
      *
      * @param pow the power to apply to every drive train motor
      */
-    public void setDrivePower(double pow) {
+    private static void setPower(double pow) {
         frontLeft.setPower(pow);
         backLeft.setPower(pow);
         frontRight.setPower(pow);
@@ -265,8 +207,8 @@ public class Drivetrain {
      *
      * @return the position, in ticks, of the left encoder
      */
-    public double getLeftTicks(){
-        return leftEncoder.getCurrentPosition() - leftPos;
+    private static double getLeftTicks(){
+        return lEncoder.getCurrentPosition() - leftPos;
     }
 
     /**
@@ -275,8 +217,8 @@ public class Drivetrain {
      *
      * @return the position, in ticks, of the right encoder
      */
-    public double getRightTicks(){
-        return rightEncoder.getCurrentPosition() - rightPos;
+    private static double getRightTicks(){
+        return rEncoder.getCurrentPosition() - rightPos;
     }
 
     /**
@@ -285,28 +227,37 @@ public class Drivetrain {
      *
      * @return the position, in ticks, of the horizontal encoder
      */
-    public double getHorzTicks(){
-        return horzEncoder.getCurrentPosition() - horzPos;
+    private static double getHorzTicks(){
+        return hEncoder.getCurrentPosition() - horzPos;
     }
 
     /**
-     * Returns the robot's heading as measured by the REV Hub IMU in euler angles [-180,180) or [-π,π).
-     *
-     * @param angleUnit The desired units for the robot heading to be expressed in.
-     * @return The angle the robot is currently facing, in terms of the specified unit.
+     * Updates the robot's heading as measured by the REV Hub IMU in euler angles [-180,180) or [-π,π)
+     * in degrees.
      */
-    public double getHeading(AngleUnit angleUnit) {
-        orientation = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.XYZ, angleUnit);
-        heading = orientation.thirdAngle - getHeadingCorrection(angleUnit);
-        return heading;
+    public static void updateHeading() {
+        orientation = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.XYZ, AngleUnit.DEGREES);
+        heading = orientation.thirdAngle - getHeadingCorrection(AngleUnit.DEGREES);
     }
 
-    public void setHeadingCorrectionDegrees() {
+    public static double getHeading(AngleUnit angleUnit) {
+        if (angleUnit == AngleUnit.DEGREES)
+            return heading;
+        else {
+            return Math.toRadians(heading);
+        }
+    }
+
+    public static void setHeadingCorrectionDegrees() {
         orientation = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.XYZ, AngleUnit.DEGREES);
         headingZeroCorrectionDegrees = orientation.thirdAngle;
+
+        tm.addData("Correction", getHeadingCorrection(AngleUnit.DEGREES));
+        tm.update();
+        sleep(200);
     }
 
-    public double getHeadingCorrection(AngleUnit angleUnit) {
+    private static double getHeadingCorrection(AngleUnit angleUnit) {
         if (angleUnit == AngleUnit.DEGREES)
             return headingZeroCorrectionDegrees;
         else
@@ -314,39 +265,145 @@ public class Drivetrain {
     }
 
     /**
-     * Sets the active drive mode of the robot to either FIELD_CENTRIC or ROBOT_CENTRIC.
+     * Sets the active control mode of the robot to either FIELD_CENTRIC or ROBOT_CENTRIC.
      *
-     * @param driveMode the desired drive mode of the robot, either FIELD_CENTRIC or ROBOT_CENTRIC
+     * @param controlMode the desired control mode of the robot, either FIELD_CENTRIC or ROBOT_CENTRIC
      */
-    public void setMode(DriveMode driveMode) {
-        this.driveMode = driveMode;
+    public static void setControlMode(ControlMode controlMode) {
+        Drivetrain.controlMode = controlMode;
     }
 
-    public double getAngle() {
-        // We experimentally determined the Z axis is the axis we want to use for heading angle.
-        // We have to process the angle because the imu works in euler angles so the Z axis is
-        // returned as 0 to +180 or 0 to -180 rolling back to -179 or +179 when rotation passes
-        // 180 degrees. We detect this transition and track the total cumulative angle of rotation.
+    public static void move(int direction, double power, double inches) {
+        double target = inches * TICKS_PER_INCH;
+        setRunMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
-        Orientation angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+        switch(direction) {
+            case 0:
+                target *= STRAFE_CORRECTION;
+                setTargetPosition(target,
+                        1, -1,
+                        -1, 1);
+                break;
+            case 45:
+                setTargetPosition(target,
+                        1, 0,
+                        0, 1);
+                break;
+            case 90:
+                setTargetPosition(target,
+                        1, 1,
+                        1, 1);
+                break;
+            case 135:
+                setTargetPosition(target,
+                        0, 1,
+                        1, 0);
+                break;
+            case 180:
+                target *= STRAFE_CORRECTION;
+                setTargetPosition(target,
+                        -1, 1,
+                        1, -1);
+                break;
+            case 225:
+                setTargetPosition(target,
+                        -1, 0,
+                        0, -1);
+                break;
+            case 270:
+                setTargetPosition(target,
+                        -1, -1,
+                        -1, -1);
+                break;
+            case 315:
+                setTargetPosition(target,
+                        0, -1,
+                        -1, 0);
+                break;
+        }
 
-        double deltaAngle = angles.firstAngle - lastAngles.firstAngle;
-
-        if (deltaAngle < -180)
-            deltaAngle += 360;
-        else if (deltaAngle > 180)
-            deltaAngle -= 360;
-
-        globalAngle += deltaAngle;
-
-        lastAngles = angles;
-
-        return globalAngle;
+        setRunMode(DcMotor.RunMode.RUN_TO_POSITION);
+        while (isBusy())
+            setPower(power);
+        setPower(0);
+        setRunMode(DcMotor.RunMode.RUN_USING_ENCODER);
     }
 
-    public void resetAngle()
-    {
-        lastAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
-        globalAngle = 0;
+    public static void rotate(double power, double deltaAngle) {
+        double target = deltaAngle * TICKS_PER_DEGREE;
+        setRunMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        setTargetPosition(target,
+                -1, 1,
+                -1, 1);
+        setRunMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+        while (isBusy())
+            setPower(power);
+        setPower(0);
+        setRunMode(DcMotor.RunMode.RUN_TO_POSITION);
+    }
+
+    public static void rotateToAngle(double power, double targetAngle, boolean displayInfo) {
+
+        tm.setAutoClear(false);
+        double initialAngle = getHeading(AngleUnit.DEGREES);
+        double deltaAngle = targetAngle - initialAngle;
+        if (Math.abs(deltaAngle) > 180) {
+            deltaAngle = 360 - Math.abs(deltaAngle);
+        }
+
+        if (displayInfo) {
+            tm.addData("Initial Angle", initialAngle);
+            tm.addData("Target Angle", targetAngle);
+            tm.addData("Delta Angle", deltaAngle);
+            tm.update();
+        }
+
+        double target = deltaAngle * TICKS_PER_DEGREE;
+
+        setRunMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        setTargetPosition(target,
+                -1, 1,
+                -1, 1);
+        setRunMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+        while (isBusy())
+            setPower(power);
+
+        if (Math.abs(targetAngle - getHeading(AngleUnit.DEGREES)) > 0.3) {
+            rotateToAngle(power, targetAngle, false);
+        }
+
+        setPower(0);
+        setRunMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        if (displayInfo) {
+            tm.addData("Final Angle", getHeading(AngleUnit.DEGREES));
+            tm.addLine("Rotate Finished");
+            tm.update();
+        }
+    }
+
+    /**
+     * Appends Drivetrain data to telemetry. For the drive motors, the data is displayed for the
+     * front left motor.
+     * @param expanded Shows expanded data for troubleshooting.
+     */
+    public static void appendTelemetry(boolean expanded) {
+        tm.addLine("=== DRIVETRAIN ===");
+        tm.addData("Heading", Drivetrain.getHeading(AngleUnit.DEGREES));
+        tm.addData("Correction", Drivetrain.getHeadingCorrection(AngleUnit.DEGREES));
+        tm.addData("Control Mode", Drivetrain.controlMode);
+        tm.addLine();
+
+        if (expanded) {
+            tm.addLine("\n:: Launcher ::");
+            tm.addData("Current", frontLeft.getCurrent(CurrentUnit.AMPS));
+            tm.addData("Current Alert", frontLeft.getCurrentAlert(CurrentUnit.AMPS));
+            tm.addData("Over Current", frontLeft.isOverCurrent());
+            tm.addData("Run Mode", frontLeft.getMode());
+            tm.addData("Encoder PID", frontLeft.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER));
+        }
     }
 }

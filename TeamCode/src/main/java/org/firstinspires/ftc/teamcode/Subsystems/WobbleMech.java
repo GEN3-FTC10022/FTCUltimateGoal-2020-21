@@ -255,6 +255,14 @@ public abstract class WobbleMech extends Subsystem {
     }
 
     /**
+     * Set RunMode of the arm to the desired RunMode
+     * @param runMode The desired RunMode
+     */
+    public static void setRunMode(DcMotor.RunMode runMode) {
+        arm.setMode(runMode);
+    }
+
+    /**
      * Appends Wobble Mech data to telemetry. For the claw, the data is displayed for the left
      * servo unless otherwise specified.
      * @param expanded Shows expanded data for troubleshooting.
@@ -263,6 +271,7 @@ public abstract class WobbleMech extends Subsystem {
         tm.addLine("=== Wobble Mech ===");
         tm.addData("Arm Position", getArmPosition());
         tm.addData("Claw Position", getClawPosition());
+        tm.addData("Control Mode", getControlMode());
 
         if (expanded) {
             tm.addLine("\n:: Arm ::");

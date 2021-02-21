@@ -23,7 +23,7 @@ public abstract class Shooter extends Subsystem {
 
     // Constants
     private static final double TRIGGER_MIN = 0;
-    private static final double TRIGGER_MAX = 0.15;
+    private static final double TRIGGER_MAX = 0.1;
     private static TriggerPosition triggerPosition;
 
     private static final double LAUNCHER_TICKS_PER_REV = YELLOWJACKET_5202_TICKS_PER_REV;
@@ -211,7 +211,7 @@ public abstract class Shooter extends Subsystem {
      */
     public static void shootSingle() {
         pushTrigger();
-        sleep(75);
+        sleep(62);
         retractTrigger();
     }
 
