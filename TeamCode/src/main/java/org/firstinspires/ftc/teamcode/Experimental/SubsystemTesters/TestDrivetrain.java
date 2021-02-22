@@ -1,15 +1,21 @@
 package org.firstinspires.ftc.teamcode.Experimental.SubsystemTesters;
 
-import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.DcMotorEx;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.teamcode.Subsystems.Drivetrain;
-import org.firstinspires.ftc.teamcode.Subsystems.Intake;
 import org.firstinspires.ftc.teamcode.Util.Constants;
 import org.firstinspires.ftc.teamcode.Util.Subsystem;
+
+/**
+ * Gamepad 1 -
+ * R. Trigger:  Drive Slow Modifier
+ * L. Stick:    Omnidirectional Drive
+ * R. Stick:    Drive Rotation
+ * Back:        Switch Drivetrain Control Mode
+ */
+
 
 @TeleOp(name = "Subsystems: Drivetrain Test")
 public class TestDrivetrain extends LinearOpMode {
@@ -43,21 +49,20 @@ public class TestDrivetrain extends LinearOpMode {
 
         Subsystem.initialize(hardwareMap,telemetry);
 
-        Drivetrain.initialize("frontLeft","frontRight",
-                "backLeft", "backRight", "imu");
+        Drivetrain.initialize();
 
         telemetry.addLine("Setting Correction...");
         telemetry.update();
         sleep(500);
 
-        while (Drivetrain.getHeading(AngleUnit.DEGREES) != 0) {
-            Drivetrain.setHeadingCorrectionDegrees();
+        do {
+            Drivetrain.setHeadingCorrection();
             Drivetrain.updateHeading();
             // Break out of loop if initialization is stopped to prevent forced restart
             if (isStopRequested()) {
                 break;
             }
-        }
+        } while (Drivetrain.getHeading(AngleUnit.DEGREES) != 0);
 
         if (!isAuto) {
             telemetry.setAutoClear(true);
@@ -89,7 +94,7 @@ public class TestDrivetrain extends LinearOpMode {
 
             // FIELD-CENTRIC DRIVE =====================================================================
 
-            if (Drivetrain.controlMode == Drivetrain.ControlMode.FIELD_CENTRIC) {
+            if (Drivetrain.getControlMode() == Drivetrain.ControlMode.FIELD_CENTRIC) {
 
                 // If robot is facing right
                 if (Drivetrain.getHeading(AngleUnit.RADIANS) < 0) {
@@ -134,7 +139,7 @@ public class TestDrivetrain extends LinearOpMode {
             if (gamepad1.back && Constants.back == 0)
                 Constants.back++;
             else if (!gamepad1.back && Constants.back == 1) {
-                if (Drivetrain.controlMode == Drivetrain.ControlMode.FIELD_CENTRIC) {
+                if (Drivetrain.getControlMode() == Drivetrain.ControlMode.FIELD_CENTRIC) {
                     Drivetrain.setControlMode(Drivetrain.ControlMode.ROBOT_CENTRIC);
                 } else {
                     Drivetrain.setControlMode(Drivetrain.ControlMode.FIELD_CENTRIC);

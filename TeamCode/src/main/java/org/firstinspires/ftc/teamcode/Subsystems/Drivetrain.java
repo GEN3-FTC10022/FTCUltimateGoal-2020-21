@@ -9,23 +9,27 @@ import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
-import org.firstinspires.ftc.teamcode.Util.PIDController;
 import org.firstinspires.ftc.teamcode.Util.Subsystem;
 
 import static org.firstinspires.ftc.teamcode.Util.Constants.motorTicksPerRev;
 
 public abstract class Drivetrain extends Subsystem {
 
-    // Objects
-    private static DcMotorEx frontLeft, frontRight, backLeft, backRight;
+    // Devices
+    private static DcMotorEx fl, fr, bl, br;
+    private static final String HM_FL = "FL";
+    private static final String HM_FR = "FR";
+    private static final String HM_BL = "BL";
+    private static final String HM_BR = "BR";
     private static DcMotor lEncoder, rEncoder, hEncoder;
-    public static ControlMode controlMode;
+    private static ControlMode controlMode;
 
     // REV IMU
     private static BNO055IMU imu;
+    private static final String HM_IMU = "imu";
     private static Orientation orientation;
     private static double heading;
-    private static double headingZeroCorrectionDegrees; // Initial Angle Correction
+    private static double headingZeroCorrection; // Initial Angle Correction
 
     // Odometry Variables
     private static int leftPos = 0, rightPos = 0, horzPos = 0;
@@ -44,31 +48,22 @@ public abstract class Drivetrain extends Subsystem {
     public static double STRAFE_CORRECTION = 5.0 /4.25;
 
     /**
-     * Contains the drive mode of the object as either field- or robot-centric, to determine
-     * TeleOp joystick interpretation.
-     */
-    public enum ControlMode {
-        FIELD_CENTRIC,
-        ROBOT_CENTRIC
-    }
-
-    /**
      * Initializes the drive train by reversing the frontRight and backRight motors, setting the
      * drive train's ZeroPowerBehavior to BRAKE, setting IMU parameters to degrees and m/s/s, and
      * setting driveMode to FIELD_CENTRIC.
      */
-    public static void initialize(String hmFL, String hmFR, String hmBL, String hmBR, String hmIMU) {
+    public static void initialize() {
 
         // Hardware Map
-        frontLeft = hm.get(DcMotorEx.class, hmFL);
-        frontRight = hm.get(DcMotorEx.class, hmFR);
-        backLeft = hm.get(DcMotorEx.class, hmBL);
-        backRight = hm.get(DcMotorEx.class, hmBR);
-        imu = hm.get(BNO055IMU.class, hmIMU);
+        fl = hm.get(DcMotorEx.class, HM_FL);
+        fr = hm.get(DcMotorEx.class, HM_FR);
+        bl = hm.get(DcMotorEx.class, HM_BL);
+        br = hm.get(DcMotorEx.class, HM_BR);
+        imu = hm.get(BNO055IMU.class, HM_IMU);
 
         // Drive
-        frontRight.setDirection(DcMotor.Direction.REVERSE);
-        backRight.setDirection(DcMotor.Direction.REVERSE);
+        fr.setDirection(DcMotor.Direction.REVERSE);
+        br.setDirection(DcMotor.Direction.REVERSE);
         setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         // IMU
@@ -77,7 +72,7 @@ public abstract class Drivetrain extends Subsystem {
         imuParameters.angleUnit = BNO055IMU.AngleUnit.DEGREES;
         imuParameters.accelUnit = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
         imu.initialize(imuParameters);
-        headingZeroCorrectionDegrees = 0;
+        headingZeroCorrection = 0;
 
         // Control Mode
         controlMode = ControlMode.FIELD_CENTRIC;
@@ -88,6 +83,33 @@ public abstract class Drivetrain extends Subsystem {
         tm.addLine("Drivetrain initialized");
         tm.update();
         sleep(500);
+    }
+
+    /**
+     * Contains the drive mode of the object as either field- or robot-centric, to determine
+     * TeleOp joystick interpretation.
+     */
+    public enum ControlMode {
+        FIELD_CENTRIC,
+        ROBOT_CENTRIC
+    }
+
+    /**
+     * Sets the active control mode of the robot to the desired control mode
+     * @param controlMode the desired control mode of the robot
+     * @see Drivetrain.ControlMode
+     */
+    public static void setControlMode(ControlMode controlMode) {
+        Drivetrain.controlMode = controlMode;
+    }
+
+    /**
+     * Returns the active drive control mode.
+     * @return The active drive control mode.
+     * @see Drivetrain.ControlMode
+     */
+    public static ControlMode getControlMode() {
+        return controlMode;
     }
 
     /**
@@ -124,84 +146,6 @@ public abstract class Drivetrain extends Subsystem {
     }
 
     /**
-     * Set RunMode of all drivetrain motors to the desired RunMode
-     * @param runMode The desired RunMode
-     */
-    private static void setRunMode(DcMotor.RunMode runMode) {
-        frontLeft.setMode(runMode);
-        backLeft.setMode(runMode);
-        frontRight.setMode(runMode);
-        backRight.setMode(runMode);
-    }
-
-    /**
-     * Sets all drive motors to reach a target position.
-     *
-     * @param dist the distance, in ticks, for the robot to travel
-     * @param fl the modifier for the front left motor (usually 1 or -1 to show direction)
-     * @param fr the modifier for the front right motor (usually 1 or -1 to show direction)
-     * @param bl the modifier for the back left motor (usually 1 or -1 to show direction)
-     * @param br the modifier for the back right motor (usually 1 or -1 to show direction)
-     */
-    private static void setTargetPosition(double dist, double fl, double fr, double bl, double br) {
-
-        frontLeft.setTargetPosition((int) (fl * dist));
-        backLeft.setTargetPosition((int) (bl * dist));
-        frontRight.setTargetPosition((int) (fr * dist));
-        backRight.setTargetPosition((int) (br * dist));
-    }
-
-    /**
-     * Determines if all the motors in the drive train are busy, where busy means that they are
-     * moving towards a set target.
-     *
-     * @return whether or not all the motors are busy
-     */
-    private static boolean isBusy() {
-
-        return frontLeft.isBusy() && backLeft.isBusy() && frontRight.isBusy() && backRight.isBusy();
-    }
-
-    /**
-     * Sets all motors in the drive train to a specified ZeroPowerBehavior.
-     *
-     * @param behavior the ZeroPowerBehavior that will be applied to each drive train motor
-     */
-    private static void setZeroPowerBehavior(DcMotor.ZeroPowerBehavior behavior) {
-        frontLeft.setZeroPowerBehavior(behavior);
-        frontRight.setZeroPowerBehavior(behavior);
-        backLeft.setZeroPowerBehavior(behavior);
-        backRight.setZeroPowerBehavior(behavior);
-    }
-
-    /**
-     * Sets each motor to its respective power (fl, fr, bl, br) on the interval [-0.1, 0.1].
-     *
-     * @param flpower the power to be assigned to the front left motor
-     * @param frpower the power to be assigned to the front right motor
-     * @param blpower the power to be assigned to the back left motor
-     * @param brpower the power to be assigned to the back right motor
-     */
-    public static void setPower(double flpower, double frpower, double blpower, double brpower) {
-        frontLeft.setPower(flpower);
-        frontRight.setPower(frpower);
-        backLeft.setPower(blpower);
-        backRight.setPower(brpower);
-    }
-
-    /**
-     * Sets all drive train motors to a specified power, which will be the same power for all motors.
-     *
-     * @param pow the power to apply to every drive train motor
-     */
-    private static void setPower(double pow) {
-        frontLeft.setPower(pow);
-        backLeft.setPower(pow);
-        frontRight.setPower(pow);
-        backRight.setPower(pow);
-    }
-
-    /**
      * Determines the change in position of the left encoder since the last recorded left encoder
      * position.
      *
@@ -232,14 +176,99 @@ public abstract class Drivetrain extends Subsystem {
     }
 
     /**
-     * Updates the robot's heading as measured by the REV Hub IMU in euler angles [-180,180) or [-π,π)
-     * in degrees.
+     * Set RunMode of all drivetrain motors to the desired RunMode
+     * @param runMode The desired RunMode
+     */
+    private static void setRunMode(DcMotor.RunMode runMode) {
+        fl.setMode(runMode);
+        bl.setMode(runMode);
+        fr.setMode(runMode);
+        br.setMode(runMode);
+    }
+
+    /**
+     * Sets all drive motors to reach a target position.
+     *
+     * @param dist the distance, in ticks, for the robot to travel
+     * @param fl the modifier for the front left motor (usually 1 or -1 to show direction)
+     * @param fr the modifier for the front right motor (usually 1 or -1 to show direction)
+     * @param bl the modifier for the back left motor (usually 1 or -1 to show direction)
+     * @param br the modifier for the back right motor (usually 1 or -1 to show direction)
+     */
+    private static void setTargetPosition(double dist, double fl, double fr, double bl, double br) {
+
+        Drivetrain.fl.setTargetPosition((int) (fl * dist));
+        Drivetrain.bl.setTargetPosition((int) (bl * dist));
+        Drivetrain.fr.setTargetPosition((int) (fr * dist));
+        Drivetrain.br.setTargetPosition((int) (br * dist));
+    }
+
+    /**
+     * Determines if all the motors in the drive train are busy, where busy means that they are
+     * moving towards a set target.
+     *
+     * @return whether or not all the motors are busy
+     */
+    private static boolean isBusy() {
+
+        return fl.isBusy() && bl.isBusy() && fr.isBusy() && br.isBusy();
+    }
+
+    /**
+     * Sets all motors in the drive train to a specified ZeroPowerBehavior.
+     *
+     * @param behavior the ZeroPowerBehavior that will be applied to each drive train motor
+     */
+    private static void setZeroPowerBehavior(DcMotor.ZeroPowerBehavior behavior) {
+        fl.setZeroPowerBehavior(behavior);
+        fr.setZeroPowerBehavior(behavior);
+        bl.setZeroPowerBehavior(behavior);
+        br.setZeroPowerBehavior(behavior);
+    }
+
+    /**
+     * Sets each motor to its respective power (fl, fr, bl, br) on the interval [-0.1, 0.1].
+     *
+     * @param flpower the power to be assigned to the front left motor
+     * @param frpower the power to be assigned to the front right motor
+     * @param blpower the power to be assigned to the back left motor
+     * @param brpower the power to be assigned to the back right motor
+     */
+    public static void setPower(double flpower, double frpower, double blpower, double brpower) {
+        fl.setPower(flpower);
+        fr.setPower(frpower);
+        bl.setPower(blpower);
+        br.setPower(brpower);
+    }
+
+    /**
+     * Sets all drive train motors to a specified power, which will be the same power for all motors.
+     *
+     * @param pow the power to apply to every drive train motor
+     */
+    private static void setPower(double pow) {
+        fl.setPower(pow);
+        bl.setPower(pow);
+        fr.setPower(pow);
+        br.setPower(pow);
+    }
+
+    /**
+     * Updates the robot's heading as measured by the REV Hub IMU in euler angles [-180,180) degrees.
+     * In TeleOp, only call once in the loop.
      */
     public static void updateHeading() {
         orientation = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.XYZ, AngleUnit.DEGREES);
         heading = orientation.thirdAngle - getHeadingCorrection(AngleUnit.DEGREES);
     }
 
+    /**
+     * Returns the last updated heading as measured by the REV Hub IMU in euler angles [-180,180)
+     * or [-π,π) in the specified units.
+     * @param angleUnit The desired angle unit.
+     * @return Last updated heading
+     * @see #updateHeading()
+     */
     public static double getHeading(AngleUnit angleUnit) {
         if (angleUnit == AngleUnit.DEGREES)
             return heading;
@@ -248,31 +277,39 @@ public abstract class Drivetrain extends Subsystem {
         }
     }
 
-    public static void setHeadingCorrectionDegrees() {
+    /**
+     * Updates the zero heading correction to the current robot angle in degrees.
+     */
+    public static void setHeadingCorrection() {
         orientation = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.XYZ, AngleUnit.DEGREES);
-        headingZeroCorrectionDegrees = orientation.thirdAngle;
+        headingZeroCorrection = orientation.thirdAngle;
 
         tm.addData("Correction", getHeadingCorrection(AngleUnit.DEGREES));
         tm.update();
         sleep(200);
     }
 
+    /**
+     * Returns the last updated heading correction.
+     * @param angleUnit The desired angle unit.
+     * @return Last updated heading correction.
+     * @see #setHeadingCorrection()
+     */
     private static double getHeadingCorrection(AngleUnit angleUnit) {
         if (angleUnit == AngleUnit.DEGREES)
-            return headingZeroCorrectionDegrees;
+            return headingZeroCorrection;
         else
-            return Math.toRadians(headingZeroCorrectionDegrees);
+            return Math.toRadians(headingZeroCorrection);
     }
 
     /**
-     * Sets the active control mode of the robot to either FIELD_CENTRIC or ROBOT_CENTRIC.
-     *
-     * @param controlMode the desired control mode of the robot, either FIELD_CENTRIC or ROBOT_CENTRIC
+     * Moves in the desired direction at the desired power for the desired distance in inches. The
+     * direction is determined by the angle in degrees of the 8-direction compass directions given
+     * by the unit circle. (eg. 45 is northeast).
+     * @param direction Desired direction
+     * @param power Percentage power set to the motor as a decimal (0-1)
+     * @param inches Desired distance
      */
-    public static void setControlMode(ControlMode controlMode) {
-        Drivetrain.controlMode = controlMode;
-    }
-
     public static void move(int direction, double power, double inches) {
         double target = inches * TICKS_PER_INCH;
         setRunMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -329,6 +366,12 @@ public abstract class Drivetrain extends Subsystem {
         setRunMode(DcMotor.RunMode.RUN_USING_ENCODER);
     }
 
+    /**
+     * Rotates for the desired number of degrees at the specified power. CW is negative, CCW is
+     * positive.
+     * @param power Percentage power set to the motor as a decimal (0-1)
+     * @param deltaAngle Angle to turn.
+     */
     public static void rotate(double power, double deltaAngle) {
         double target = deltaAngle * TICKS_PER_DEGREE;
         setRunMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -344,6 +387,10 @@ public abstract class Drivetrain extends Subsystem {
         setRunMode(DcMotor.RunMode.RUN_TO_POSITION);
     }
 
+    /**
+     * @deprecated Experimental
+     */
+    @Deprecated
     public static void rotateToAngle(double power, double targetAngle, boolean displayInfo) {
 
         tm.setAutoClear(false);
@@ -399,11 +446,11 @@ public abstract class Drivetrain extends Subsystem {
 
         if (expanded) {
             tm.addLine("\n:: Launcher ::");
-            tm.addData("Current", frontLeft.getCurrent(CurrentUnit.AMPS));
-            tm.addData("Current Alert", frontLeft.getCurrentAlert(CurrentUnit.AMPS));
-            tm.addData("Over Current", frontLeft.isOverCurrent());
-            tm.addData("Run Mode", frontLeft.getMode());
-            tm.addData("Encoder PID", frontLeft.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER));
+            tm.addData("Current", fl.getCurrent(CurrentUnit.AMPS));
+            tm.addData("Current Alert", fl.getCurrentAlert(CurrentUnit.AMPS));
+            tm.addData("Over Current", fl.isOverCurrent());
+            tm.addData("Run Mode", fl.getMode());
+            tm.addData("Encoder PID", fl.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER));
         }
     }
 }

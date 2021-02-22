@@ -14,7 +14,10 @@ public abstract class WobbleMech extends Subsystem {
 
     // Devices
     private static DcMotorEx arm;
+    private static final String HM_ARM = "arm";
     private static Servo lClaw, rClaw;
+    private static final String HM_LCLAW = "lClaw";
+    private static final String HM_RCLAW = "rClaw";
 
     // Constants
     private static final double WOBBLE_TICKS_PER_REV = NEVEREST_CLASSIC_60_TICKS_PER_REV;
@@ -33,16 +36,13 @@ public abstract class WobbleMech extends Subsystem {
     /**
      * Configures the hardware map, sets the control mode to assisted, sets the arm to the rest
      * position, and opens the claw.
-     * @param hmArm Arm hardware map name
-     * @param hmClawL Left Claw hardware map name
-     * @param hmClawR Right Claw hardware map name
      */
-    public static void initialize(String hmArm, String hmClawL, String hmClawR) {
+    public static void initialize() {
 
         // Hardware Map
-        arm = hm.get(DcMotorEx.class, hmArm);
-        lClaw = hm.get(Servo.class, hmClawL);
-        rClaw = hm.get(Servo.class, hmClawR);
+        arm = hm.get(DcMotorEx.class, HM_ARM);
+        lClaw = hm.get(Servo.class, HM_LCLAW);
+        rClaw = hm.get(Servo.class, HM_RCLAW);
 
         // Arm
         arm.setDirection(DcMotorSimple.Direction.REVERSE);
@@ -60,7 +60,6 @@ public abstract class WobbleMech extends Subsystem {
 
         tm.addLine("Wobble Mech initialized");
         tm.update();
-        sleep(500);
     }
 
     /**
@@ -237,14 +236,14 @@ public abstract class WobbleMech extends Subsystem {
      * Applies positive power to the arm motor.
      */
     public static void armUp() {
-        arm.setPower(ARM_POWER);
+        arm.setPower(-ARM_POWER);
     }
 
     /**
      * Applies negative power to the arm motor.
      */
     public static void armDown() {
-        arm.setPower(-ARM_POWER);
+        arm.setPower(ARM_POWER);
     }
 
     /**

@@ -6,24 +6,25 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.Servo;
 
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
+import org.firstinspires.ftc.teamcode.Util.Constants;
 import org.firstinspires.ftc.teamcode.Util.Subsystem;
 
-import static org.firstinspires.ftc.robotcore.external.BlocksOpModeCompanion.telemetry;
 import static org.firstinspires.ftc.teamcode.Util.Constants.YELLOWJACKET_5202_MAX_RPM;
 import static org.firstinspires.ftc.teamcode.Util.Constants.YELLOWJACKET_5202_TICKS_PER_REV;
-import static org.firstinspires.ftc.teamcode.Util.Constants.motorTicksPerRev;
 
 public abstract class Shooter extends Subsystem {
 
     // Devices
     private static DcMotorEx launcherOne, launcherTwo;
+    private static final String HM_L1 = "launcherOne";
+    private static final String HM_L2 = "launcherTwo";
     private static Servo trigger;
+    private static final String HM_TRIGGER = "trigger";
 
     // Constants
     private static final double TRIGGER_MIN = 0;
-    private static final double TRIGGER_MAX = 0.1;
+    private static final double TRIGGER_MAX = 0.12;
     private static TriggerPosition triggerPosition;
 
     private static final double LAUNCHER_TICKS_PER_REV = YELLOWJACKET_5202_TICKS_PER_REV;
@@ -33,26 +34,26 @@ public abstract class Shooter extends Subsystem {
     public static final int ZERO_VELOCITY = 0;
     public static final int LOW_GOAL_VELOCITY = 1000; // temp
     public static final int MID_GOAL_VELOCITY = 1200; // temp
-    public static final int POWER_SHOT_VELOCITY = 1400; // temp
+    public static final int POWER_SHOT_VELOCITY = 1400; // tested
     public static final int HIGH_GOAL_VELOCITY = 1640; // tested
     private static final int[] VELOCITIES = {ZERO_VELOCITY,LOW_GOAL_VELOCITY,MID_GOAL_VELOCITY,POWER_SHOT_VELOCITY,HIGH_GOAL_VELOCITY};
     private static int targetSetting;
 
-    private static VelocityControlMode velocityControlMode;
+    private static ControlMode controlMode;
     private static final double VELOCITY_MODIFIER = 20;
     private static int targetVelocity;
-    private static final PIDFCoefficients launcherVelocityPID = new PIDFCoefficients(7.5,3,3.5,0);
+    private static final PIDFCoefficients launcherVelocityPID = new PIDFCoefficients(7.5,0,0,0);
 
     /**
      * Configures the hardware map, sets the VCM to preset, sets the trigger to the retracted
      * position, and sets the defualt target setting and manual target velocity to high goal.
      */
-    public static void initialize(String hmLauncherOne, String hmLauncherTwo, String hmTrigger) {
+    public static void initialize() {
 
         // Hardware Map
-        launcherOne = hm.get(DcMotorEx.class, hmLauncherOne);
-        launcherTwo = hm.get(DcMotorEx.class, hmLauncherTwo);
-        trigger = hm.get(Servo.class, hmTrigger);
+        launcherOne = hm.get(DcMotorEx.class, HM_L1);
+        launcherTwo = hm.get(DcMotorEx.class, HM_L2);
+        trigger = hm.get(Servo.class, HM_TRIGGER);
 
         // Launcher
         launcherOne.setDirection(DcMotorSimple.Direction.REVERSE);
@@ -67,14 +68,13 @@ public abstract class Shooter extends Subsystem {
         // Trigger
         trigger.scaleRange(TRIGGER_MIN, TRIGGER_MAX);
 
-        velocityControlMode = VelocityControlMode.PRESET;
+        controlMode = ControlMode.PRESET;
         retractTrigger();
         targetSetting = 4;
         targetVelocity = HIGH_GOAL_VELOCITY;
 
         tm.addLine("Shooter initialized");
         tm.update();
-        sleep(500);
     }
 
     /**
@@ -113,9 +113,9 @@ public abstract class Shooter extends Subsystem {
     /**
      * Velocity Control Mode - PRESET, MANUAL
      */
-    public enum VelocityControlMode {
+    public enum ControlMode {
         /**
-         * Adjusting the launcher velocity in this mode will cycle through the 4 preset velocities.
+         * Adjusting the launcher velocity in this mode will cycle through the 5 preset velocities.
          * @see #VELOCITIES
          */
         PRESET,
@@ -131,17 +131,17 @@ public abstract class Shooter extends Subsystem {
     /**
      * @return Current velocity control mode of the shooter
      */
-    public static VelocityControlMode getVelocityControlMode() {
-        return velocityControlMode;
+    public static ControlMode getControlMode() {
+        return controlMode;
     }
 
     /**
      * Sets the active velocity control mode to the argument
-     * @param velocityControlMode The desired velocity control mode.
-     * @see Shooter.VelocityControlMode
+     * @param controlMode The desired velocity control mode.
+     * @see ControlMode
      */
-    public static void setVelocityControlMode(VelocityControlMode velocityControlMode) {
-        Shooter.velocityControlMode = velocityControlMode;
+    public static void setControlMode(ControlMode controlMode) {
+        Shooter.controlMode = controlMode;
     }
 
     /**
@@ -150,9 +150,9 @@ public abstract class Shooter extends Subsystem {
      * @param k The desired target velocity in ticks per second or target setting.
      */
     public static void setTarget(int k) {
-        if (velocityControlMode == VelocityControlMode.PRESET && k >= 0 && k <= VELOCITIES.length-1)
+        if (controlMode == ControlMode.PRESET && k >= 0 && k <= VELOCITIES.length-1)
             targetSetting = k;
-        else if (velocityControlMode == VelocityControlMode.MANUAL && targetVelocity <= LAUNCHER_MAX_TICKS_PER_SECOND-VELOCITY_MODIFIER)
+        else if (controlMode == ControlMode.MANUAL && targetVelocity <= LAUNCHER_MAX_TICKS_PER_SECOND-VELOCITY_MODIFIER)
             targetVelocity = k;
     }
 
@@ -162,9 +162,9 @@ public abstract class Shooter extends Subsystem {
      * initialized.
      */
     public static double getTarget() {
-        if (velocityControlMode == VelocityControlMode.PRESET)
+        if (controlMode == ControlMode.PRESET)
             return targetSetting;
-        else if (velocityControlMode == VelocityControlMode.MANUAL)
+        else if (controlMode == ControlMode.MANUAL)
             return targetVelocity;
         else
             return -1;
@@ -175,9 +175,9 @@ public abstract class Shooter extends Subsystem {
      * mode.
      */
     public static void increaseVelocity() {
-        if (velocityControlMode == VelocityControlMode.PRESET && targetSetting < VELOCITIES.length-1)
+        if (controlMode == ControlMode.PRESET && targetSetting < VELOCITIES.length-1)
             targetSetting++;
-        else if (velocityControlMode == VelocityControlMode.MANUAL && targetVelocity <= LAUNCHER_MAX_TICKS_PER_SECOND-VELOCITY_MODIFIER)
+        else if (controlMode == ControlMode.MANUAL && targetVelocity <= LAUNCHER_MAX_TICKS_PER_SECOND-VELOCITY_MODIFIER)
             targetVelocity += VELOCITY_MODIFIER;
     }
 
@@ -186,9 +186,9 @@ public abstract class Shooter extends Subsystem {
      * mode.
      */
     public static void decreaseVelocity() {
-        if (velocityControlMode == VelocityControlMode.PRESET && targetSetting > 0)
+        if (controlMode == ControlMode.PRESET && targetSetting > 0)
             targetSetting--;
-        else if (velocityControlMode == VelocityControlMode.MANUAL && targetVelocity >= -LAUNCHER_MAX_TICKS_PER_SECOND+VELOCITY_MODIFIER)
+        else if (controlMode == ControlMode.MANUAL && targetVelocity >= -LAUNCHER_MAX_TICKS_PER_SECOND+VELOCITY_MODIFIER)
             targetVelocity -= VELOCITY_MODIFIER;
     }
 
@@ -197,10 +197,10 @@ public abstract class Shooter extends Subsystem {
      * velocity control mode.
      */
     public static void runLauncher() {
-        if (velocityControlMode == VelocityControlMode.PRESET) {
+        if (controlMode == ControlMode.PRESET) {
             launcherOne.setVelocity(VELOCITIES[targetSetting]);
             launcherTwo.setPower(launcherOne.getPower());
-        } else if (velocityControlMode == VelocityControlMode.MANUAL) {
+        } else if (controlMode == ControlMode.MANUAL) {
             launcherOne.setVelocity(targetVelocity);
             launcherTwo.setPower(launcherOne.getPower());
         }
@@ -211,7 +211,7 @@ public abstract class Shooter extends Subsystem {
      */
     public static void shootSingle() {
         pushTrigger();
-        sleep(62);
+        sleep(75);
         retractTrigger();
     }
 
@@ -221,7 +221,7 @@ public abstract class Shooter extends Subsystem {
     public static void shootAll() {
         for (int i = 0; i < 3; i++) {
             shootSingle();
-            sleep(180);
+            sleep(200);
         }
     }
 
@@ -234,7 +234,7 @@ public abstract class Shooter extends Subsystem {
         tm.addData("L1 Velocity", launcherOne.getVelocity());
         tm.addData("L2 Velocity", launcherTwo.getVelocity());
         tm.addData("Target", getTarget());
-        tm.addData("VCM", getVelocityControlMode());
+        tm.addData("VCM", getControlMode());
         tm.addLine();
 
         if (expanded) {
@@ -252,6 +252,8 @@ public abstract class Shooter extends Subsystem {
             tm.addData("Port Number", trigger.getPortNumber());
 
             tm.addLine("\n:: Launcher ::");
+            tm.addData("L1 Power", launcherOne.getPower());
+            tm.addData("L2 Power", launcherTwo.getPower());
             tm.addData("Current", launcherOne.getCurrent(CurrentUnit.AMPS));
             tm.addData("Current Alert", launcherOne.getCurrentAlert(CurrentUnit.AMPS));
             tm.addData("Over Current", launcherOne.isOverCurrent());

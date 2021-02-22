@@ -37,20 +37,23 @@ public abstract class Vision extends Subsystem {
 
     private static int cameraMonitorViewId;
     private static VuforiaLocalizer.Parameters parameters;
-    private static WebcamName webcamName = null;
+    private static WebcamName webcamName;
+    private static final String HM_WEBCAM = "Webcam";
 
-    private static Image rgbImage = null;
-    private static VuforiaLocalizer.CloseableFrame closeableFrame = null;
-    private static Bitmap bitmap = null;
-    private static Bitmap croppedBitmap = null;
+    private static Image rgbImage;
+    private static VuforiaLocalizer.CloseableFrame closeableFrame;
+    private static Bitmap bitmap;
+    private static Bitmap croppedBitmap;
 
     // Crop Variables
+    private static final int BITMAP_WIDTH = 800;
+    private static final int BITMAP_HEIGHT = 448;
     private static final int CROP_INITIAL_X = 0;
-    private static final int CROP_FINAL_X = 85;
-    private static final int CROP_INITIAL_Y = 180;
-    private static final int CROP_FINAL_Y = 260;
-    private static final int CROP_WIDTH = CROP_FINAL_X - CROP_INITIAL_X;
-    private static final int CROP_HEIGHT = CROP_FINAL_Y - CROP_INITIAL_Y;
+    private static final int CROP_FINAL_X = 80;
+    private static final int CROP_INITIAL_Y = BITMAP_HEIGHT/3;
+    private static final int CROP_FINAL_Y = 2*CROP_INITIAL_Y;
+    private static final int CROP_WIDTH = CROP_FINAL_X - CROP_INITIAL_X; // Leftmost tenth
+    private static final int CROP_HEIGHT = CROP_FINAL_Y - CROP_INITIAL_Y; // Middle third
 
     // Detection Constants
     private static final int ONE_RING_MAX_PIXELS = 18;
@@ -60,37 +63,36 @@ public abstract class Vision extends Subsystem {
 
     /**
      * Configures the hardware map and initializes vuforia parameters.
-     * @param hmWebcam Webcam hardware map name
      */
-    public static void initialize(String hmWebcam) {
+    public static void initialize() {
 
-        sleep(1000);
+        webcamName = null;
+        rgbImage = null;
+        closeableFrame = null;
+        bitmap = null;
+        croppedBitmap = null;
 
         // Hardware Map
-        webcamName = hm.get(WebcamName.class, hmWebcam);
+        webcamName = hm.get(WebcamName.class, HM_WEBCAM);
 
         /*
          * Configure Vuforia by creating a Parameter object, and passing it to the Vuforia engine.
          * We can pass Vuforia the handle to a camera preview resource (on the RC phone);
          * If no camera monitor is desired, use the parameter-less constructor instead (commented out below).
+         * Note: Preview is shown on the DS phone.
          */
         cameraMonitorViewId = hm.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hm.appContext.getPackageName());
         parameters = new VuforiaLocalizer.Parameters(cameraMonitorViewId);
         // parameters = new VuforiaLocalizer.Parameters();
 
         parameters.cameraName = webcamName;
-
         parameters.vuforiaLicenseKey = VUFORIA_KEY;
+        parameters.useExtendedTracking = false; // Make sure extended tracking is disabled.
 
-        // Make sure extended tracking is disabled.
-        parameters.useExtendedTracking = false;
-
-        // Instantiate the Vuforia engine
-        vuforia = ClassFactory.getInstance().createVuforia(parameters);
+        vuforia = ClassFactory.getInstance().createVuforia(parameters); // Instantiate the Vuforia engine
 
         tm.addLine("Vision initialized");
         tm.update();
-        sleep(500);
     }
 
     /**
@@ -114,7 +116,7 @@ public abstract class Vision extends Subsystem {
                     }
                 }
 
-            } catch (InterruptedException exc) {
+            } catch (InterruptedException ignored) {
 
             } finally {
                 if (closeableFrame != null)
@@ -342,7 +344,7 @@ public abstract class Vision extends Subsystem {
      * @param saveBitmaps Stores the bitmap and the cropped bitmap as png files in the device storage
      * @param showPixelData Shows extended information about individual RGB values for each pixel scan
      */
-    public static void vuforiaScanStack(boolean saveBitmaps, boolean showPixelData) {
+    public static void scanStack(boolean saveBitmaps, boolean showPixelData) {
 
         tm.setAutoClear(false);
 
@@ -370,7 +372,7 @@ public abstract class Vision extends Subsystem {
             }
 
             // Scan bitmap for starter stack height
-            scanBitmapEx(false);
+            scanBitmapEx(showPixelData);
             tm.addLine("Bitmap scan finished");
             tm.addData("Num Rings", ringsFound);
             tm.update();

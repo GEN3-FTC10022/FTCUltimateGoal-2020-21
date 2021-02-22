@@ -2,10 +2,8 @@ package org.firstinspires.ftc.teamcode.Experimental.SubsystemTesters;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.DcMotorEx;
 
 import org.firstinspires.ftc.teamcode.Subsystems.Intake;
-import org.firstinspires.ftc.teamcode.Subsystems.WobbleMech;
 import org.firstinspires.ftc.teamcode.Util.Constants;
 import org.firstinspires.ftc.teamcode.Util.Subsystem;
 
@@ -13,7 +11,7 @@ import org.firstinspires.ftc.teamcode.Util.Subsystem;
  * Gamepad 1 -
  * A:           Intake In/Off
  * B:           Intake Out/Off
- * Back:        Intake Lock/Drop
+ * X:           Intake Lock/Drop
  */
 
 @TeleOp(name = "Subsystems: Intake Test")
@@ -74,7 +72,6 @@ public class TestIntake extends LinearOpMode {
                     Intake.out();
                 Constants.b--;
             }
-
         }
     }
 
@@ -82,7 +79,7 @@ public class TestIntake extends LinearOpMode {
         sleep(30000);
     }
 
-    public void initialize(boolean isAuto) {
+    public void initialize(boolean isuAto) {
 
         this.isAuto = isAuto;
 
@@ -96,7 +93,7 @@ public class TestIntake extends LinearOpMode {
 
         Subsystem.initialize(hardwareMap,telemetry);
 
-        Intake.initialize("rollers", "release");
+        Intake.initialize();
 
         if (!isAuto) {
             telemetry.setAutoClear(true);

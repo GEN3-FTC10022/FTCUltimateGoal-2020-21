@@ -1,17 +1,9 @@
 package org.firstinspires.ftc.teamcode.Experimental.SubsystemTesters;
 
-import android.graphics.Color;
-
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.DcMotorEx;
 
-import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
-import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackable;
-import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackableDefaultListener;
-import org.firstinspires.ftc.teamcode.Subsystems.Intake;
 import org.firstinspires.ftc.teamcode.Subsystems.Vision;
-import org.firstinspires.ftc.teamcode.Subsystems.WobbleMech;
 import org.firstinspires.ftc.teamcode.Util.Constants;
 import org.firstinspires.ftc.teamcode.Util.Subsystem;
 
@@ -42,7 +34,7 @@ public class TestVision extends LinearOpMode {
     }
 
     public void doAuto() {
-        Vision.vuforiaScanStack(false, false);
+        Vision.scanStack(false, false);
         sleep(30000);
     }
 
@@ -60,6 +52,6 @@ public class TestVision extends LinearOpMode {
 
         Subsystem.initialize(hardwareMap,telemetry);
 
-        Vision.initialize("Webcam");
+        Vision.initialize();
     }
 }

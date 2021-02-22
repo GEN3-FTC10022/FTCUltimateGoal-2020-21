@@ -1,7 +1,7 @@
 package org.firstinspires.ftc.teamcode.Subsystems;
 
 import com.qualcomm.robotcore.hardware.DcMotor;
-import org.firstinspires.ftc.robotcore.external.navigation.Position;
+
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
@@ -9,14 +9,13 @@ import com.qualcomm.robotcore.hardware.Servo;
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.teamcode.Util.Subsystem;
 
-import static org.firstinspires.ftc.robotcore.external.BlocksOpModeCompanion.hardwareMap;
-import static org.firstinspires.ftc.robotcore.external.BlocksOpModeCompanion.telemetry;
-
 public abstract class Intake extends Subsystem {
 
     // Devices
     private static DcMotorEx rollers;
+    private static final String HM_ROLLERS = "rollers";
     private static Servo release;
+    private static final String HM_RELEASE = "release";
 
     // Variables
     private static Direction direction;
@@ -30,11 +29,11 @@ public abstract class Intake extends Subsystem {
     /**
      * Configures the hardware map, locks the intake and turns off the rollers
      */
-    public static void initialize(String hmRollers, String hmRelease) {
+    public static void initialize() {
 
         // Hardware Map
-        rollers = hm.get(DcMotorEx.class, hmRollers);
-        release = hm.get(Servo.class, hmRelease);
+        rollers = hm.get(DcMotorEx.class, HM_ROLLERS);
+        release = hm.get(Servo.class, HM_RELEASE);
 
         // Rollers
         rollers.setDirection(DcMotorSimple.Direction.REVERSE);
@@ -49,7 +48,6 @@ public abstract class Intake extends Subsystem {
 
         tm.addLine("Intake initialized");
         tm.update();
-        sleep(500);
     }
 
     /**

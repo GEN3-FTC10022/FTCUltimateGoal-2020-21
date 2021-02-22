@@ -17,7 +17,7 @@ public class TestAuto extends TestSuperclass {
 
         waitForStart();
 
-        Vision.vuforiaScanStack(false, false);
+        Vision.scanStack(false, false);
 
         Shooter.setTarget(4);
         Shooter.runLauncher();

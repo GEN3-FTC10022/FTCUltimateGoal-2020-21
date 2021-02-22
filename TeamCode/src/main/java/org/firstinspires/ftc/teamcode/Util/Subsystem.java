@@ -26,7 +26,6 @@ public abstract class Subsystem {
 
         tm.addLine("Subsystem Hardware Map and Telemetry initialized");
         tm.update();
-        sleep(500);
     }
 
     /**

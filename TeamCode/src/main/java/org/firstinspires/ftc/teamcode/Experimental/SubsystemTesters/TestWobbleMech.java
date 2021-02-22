@@ -10,8 +10,10 @@ import org.firstinspires.ftc.teamcode.Util.Subsystem;
 
 /**
  * Gamepad 1 -
- * X:           Reset WobbleMech || Arm Down
- * Y:           Advance WobbleMech || Arm Up
+ * X:           Reset WobbleMech
+ * Y:           Advance WobbleMech
+ * Up:          Arm Up
+ * Down:        Arm Down
  * Right:       Place Wobble Goal || Claw Open/Close
  * Back:        Switch Wobble Mech Control Mode
  */
@@ -96,9 +98,9 @@ public class TestWobbleMech extends LinearOpMode {
 
             } else if (WobbleMech.getControlMode() == WobbleMech.ControlMode.MANUAL) {
 
-                if (gamepad1.y)
+                if (gamepad1.dpad_up)
                     WobbleMech.armUp();
-                else if (gamepad1.x)
+                else if (gamepad1.dpad_down)
                     WobbleMech.armDown();
                 else
                     WobbleMech.armStop();
@@ -136,7 +138,7 @@ public class TestWobbleMech extends LinearOpMode {
 
         Subsystem.initialize(hardwareMap,telemetry);
 
-        WobbleMech.initialize("arm","lClaw","rClaw");
+        WobbleMech.initialize();
 
         if (!isAuto) {
             telemetry.setAutoClear(true);
