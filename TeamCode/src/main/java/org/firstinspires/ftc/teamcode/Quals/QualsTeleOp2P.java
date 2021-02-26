@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.Experimental;
+package org.firstinspires.ftc.teamcode.Quals;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
@@ -8,7 +8,6 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.teamcode.Subsystems.Drivetrain;
 import org.firstinspires.ftc.teamcode.Subsystems.Intake;
 import org.firstinspires.ftc.teamcode.Subsystems.Shooter;
-import org.firstinspires.ftc.teamcode.Subsystems.Vision;
 import org.firstinspires.ftc.teamcode.Subsystems.WobbleMech;
 import org.firstinspires.ftc.teamcode.Util.Constants;
 import org.firstinspires.ftc.teamcode.Util.Subsystem;
@@ -63,8 +62,8 @@ import org.firstinspires.ftc.teamcode.Util.Subsystem;
  * Back:        -
  */
 
-@TeleOp(name = "Test: TeleOp")
-public class TestTeleOp extends LinearOpMode {
+@TeleOp(name = "Quals: TeleOp 2P")
+public class QualsTeleOp2P extends LinearOpMode {
 
     private double vertical, horizontal, rotation, max, kSlow, temp;
     private double flpower, frpower, blpower, brpower;
@@ -330,3 +329,4 @@ public class TestTeleOp extends LinearOpMode {
         telemetry.update();
     }
 }
+

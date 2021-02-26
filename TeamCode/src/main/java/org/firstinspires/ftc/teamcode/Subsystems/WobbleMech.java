@@ -24,7 +24,7 @@ public abstract class WobbleMech extends Subsystem {
     private static final double WOBBLE_GEAR_REDUCTION = 2;
     private static final double WOBBLE_TICKS_PER_DEGREE = (WOBBLE_TICKS_PER_REV * WOBBLE_GEAR_REDUCTION)/360.0;
     private static final double ARM_POWER = 0.8;
-    private static final double[] WOBBLE_ANGLES = {0, 60, 125};
+    private static final double[] WOBBLE_ANGLES = {0, 50, 125};
     private static ArmPosition armPosition;
 
     private static final double CLAW_MIN = 0;
@@ -293,5 +293,7 @@ public abstract class WobbleMech extends Subsystem {
             tm.addData("L.Claw Port Number", lClaw.getPortNumber());
             tm.addData("R.Claw Port Number", lClaw.getPortNumber());
         }
+
+        tm.addLine();
     }
 }

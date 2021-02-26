@@ -149,5 +149,7 @@ public abstract class Intake extends Subsystem {
             tm.addData("Controller", release.getController());
             tm.addData("Port Number", release.getPortNumber());
         }
+
+        tm.addLine();
     }
 }

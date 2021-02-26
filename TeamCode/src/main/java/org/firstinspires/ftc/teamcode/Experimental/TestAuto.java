@@ -25,14 +25,13 @@ public class TestAuto extends LinearOpMode {
 
         Vision.scanStack(false, false);
 
-        Shooter.setTarget(6);
-        Shooter.runLauncher();
-
         // Move to launch line
         Drivetrain.move(90,0.8,58.5);
         sleep(250);
         Drivetrain.move(0,0.8,15);
-        sleep(3000);
+        sleep(250);
+        Shooter.runLauncher();
+        sleep(4000);
         Shooter.shootAll();
         Shooter.setTarget(0);
 
@@ -84,7 +83,7 @@ public class TestAuto extends LinearOpMode {
         WobbleMech.initialize();
         Intake.initialize();
         Shooter.initialize();
-        Drivetrain.initialize();
+        Drivetrain.initialize(true);
 
         telemetry.addLine("Setting Correction...");
         telemetry.update();

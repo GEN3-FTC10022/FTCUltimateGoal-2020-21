@@ -34,9 +34,9 @@ public abstract class Shooter extends Subsystem {
     public static final int ZERO_VELOCITY = 0;
     public static final int LOW_GOAL_VELOCITY = 1000; // temp
     public static final int MID_GOAL_VELOCITY = 1200; // temp
-    public static final int POWER_SHOT_VELOCITY = 1400; // tested
+    public static final int POWER_SHOT_VELOCITY = 1420; // tested
     public static final int HIGH_GOAL_VELOCITY = 1650; // tested
-    private static final int[] VELOCITIES = {ZERO_VELOCITY,LOW_GOAL_VELOCITY,MID_GOAL_VELOCITY,POWER_SHOT_VELOCITY,HIGH_GOAL_VELOCITY};
+    private static final int[] VELOCITIES = {ZERO_VELOCITY,POWER_SHOT_VELOCITY,HIGH_GOAL_VELOCITY};
     private static int targetSetting;
 
     private static ControlMode controlMode;
@@ -70,7 +70,7 @@ public abstract class Shooter extends Subsystem {
 
         controlMode = ControlMode.PRESET;
         retractTrigger();
-        targetSetting = 4;
+        targetSetting = VELOCITIES.length-1;
         targetVelocity = HIGH_GOAL_VELOCITY;
 
         tm.addLine("Shooter initialized");
@@ -150,9 +150,9 @@ public abstract class Shooter extends Subsystem {
      * @param k The desired target velocity in ticks per second or target setting.
      */
     public static void setTarget(int k) {
-        if (controlMode == ControlMode.PRESET && k >= 0 && k <= VELOCITIES.length-1)
+        if (controlMode == ControlMode.PRESET && k >= 0 && k < VELOCITIES.length)
             targetSetting = k;
-        else if (controlMode == ControlMode.MANUAL && targetVelocity <= LAUNCHER_MAX_TICKS_PER_SECOND-VELOCITY_MODIFIER)
+        else if (controlMode == ControlMode.MANUAL && k <= LAUNCHER_MAX_TICKS_PER_SECOND)
             targetVelocity = k;
     }
 
@@ -235,7 +235,6 @@ public abstract class Shooter extends Subsystem {
         tm.addData("L2 Velocity", launcherTwo.getVelocity());
         tm.addData("Target", getTarget());
         tm.addData("VCM", getControlMode());
-        tm.addLine();
 
         if (expanded) {
             tm.addLine("\nVelocities");
@@ -260,5 +259,7 @@ public abstract class Shooter extends Subsystem {
             tm.addData("Run Mode", launcherOne.getMode());
             tm.addData("Encoder PID", launcherOne.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER));
         }
+
+        tm.addLine();
     }
 }

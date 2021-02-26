@@ -43,7 +43,7 @@ public abstract class Drivetrain extends Subsystem {
     private static final double TICKS_PER_REV = motorTicksPerRev[0];
     private static final double GEAR_REDUCTION = 1;
     private static final double TICKS_PER_INCH = (((TICKS_PER_REV * GEAR_REDUCTION) / WHEEL_CIRCUMFERENCE_INCHES));
-    private static final double TICKS_PER_DEGREE = 3600.0 /360.0; // temp
+    private static final double TICKS_PER_DEGREE = 3585.0 /360.0; // temp
     private static final double TRACK_WIDTH = 12.2047; //temp
     public static double STRAFE_CORRECTION = 5.0 /4.25;
 
@@ -52,7 +52,7 @@ public abstract class Drivetrain extends Subsystem {
      * drive train's ZeroPowerBehavior to BRAKE, setting IMU parameters to degrees and m/s/s, and
      * setting driveMode to FIELD_CENTRIC.
      */
-    public static void initialize() {
+    public static void initialize(boolean isAuto) {
 
         // Hardware Map
         fl = hm.get(DcMotorEx.class, HM_FL);
@@ -64,7 +64,8 @@ public abstract class Drivetrain extends Subsystem {
         // Drive
         fr.setDirection(DcMotor.Direction.REVERSE);
         br.setDirection(DcMotor.Direction.REVERSE);
-        setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        if (isAuto) setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        else setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
 
         // IMU
         BNO055IMU.Parameters imuParameters = new BNO055IMU.Parameters();
@@ -384,7 +385,7 @@ public abstract class Drivetrain extends Subsystem {
         while (isBusy())
             setPower(power);
         setPower(0);
-        setRunMode(DcMotor.RunMode.RUN_TO_POSITION);
+        setRunMode(DcMotor.RunMode.RUN_USING_ENCODER);
     }
 
     /**
@@ -440,17 +441,20 @@ public abstract class Drivetrain extends Subsystem {
     public static void appendTelemetry(boolean expanded) {
         tm.addLine("=== DRIVETRAIN ===");
         tm.addData("Heading", Drivetrain.getHeading(AngleUnit.DEGREES));
-        tm.addData("Correction", Drivetrain.getHeadingCorrection(AngleUnit.DEGREES));
+
         tm.addData("Control Mode", Drivetrain.controlMode);
         tm.addLine();
 
         if (expanded) {
-            tm.addLine("\n:: Launcher ::");
+            tm.addLine("\n:: FL Motor ::");
+            tm.addData("Correction", Drivetrain.getHeadingCorrection(AngleUnit.DEGREES));
             tm.addData("Current", fl.getCurrent(CurrentUnit.AMPS));
             tm.addData("Current Alert", fl.getCurrentAlert(CurrentUnit.AMPS));
             tm.addData("Over Current", fl.isOverCurrent());
             tm.addData("Run Mode", fl.getMode());
             tm.addData("Encoder PID", fl.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER));
         }
+
+        tm.addLine();
     }
 }
