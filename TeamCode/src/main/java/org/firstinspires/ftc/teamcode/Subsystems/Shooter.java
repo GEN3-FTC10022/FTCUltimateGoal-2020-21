@@ -35,7 +35,7 @@ public abstract class Shooter extends Subsystem {
     public static final int LOW_GOAL_VELOCITY = 1000; // temp
     public static final int MID_GOAL_VELOCITY = 1200; // temp
     public static final int POWER_SHOT_VELOCITY = 1400; // tested
-    public static final int HIGH_GOAL_VELOCITY = 1620; // tested
+    public static final int HIGH_GOAL_VELOCITY = 1650; // tested
     private static final int[] VELOCITIES = {ZERO_VELOCITY,LOW_GOAL_VELOCITY,MID_GOAL_VELOCITY,POWER_SHOT_VELOCITY,HIGH_GOAL_VELOCITY};
     private static int targetSetting;
 

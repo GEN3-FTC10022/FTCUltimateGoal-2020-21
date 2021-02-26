@@ -51,7 +51,7 @@ public class TestAuto extends LinearOpMode {
 
         } else if (Vision.ringsFound == 1) { // Target Zone B
             Shooter.runLauncher();
-            Drivetrain.move(180,0.8,30);
+            Drivetrain.move(180,0.8,35);
             sleep(500);
             Drivetrain.move(90,0.8,15);
             WobbleMech.place();
