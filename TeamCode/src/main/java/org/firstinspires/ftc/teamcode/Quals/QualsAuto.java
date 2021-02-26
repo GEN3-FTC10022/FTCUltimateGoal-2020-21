@@ -45,8 +45,8 @@ public class QualsAuto extends LinearOpMode {
             sleep(500);
             WobbleMech.place();
 
-            // Rotate to zero
-            Drivetrain.rotate(0.5, 90);
+            // Face left
+            Drivetrain.rotate(0.5, 180);
 
         } else if (Vision.ringsFound == 1) { // Target Zone B
             Shooter.runLauncher();
@@ -54,6 +54,10 @@ public class QualsAuto extends LinearOpMode {
             sleep(500);
             Drivetrain.move(90,0.8,15);
             WobbleMech.place();
+
+            // Face left
+            Drivetrain.rotate(0.5, 90);
+
 
         } else { // Target Zone C
             Shooter.runLauncher();
@@ -64,6 +68,9 @@ public class QualsAuto extends LinearOpMode {
             WobbleMech.place();
             Drivetrain.move(270,0.8,32);
             sleep(500);
+
+            // Face left
+            Drivetrain.rotate(0.5, 90);
         }
 
         sleep(30000);
