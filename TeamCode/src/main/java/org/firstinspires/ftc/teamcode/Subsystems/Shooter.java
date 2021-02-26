@@ -35,14 +35,14 @@ public abstract class Shooter extends Subsystem {
     public static final int LOW_GOAL_VELOCITY = 1000; // temp
     public static final int MID_GOAL_VELOCITY = 1200; // temp
     public static final int POWER_SHOT_VELOCITY = 1400; // tested
-    public static final int HIGH_GOAL_VELOCITY = 1640; // tested
+    public static final int HIGH_GOAL_VELOCITY = 1620; // tested
     private static final int[] VELOCITIES = {ZERO_VELOCITY,LOW_GOAL_VELOCITY,MID_GOAL_VELOCITY,POWER_SHOT_VELOCITY,HIGH_GOAL_VELOCITY};
     private static int targetSetting;
 
     private static ControlMode controlMode;
     private static final double VELOCITY_MODIFIER = 20;
     private static int targetVelocity;
-    private static final PIDFCoefficients launcherVelocityPID = new PIDFCoefficients(7.5,0,0,0);
+    private static final PIDFCoefficients launcherVelocityPID = new PIDFCoefficients(7.5,3,3.5,0);
 
     /**
      * Configures the hardware map, sets the VCM to preset, sets the trigger to the retracted
@@ -221,7 +221,7 @@ public abstract class Shooter extends Subsystem {
     public static void shootAll() {
         for (int i = 0; i < 3; i++) {
             shootSingle();
-            sleep(200);
+            sleep(250);
         }
     }
 

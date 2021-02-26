@@ -206,7 +206,7 @@ public abstract class WobbleMech extends Subsystem {
      */
     public static void place() {
         WobbleMech.setArmPosition(WobbleMech.ArmPosition.LOW);
-        sleep(500);
+        sleep(1000);
         WobbleMech.clawOpen();
         sleep(500);
         reset();
