@@ -34,8 +34,8 @@ public abstract class Shooter extends Subsystem {
     public static final int ZERO_VELOCITY = 0;
     public static final int LOW_GOAL_VELOCITY = 1000; // temp
     public static final int MID_GOAL_VELOCITY = 1200; // temp
-    public static final int POWER_SHOT_VELOCITY = 1420; // tested
-    public static final int HIGH_GOAL_VELOCITY = 1650; // tested
+    public static final int POWER_SHOT_VELOCITY = 1360; // tested
+    public static final int HIGH_GOAL_VELOCITY = 1230; // tested
     private static final int[] VELOCITIES = {ZERO_VELOCITY,POWER_SHOT_VELOCITY,HIGH_GOAL_VELOCITY};
     private static int targetSetting;
 
@@ -211,7 +211,7 @@ public abstract class Shooter extends Subsystem {
      */
     public static void shootSingle() {
         pushTrigger();
-        sleep(75);
+        sleep(80);
         retractTrigger();
     }
 
@@ -221,7 +221,7 @@ public abstract class Shooter extends Subsystem {
     public static void shootAll() {
         for (int i = 0; i < 3; i++) {
             shootSingle();
-            sleep(250);
+            sleep(300);
         }
     }
 

@@ -76,7 +76,7 @@ public abstract class Drivetrain extends Subsystem {
         headingZeroCorrection = 0;
 
         // Control Mode
-        controlMode = ControlMode.FIELD_CENTRIC;
+        controlMode = ControlMode.ROBOT_CENTRIC;
 
         // Odometry
         //updateTicks();

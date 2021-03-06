@@ -122,6 +122,7 @@ public class QualsTeleOp1P extends LinearOpMode {
                 Constants.y++;
             else if (!gamepad1.y && Constants.y == 1) {
                 Shooter.increaseVelocity();
+                Intake.off();
                 Constants.y--;
             }
 

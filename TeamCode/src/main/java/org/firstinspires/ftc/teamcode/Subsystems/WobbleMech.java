@@ -24,11 +24,11 @@ public abstract class WobbleMech extends Subsystem {
     private static final double WOBBLE_GEAR_REDUCTION = 2;
     private static final double WOBBLE_TICKS_PER_DEGREE = (WOBBLE_TICKS_PER_REV * WOBBLE_GEAR_REDUCTION)/360.0;
     private static final double ARM_POWER = 0.8;
-    private static final double[] WOBBLE_ANGLES = {0, 50, 125};
+    private static final double[] WOBBLE_ANGLES = {0, 50, 120};
     private static ArmPosition armPosition;
 
     private static final double CLAW_MIN = 0;
-    private static final double CLAW_MAX = 0.5225;
+    private static final double CLAW_MAX = 0.56;
     private static ClawPosition clawPosition;
 
     private static ControlMode controlMode;

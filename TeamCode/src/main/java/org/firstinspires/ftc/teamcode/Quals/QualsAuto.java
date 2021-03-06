@@ -26,51 +26,52 @@ public class QualsAuto extends LinearOpMode {
         Vision.scanStack(false, false);
 
         // Move to launch line
-        Drivetrain.move(90,0.8,58.5);
+        Drivetrain.move(90,0.8,61);
         sleep(250);
-        Drivetrain.move(0,0.8,15);
+        Drivetrain.move(0,0.8,20);
         sleep(250);
         Shooter.runLauncher();
         sleep(4000);
         Shooter.shootAll();
         Shooter.setTarget(0);
+        Intake.drop();
 
         if (Vision.ringsFound == 0) { // Target Zone A
             Shooter.runLauncher();
-            Drivetrain.move(180,0.8,25);
+            Drivetrain.move(180,0.5,25);
             sleep(500);
-            Drivetrain.move(90,0.8,12);
+            Drivetrain.move(90,0.8,10);
             sleep(500);
-            Drivetrain.rotate(0.5, -90);
+            Drivetrain.rotate(0.5, -89);
             sleep(500);
             WobbleMech.place();
 
             // Face left
-            Drivetrain.rotate(0.5, 180);
+            Drivetrain.rotate(0.5, 179);
 
         } else if (Vision.ringsFound == 1) { // Target Zone B
             Shooter.runLauncher();
-            Drivetrain.move(180,0.8,35);
+            Drivetrain.move(180,0.5,35);
             sleep(500);
             Drivetrain.move(90,0.8,15);
             WobbleMech.place();
 
             // Face left
-            Drivetrain.rotate(0.5, 90);
+            Drivetrain.rotate(0.5, 89);
 
 
         } else { // Target Zone C
             Shooter.runLauncher();
             Drivetrain.move(90,0.8,37);
             sleep(500);
-            Drivetrain.move(180,0.8,8);
+            Drivetrain.move(180,0.5,11);
             sleep(500);
             WobbleMech.place();
-            Drivetrain.move(270,0.8,32);
+            Drivetrain.move(270,0.8,27);
             sleep(500);
 
             // Face left
-            Drivetrain.rotate(0.5, 90);
+            Drivetrain.rotate(0.5, 89);
         }
 
         sleep(30000);
