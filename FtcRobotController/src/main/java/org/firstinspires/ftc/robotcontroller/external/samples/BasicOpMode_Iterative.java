@@ -54,8 +54,6 @@ import com.qualcomm.robotcore.util.Range;
 @Disabled
 public class BasicOpMode_Iterative extends OpMode
 {
-    // added a random comment to test gitkraken
-
     // Declare OpMode members.
     private ElapsedTime runtime = new ElapsedTime();
     private DcMotor leftDrive = null;
