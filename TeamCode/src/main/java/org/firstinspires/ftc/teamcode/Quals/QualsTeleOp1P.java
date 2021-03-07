@@ -60,6 +60,8 @@ public class QualsTeleOp1P extends LinearOpMode {
 
         telemetry.setAutoClear(true);
 
+        Shooter.startLauncher();
+
         while (opModeIsActive()) {
 
             // CONTROL MODE ========================================================================

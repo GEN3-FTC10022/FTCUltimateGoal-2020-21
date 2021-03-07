@@ -1,13 +1,16 @@
 package org.firstinspires.ftc.teamcode.Subsystems;
 
+import com.acmerobotics.roadrunner.control.PIDCoefficients;
+import com.qualcomm.hardware.lynx.LynxModule;
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
-import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
-import org.firstinspires.ftc.teamcode.Util.Constants;
+import org.firstinspires.ftc.teamcode.Util.ShooterTuning.VelocityPIDFController;
 import org.firstinspires.ftc.teamcode.Util.Subsystem;
 
 import static org.firstinspires.ftc.teamcode.Util.Constants.YELLOWJACKET_5202_MAX_RPM;
@@ -32,9 +35,8 @@ public abstract class Shooter extends Subsystem {
     private static final double LAUNCHER_MAX_TICKS_PER_SECOND = LAUNCHER_MAX_REV_PER_MIN * (LAUNCHER_TICKS_PER_REV/60.0);
 
     public static final int ZERO_VELOCITY = 0;
-    public static final int LOW_GOAL_VELOCITY = 1000; // temp
-    public static final int MID_GOAL_VELOCITY = 1200; // temp
-    public static final int POWER_SHOT_VELOCITY = 1360; // tested
+    public static final int MID_GOAL_VELOCITY = 1000; // temp
+    public static final int POWER_SHOT_VELOCITY = 1100; // tested
     public static final int HIGH_GOAL_VELOCITY = 1230; // tested
     private static final int[] VELOCITIES = {ZERO_VELOCITY,POWER_SHOT_VELOCITY,HIGH_GOAL_VELOCITY};
     private static int targetSetting;
@@ -42,7 +44,15 @@ public abstract class Shooter extends Subsystem {
     private static ControlMode controlMode;
     private static final double VELOCITY_MODIFIER = 20;
     private static int targetVelocity;
-    private static final PIDFCoefficients launcherVelocityPID = new PIDFCoefficients(7.5,3,3.5,0);
+
+    // PID
+    private static PIDCoefficients MOTOR_VELO_PID;
+    private static double kV;
+    private static double kA;
+    private static double kStatic;
+    private static ElapsedTime veloTimer;
+    private static VelocityPIDFController veloController;
+    private static double lastTargetVelocity;
 
     /**
      * Configures the hardware map, sets the VCM to preset, sets the trigger to the retracted
@@ -58,20 +68,30 @@ public abstract class Shooter extends Subsystem {
         // Launcher
         launcherOne.setDirection(DcMotorSimple.Direction.REVERSE);
         launcherTwo.setDirection(DcMotorSimple.Direction.REVERSE);
-        launcherOne.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        launcherTwo.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        launcherOne.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        launcherOne.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+        launcherTwo.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+        launcherOne.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         launcherTwo.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        launcherOne.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, launcherVelocityPID);
-        launcherTwo.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, launcherVelocityPID);
 
         // Trigger
         trigger.scaleRange(TRIGGER_MIN, TRIGGER_MAX);
 
+        // PID
+        MOTOR_VELO_PID = new PIDCoefficients(0.00235, 0, 0.0000011);
+        kV = 0.000465;
+        kA = 0.00015;
+        kStatic = 0;
+        veloTimer = new ElapsedTime();
+        lastTargetVelocity = 0.0;
+        veloController = new VelocityPIDFController(MOTOR_VELO_PID, kV, kA, kStatic);
+        for (LynxModule module : hm.getAll(LynxModule.class)) {
+            module.setBulkCachingMode(LynxModule.BulkCachingMode.AUTO);
+        }
+
         controlMode = ControlMode.PRESET;
         retractTrigger();
-        targetSetting = VELOCITIES.length-1;
-        targetVelocity = HIGH_GOAL_VELOCITY;
+        targetSetting = VELOCITIES.length-1; // Set target setting to high goal
+        targetVelocity = HIGH_GOAL_VELOCITY; // Set target velocity to high goal
 
         tm.addLine("Shooter initialized");
         tm.update();
@@ -193,17 +213,31 @@ public abstract class Shooter extends Subsystem {
     }
 
     /**
+     * Starts the velocity timer. To be called right after {@link LinearOpMode#waitForStart()}.
+     */
+    public static void startLauncher() {
+        veloTimer.reset();
+    }
+
+    /**
      * Runs the launcher at the target setting or the target velocity depending on the active
-     * velocity control mode.
+     * velocity control mode. Will only run if {@link #startLauncher()} has been called after start
+     * outside of loop.
      */
     public static void runLauncher() {
-        if (controlMode == ControlMode.PRESET) {
-            launcherOne.setVelocity(VELOCITIES[targetSetting]);
-            launcherTwo.setPower(launcherOne.getPower());
-        } else if (controlMode == ControlMode.MANUAL) {
-            launcherOne.setVelocity(targetVelocity);
-            launcherTwo.setPower(launcherOne.getPower());
-        }
+
+        if (controlMode == ControlMode.PRESET)
+            veloController.setTargetVelocity(VELOCITIES[targetSetting]);
+        else
+            veloController.setTargetVelocity(targetVelocity);
+
+        veloController.setTargetAcceleration((targetVelocity - lastTargetVelocity) / veloTimer.seconds());
+        veloTimer.reset();
+        lastTargetVelocity = targetVelocity;
+
+        double power = veloController.update(launcherOne.getCurrentPosition(),launcherOne.getVelocity());
+        launcherOne.setPower(power);
+        launcherTwo.setPower(power);
     }
 
     /**
@@ -233,12 +267,14 @@ public abstract class Shooter extends Subsystem {
         tm.addLine("=== SHOOTER ===");
         tm.addData("L1 Velocity", launcherOne.getVelocity());
         tm.addData("L2 Velocity", launcherTwo.getVelocity());
-        tm.addData("Target", getTarget());
+        if (controlMode == ControlMode.PRESET)
+            tm.addData("Target", VELOCITIES[targetSetting]);
+        else
+            tm.addData("Target", targetVelocity);
         tm.addData("VCM", getControlMode());
 
         if (expanded) {
             tm.addLine("\nVelocities");
-            tm.addData("Low Goal", LOW_GOAL_VELOCITY);
             tm.addData("Mid Goal", MID_GOAL_VELOCITY);
             tm.addData("Power Shot", POWER_SHOT_VELOCITY);
             tm.addData("High Goal", HIGH_GOAL_VELOCITY);
