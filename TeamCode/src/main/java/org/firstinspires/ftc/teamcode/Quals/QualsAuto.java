@@ -26,38 +26,75 @@ public class QualsAuto extends LinearOpMode {
         Vision.scanStack(false, false);
 
         // Move to launch line
-        Drivetrain.move(90,0.8,61);
+        Drivetrain.move(90,0.8,62);
         sleep(250);
-        Drivetrain.move(0,0.8,20);
+        Drivetrain.move(0,0.35,20);
         sleep(250);
-        Shooter.runLauncher();
+
+        // Shoot Rings
         sleep(4000);
-        Shooter.shootAll();
-        Shooter.setTarget(0);
+
+        Shooter.stopLauncher();
+
         Intake.drop();
 
         if (Vision.ringsFound == 0) { // Target Zone A
-            Shooter.runLauncher();
             Drivetrain.move(180,0.5,25);
-            sleep(500);
-            Drivetrain.move(90,0.8,10);
-            sleep(500);
-            Drivetrain.rotate(0.5, -89);
-            sleep(500);
+            sleep(250);
+            Drivetrain.move(90,0.8,13.5);
+            sleep(250);
+            Drivetrain.rotate(0.5, -90.2);
+            sleep(250);
             WobbleMech.place();
 
-            // Face left
-            Drivetrain.rotate(0.5, 179);
+            // Face 2nd Wobble Goal
+            Drivetrain.rotate(0.5, -96);
+            sleep(250);
+            Drivetrain.move(90,0.8, 48.5);
+            WobbleMech.aim();
+            sleep(1000);
+
+            WobbleMech.collect();
+            sleep(250);
+
+            Drivetrain.rotate(0.5, 164);
+            sleep(250);
+            Drivetrain.move(90, 0.8, 20);
+            sleep(250);
+
+            WobbleMech.place();
+            sleep(250);
+
+            Drivetrain.rotate(0.5,108);
+            sleep(250);
+            Drivetrain.move(0,0.5,24);
+            sleep(250);
 
         } else if (Vision.ringsFound == 1) { // Target Zone B
-            Shooter.runLauncher();
+
             Drivetrain.move(180,0.5,35);
-            sleep(500);
-            Drivetrain.move(90,0.8,15);
+            sleep(250);
+            Drivetrain.move(90,0.8,6);
             WobbleMech.place();
 
             // Face left
-            Drivetrain.rotate(0.5, 89);
+            Drivetrain.rotate(0.5, -185);
+            sleep(250);
+
+            Drivetrain.move(90,0.8, 40);
+            WobbleMech.aim();
+            sleep(1000);
+
+            WobbleMech.collect();
+            sleep(250);
+
+            Drivetrain.rotate(0.5, 185);
+            sleep(250);
+            Drivetrain.move(90,0.8, 42);
+            sleep(250);
+
+            WobbleMech.place();
+            sleep(250);
 
 
         } else { // Target Zone C

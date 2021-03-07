@@ -23,55 +23,11 @@ public class TestAuto extends LinearOpMode {
 
         waitForStart();
 
-        Vision.scanStack(false, false);
-
-        // Move to launch line
-        Drivetrain.move(90,0.8,58.5);
-        sleep(250);
-        Drivetrain.move(0,0.8,15);
-        sleep(250);
-        Shooter.runLauncher();
         sleep(4000);
-        Shooter.shootAll();
-        Shooter.setTarget(0);
-
-        if (Vision.ringsFound == 0) { // Target Zone A
-            Shooter.runLauncher();
-            Drivetrain.move(180,0.8,25);
-            sleep(500);
-            Drivetrain.move(90,0.8,12);
-            sleep(500);
-            Drivetrain.rotate(0.5, -90);
-            sleep(500);
-            WobbleMech.place();
-
-            // Face left
-            Drivetrain.rotate(0.5, 180);
-
-        } else if (Vision.ringsFound == 1) { // Target Zone B
-            Shooter.runLauncher();
-            Drivetrain.move(180,0.8,35);
-            sleep(500);
-            Drivetrain.move(90,0.8,15);
-            WobbleMech.place();
-
-            // Face left
-            Drivetrain.rotate(0.5, 90);
-
-
-        } else { // Target Zone C
-            Shooter.runLauncher();
-            Drivetrain.move(90,0.8,37);
-            sleep(500);
-            Drivetrain.move(180,0.8,8);
-            sleep(500);
-            WobbleMech.place();
-            Drivetrain.move(270,0.8,32);
-            sleep(500);
-
-            // Face left
-            Drivetrain.rotate(0.5, 90);
-        }
+        telemetry.addData("Velocity", Shooter.getVelocity());
+        telemetry.update();
+        sleep(2000);
+        Shooter.stopLauncher();
 
         sleep(30000);
     }
