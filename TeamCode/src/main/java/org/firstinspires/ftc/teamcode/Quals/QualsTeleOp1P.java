@@ -21,9 +21,9 @@ import org.firstinspires.ftc.teamcode.Util.Subsystem;
  * X:           Decrease Target Velocity || Decrease Target Velocity
  * Y:           Increase Target Velocity || Increase Target Velocity
  *
- * Up:          Advance WobbleMech || Arm Up
+ * Up:          Aim/Collect Wobble Goal || Arm Up
  * Down:        Reset WobbleMech || Arm Down
- * Left:        -
+ * Left:        Drop Wobble Goal
  * Right:       Place Wobble Goal || Claw Open/Close
  *
  * L. Bumper:   Launch Multiple
@@ -41,7 +41,6 @@ import org.firstinspires.ftc.teamcode.Util.Subsystem;
  * Back + [Input]:
  *
  * A:           Switch Drivetrain Control Mode
- * B:           Switch Shooter Control Mode
  * X:           Switch WobbleMech Control Mode
  */
 
@@ -83,6 +82,7 @@ public class QualsTeleOp1P extends LinearOpMode {
                     Constants.down = 0;
                     Constants.up = 0;
                     Constants.right = 0;
+                    Constants.left = 0;
                     Constants.x--;
                 }
 
@@ -134,7 +134,7 @@ public class QualsTeleOp1P extends LinearOpMode {
 
             if (WobbleMech.getControlMode() == WobbleMech.ControlMode.ASSISTED) {
 
-                // Procedural Auto-Complete Functions
+                // Aim and Collect Wobble Goal
                 if (gamepad1.dpad_up && Constants.up == 0) {
                     Constants.up++;
                 } else if (!gamepad1.dpad_up && Constants.up == 1) { // Aim wobble mech
@@ -144,13 +144,11 @@ public class QualsTeleOp1P extends LinearOpMode {
                     Constants.up++;
                 } else if (!gamepad1.dpad_up && Constants.up == 3) { // Collect wobble goal
                     WobbleMech.collect();
-                    Constants.up++;
-                } else if (gamepad1.dpad_up && Constants.up == 4) {
-                    Constants.up++;
-                } else if (gamepad1.dpad_up && Constants.up == 5) { // Drop wobble goal
-                    WobbleMech.drop();
                     Constants.up = 0;
-                } else if (gamepad1.dpad_down && Constants.down == 0) {
+                }
+
+                // Reset Wobble Goal
+                if (gamepad1.dpad_down && Constants.down == 0) {
                     Constants.down++;
                 } else if (!gamepad1.dpad_down && Constants.down == 1) { // Reset wobble mech
                     WobbleMech.reset();
@@ -163,6 +161,14 @@ public class QualsTeleOp1P extends LinearOpMode {
                     Constants.right++;
                 else if (!gamepad1.dpad_right && Constants.right == 1) {
                     WobbleMech.place();
+                    Constants.right--;
+                }
+
+                // Drop Wobble Goal
+                if (gamepad1.dpad_left && Constants.left == 0)
+                    Constants.left++;
+                else if (!gamepad1.dpad_left && Constants.left == 1) {
+                    WobbleMech.drop();
                     Constants.right--;
                 }
 

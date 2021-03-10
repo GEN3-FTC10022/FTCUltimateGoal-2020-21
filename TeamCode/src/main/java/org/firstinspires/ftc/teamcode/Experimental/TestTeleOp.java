@@ -19,16 +19,16 @@ import org.firstinspires.ftc.teamcode.Util.Subsystem;
  * Gamepad 1 -
  * A:           Intake In/Off
  * B:           Intake Out/Off
- * X:           -
- * Y:           -
+ * X:           Decrease Target Velocity || Decrease Target Velocity
+ * Y:           Increase Target Velocity || Increase Target Velocity
  *
- * Up:          -
- * Down:        -
- * Left:        -
- * Right:       -
+ * Up:          Aim/Collect Wobble Goal || Arm Up
+ * Down:        Reset WobbleMech || Arm Down
+ * Left:        Drop Wobble Goal
+ * Right:       Place Wobble Goal || Claw Open/Close
  *
- * L. Bumper:   Launch Multiple
- * R. Bumper:   Launch Single
+ * L. Bumper:   -
+ * R. Bumper:   Launch All
  *
  * L. Trigger:  -
  * R. Trigger:  Drive Slow Modifier
@@ -37,30 +37,12 @@ import org.firstinspires.ftc.teamcode.Util.Subsystem;
  * R. Stick:    Drive Rotation
  *
  * Start:       -
- * Back:        Switch Drivetrain Control Mode
+ * Back:        Modifier
  *
- * Gamepad 2 -
- * A:           -
- * B:           Switch Shooter Control Mode
+ * Back + [Input]:
+ *
+ * A:           Switch Drivetrain Control Mode
  * X:           Switch WobbleMech Control Mode
- * Y:           -
- *
- * Up:          Advance WobbleMech || Arm Up
- * Down:        Reset WobbleMech || Arm Down
- * Left:        -
- * Right:       Place Wobble Goal || Claw Open/Close
- *
- * L. Bumper:   Decrease Target Setting || Decrease Target Velocity
- * R. Bumper:   Increase Target Setting || Increase Target Velocity
- *
- * L. Trigger:  -
- * R. Trigger:  -
- *
- * L. Stick:    -
- * R. Stick:    -
- *
- * Start:       -
- * Back:        -
  */
 
 @TeleOp(name = "Test: TeleOp")
@@ -80,108 +62,126 @@ public class TestTeleOp extends LinearOpMode {
 
         while (opModeIsActive()) {
 
+            // CONTROL MODE ========================================================================
+
+            if (gamepad1.back) {
+
+                // WobbleMech
+                if (gamepad1.x && Constants.x == 0)
+                    Constants.x++;
+                else if (!gamepad1.x && Constants.x == 1) {
+                    if (WobbleMech.getControlMode() == WobbleMech.ControlMode.ASSISTED) {
+                        WobbleMech.setControlMode(WobbleMech.ControlMode.MANUAL);
+                        WobbleMech.setRunMode(DcMotor.RunMode.RUN_USING_ENCODER);
+                    }
+                    else if (WobbleMech.getControlMode() == WobbleMech.ControlMode.MANUAL) {
+                        WobbleMech.setControlMode(WobbleMech.ControlMode.ASSISTED);
+                        WobbleMech.reset();
+                    }
+                    Constants.down = 0;
+                    Constants.up = 0;
+                    Constants.right = 0;
+                    Constants.left = 0;
+                    Constants.x--;
+                }
+
+                // Drivetrain
+                if (gamepad1.a && Constants.a == 0)
+                    Constants.a++;
+                else if (!gamepad1.a && Constants.a == 1) {
+                    if (Drivetrain.getControlMode() == Drivetrain.ControlMode.FIELD_CENTRIC) {
+                        Drivetrain.setControlMode(Drivetrain.ControlMode.ROBOT_CENTRIC);
+                    } else {
+                        Drivetrain.setControlMode(Drivetrain.ControlMode.FIELD_CENTRIC);
+                    }
+                    Constants.a--;
+                }
+            }
+
             // SHOOTER =============================================================================
 
-            Shooter.refreshLauncher();
-
             // Velocity
-            if (gamepad2.right_bumper && Constants.rBumper2 == 0)
-                Constants.rBumper2++;
-            else if (!gamepad2.right_bumper && Constants.rBumper2 == 1) {
-                Shooter.increaseTarget();
-                Constants.rBumper2--;
-            } else if (gamepad2.left_bumper && Constants.lBumper2 == 0)
-                Constants.lBumper2++;
-            else if (!gamepad2.left_bumper && Constants.lBumper2 == 1) {
+            if (gamepad1.x && Constants.x == 0)
+                Constants.x++;
+            else if (!gamepad1.x && Constants.x == 1) {
                 Shooter.decreaseTarget();
-                Constants.lBumper2--;
+                Constants.x--;
+            } else if (gamepad1.y && Constants.y == 0)
+                Constants.y++;
+            else if (!gamepad1.y && Constants.y == 1) {
+                Shooter.increaseTarget();
+                Intake.off();
+                Constants.y--;
             }
 
             // Launching
             if (gamepad1.right_bumper && Constants.rBumper == 0)
                 Constants.rBumper++;
             else if (!gamepad1.right_bumper && Constants.rBumper == 1) {
-                Shooter.shootSingle();
+                Shooter.launchAll(2);
                 Constants.rBumper--;
-            } else if (gamepad1.left_bumper && Constants.lBumper == 0)
-                Constants.lBumper++;
-            else if (!gamepad1.left_bumper && Constants.lBumper == 1) {
-                Shooter.shootAll();
-                Constants.lBumper--;
             }
 
             // WOBBLE MECH =========================================================================
 
-            // Control Mode
-            if (gamepad2.x && Constants.x2 == 0)
-                Constants.x2++;
-            else if (!gamepad2.x && Constants.x2 == 1) {
-                if (WobbleMech.getControlMode() == WobbleMech.ControlMode.ASSISTED) {
-                    WobbleMech.setControlMode(WobbleMech.ControlMode.MANUAL);
-                    WobbleMech.setRunMode(DcMotor.RunMode.RUN_USING_ENCODER);
-                }
-                else if (WobbleMech.getControlMode() == WobbleMech.ControlMode.MANUAL) {
-                    WobbleMech.setControlMode(WobbleMech.ControlMode.ASSISTED);
-                    WobbleMech.reset();
-                }
-                Constants.down2 = 0;
-                Constants.up2 = 0;
-                Constants.right2 = 0;
-                Constants.x2--;
-            }
-
             if (WobbleMech.getControlMode() == WobbleMech.ControlMode.ASSISTED) {
 
-                // Procedural Auto-Complete Functions
-                if (gamepad2.dpad_up && Constants.up2 == 0) {
-                    Constants.up2++;
-                } else if (!gamepad2.dpad_up && Constants.up2 == 1) { // Aim wobble mech
+                // Aim and Collect Wobble Goal
+                if (gamepad1.dpad_up && Constants.up == 0) {
+                    Constants.up++;
+                } else if (!gamepad1.dpad_up && Constants.up == 1) { // Aim wobble mech
                     WobbleMech.aim();
-                    Constants.up2++;
-                } else if (gamepad2.dpad_up && Constants.up2 == 2) {
-                    Constants.up2++;
-                } else if (!gamepad2.dpad_up && Constants.up2 == 3) { // Collect wobble goal
+                    Constants.up++;
+                } else if (gamepad1.dpad_up && Constants.up == 2) {
+                    Constants.up++;
+                } else if (!gamepad1.dpad_up && Constants.up == 3) { // Collect wobble goal
                     WobbleMech.collect();
-                    Constants.up2++;
-                } else if (gamepad2.dpad_up && Constants.up2 == 4) {
-                    Constants.up2++;
-                } else if (gamepad2.dpad_up && Constants.up2 == 5) { // Drop wobble goal
-                    WobbleMech.drop();
-                    Constants.up2 = 0;
-                } else if (gamepad2.dpad_down && Constants.down2 == 0) {
-                    Constants.down2++;
-                } else if (!gamepad2.dpad_down && Constants.down2 == 1) { // Reset wobble mech
+                    Constants.up = 0;
+                }
+
+                // Reset Wobble Goal
+                if (gamepad1.dpad_down && Constants.down == 0) {
+                    Constants.down++;
+                } else if (!gamepad1.dpad_down && Constants.down == 1) { // Reset wobble mech
                     WobbleMech.reset();
-                    Constants.up2 = 0;
-                    Constants.down2 = 0;
+                    Constants.up = 0;
+                    Constants.down = 0;
                 }
 
                 // Place Wobble Goal
-                if (gamepad2.dpad_right && Constants.right2 == 0)
-                    Constants.right2++;
-                else if (!gamepad2.dpad_right && Constants.right2 == 1) {
+                if (gamepad1.dpad_right && Constants.right == 0)
+                    Constants.right++;
+                else if (!gamepad1.dpad_right && Constants.right == 1) {
                     WobbleMech.place();
-                    Constants.right2--;
+                    Constants.right--;
+                }
+
+                // Drop Wobble Goal
+                if (gamepad1.dpad_left && Constants.left == 0)
+                    Constants.left++;
+                else if (!gamepad1.dpad_left && Constants.left == 1) {
+                    WobbleMech.drop();
+                    Constants.right--;
                 }
 
             } else if (WobbleMech.getControlMode() == WobbleMech.ControlMode.MANUAL) {
 
-                if (gamepad2.dpad_up)
+                if (gamepad1.dpad_up)
                     WobbleMech.armUp();
-                else if (gamepad2.dpad_down)
+                else if (gamepad1.dpad_down)
                     WobbleMech.armDown();
                 else
                     WobbleMech.armStop();
 
                 // Toggle Claw
-                if (gamepad2.dpad_right && Constants.right2 == 0)
-                    Constants.right2++;
-                else if (!gamepad2.dpad_right && Constants.right2 == 1) {
+                if (gamepad1.dpad_right && Constants.right == 0)
+                    Constants.right++;
+                else if (!gamepad1.dpad_right && Constants.right == 1) {
                     if (WobbleMech.getClawPosition() == WobbleMech.ClawPosition.CLOSED)
                         WobbleMech.clawOpen();
                     else
                         WobbleMech.clawClose();
-                    Constants.right2--;
+                    Constants.right--;
                 }
             }
 
@@ -193,8 +193,10 @@ public class TestTeleOp extends LinearOpMode {
             else if (!gamepad1.a && Constants.a == 1 && !gamepad1.start) {
                 if (Intake.getDirection() == Intake.Direction.IN)
                     Intake.off();
-                else
+                else {
                     Intake.in();
+                    Shooter.setTarget(0); // Turn off shooter when intake is running
+                }
                 Constants.a--;
             } else if (gamepad1.b && Constants.b == 0 && !gamepad1.start)
                 Constants.b++;
@@ -255,18 +257,6 @@ public class TestTeleOp extends LinearOpMode {
             brpower *= kSlow;
 
             Drivetrain.setPower(flpower, frpower, blpower, brpower);
-
-            // Switch Modes
-            if (gamepad1.back && Constants.back == 0)
-                Constants.back++;
-            else if (!gamepad2.back && Constants.back == 1) {
-                if (Drivetrain.getControlMode() == Drivetrain.ControlMode.FIELD_CENTRIC) {
-                    Drivetrain.setControlMode(Drivetrain.ControlMode.ROBOT_CENTRIC);
-                } else {
-                    Drivetrain.setControlMode(Drivetrain.ControlMode.FIELD_CENTRIC);
-                }
-                Constants.back--;
-            }
 
             // TELEMETRY ===========================================================================
 
