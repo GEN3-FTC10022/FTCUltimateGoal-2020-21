@@ -16,7 +16,7 @@ import org.firstinspires.ftc.teamcode.Util.Subsystem;
  * Back:        Switch Shooter Control Mode
  */
 
-@TeleOp(name = "Subsystems: Shooter Test")
+@TeleOp (name = "Subsystems: Shooter Test")
 public class TestShooter extends LinearOpMode {
 
     private boolean isAuto;
@@ -24,7 +24,7 @@ public class TestShooter extends LinearOpMode {
     @Override
     public void runOpMode() {
 
-        initialize(false);
+        initialize(true);
 
         Constants.reset();
 
@@ -32,8 +32,11 @@ public class TestShooter extends LinearOpMode {
 
         if (isAuto)
             doAuto();
-        else
+        else {
+            Shooter.setTarget(0);
+            Shooter.resetTimer();
             doTeleOp();
+        }
     }
 
     private void doTeleOp(){
@@ -42,29 +45,18 @@ public class TestShooter extends LinearOpMode {
             Shooter.appendTelemetry(true);
             telemetry.update();
 
-            Shooter.runLauncher();
-
-            // Control Mode
-            if (gamepad1.back && Constants.back == 0)
-                Constants.back++;
-            else if (!gamepad1.back && Constants.back == 1) {
-                if (Shooter.getControlMode() == Shooter.ControlMode.PRESET)
-                    Shooter.setControlMode(Shooter.ControlMode.MANUAL);
-                else if (Shooter.getControlMode() == Shooter.ControlMode.MANUAL)
-                    Shooter.setControlMode(Shooter.ControlMode.PRESET);
-                Constants.back--;
-            }
+            Shooter.refreshLauncher();
 
             // Velocity
             if (gamepad1.dpad_up && Constants.up == 0)
                 Constants.up++;
             else if (!gamepad1.dpad_up && Constants.up == 1) {
-                Shooter.increaseVelocity();
+                Shooter.increaseTarget();
                 Constants.up--;
             } else if (gamepad1.dpad_down && Constants.down == 0)
                 Constants.down++;
             else if (!gamepad1.dpad_down && Constants.down == 1) {
-                Shooter.decreaseVelocity();
+                Shooter.decreaseTarget();
                 Constants.down--;
             }
 
@@ -85,11 +77,11 @@ public class TestShooter extends LinearOpMode {
     }
 
     public void doAuto() {
-        Shooter.setTarget(4);
-        Shooter.runLauncher();
-        sleep(2000);
-        Shooter.shootAll();
-        Shooter.setTarget(0);
+
+        Shooter.launchAll(2);
+        telemetry.addLine("Finished");
+        telemetry.update();
+
         sleep(30000);
     }
 

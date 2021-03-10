@@ -82,29 +82,18 @@ public class TestTeleOp extends LinearOpMode {
 
             // SHOOTER =============================================================================
 
-            Shooter.runLauncher();
-
-            // Control Mode
-            if (gamepad2.b && Constants.b2 == 0 && !gamepad2.start)
-                Constants.b2++;
-            else if (!gamepad2.b && Constants.b2 == 1) {
-                if (Shooter.getControlMode() == Shooter.ControlMode.PRESET)
-                    Shooter.setControlMode(Shooter.ControlMode.MANUAL);
-                else if (Shooter.getControlMode() == Shooter.ControlMode.MANUAL)
-                    Shooter.setControlMode(Shooter.ControlMode.PRESET);
-                Constants.b2--;
-            }
+            Shooter.refreshLauncher();
 
             // Velocity
             if (gamepad2.right_bumper && Constants.rBumper2 == 0)
                 Constants.rBumper2++;
             else if (!gamepad2.right_bumper && Constants.rBumper2 == 1) {
-                Shooter.increaseVelocity();
+                Shooter.increaseTarget();
                 Constants.rBumper2--;
             } else if (gamepad2.left_bumper && Constants.lBumper2 == 0)
                 Constants.lBumper2++;
             else if (!gamepad2.left_bumper && Constants.lBumper2 == 1) {
-                Shooter.decreaseVelocity();
+                Shooter.decreaseTarget();
                 Constants.lBumper2--;
             }
 

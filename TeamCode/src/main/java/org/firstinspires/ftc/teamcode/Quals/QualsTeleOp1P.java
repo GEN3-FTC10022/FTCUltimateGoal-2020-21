@@ -60,24 +60,13 @@ public class QualsTeleOp1P extends LinearOpMode {
 
         telemetry.setAutoClear(true);
 
-        Shooter.startLauncher();
+        Shooter.resetTimer();
 
         while (opModeIsActive()) {
 
             // CONTROL MODE ========================================================================
 
             if (gamepad1.back) {
-
-                // Shooter
-                if (gamepad1.b && Constants.b == 0)
-                    Constants.b++;
-                else if (!gamepad1.b && Constants.b == 1) {
-                    if (Shooter.getControlMode() == Shooter.ControlMode.PRESET)
-                        Shooter.setControlMode(Shooter.ControlMode.MANUAL);
-                    else if (Shooter.getControlMode() == Shooter.ControlMode.MANUAL)
-                        Shooter.setControlMode(Shooter.ControlMode.PRESET);
-                    Constants.b--;
-                }
 
                 // WobbleMech
                 if (gamepad1.x && Constants.x == 0)
@@ -112,18 +101,18 @@ public class QualsTeleOp1P extends LinearOpMode {
 
             // SHOOTER =============================================================================
 
-            Shooter.runLauncher();
+            Shooter.refreshLauncher();
 
             // Velocity
             if (gamepad1.x && Constants.x == 0)
                 Constants.x++;
             else if (!gamepad1.x && Constants.x == 1) {
-                Shooter.decreaseVelocity();
+                Shooter.decreaseTarget();
                 Constants.x--;
             } else if (gamepad1.y && Constants.y == 0)
                 Constants.y++;
             else if (!gamepad1.y && Constants.y == 1) {
-                Shooter.increaseVelocity();
+                Shooter.increaseTarget();
                 Intake.off();
                 Constants.y--;
             }

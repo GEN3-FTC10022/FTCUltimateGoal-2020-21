@@ -46,6 +46,9 @@ public abstract class Drivetrain extends Subsystem {
     private static final double TICKS_PER_DEGREE = 3585.0 /360.0; // temp
     private static final double TRACK_WIDTH = 12.2047; //temp
     public static double STRAFE_CORRECTION = 5.0 /4.25;
+    private static final double normalPower = 0.8;
+    private static final double strafePower = 0.5;
+    private static final double rotatePower = 0.5;
 
     /**
      * Initializes the drive train by reversing the frontRight and backRight motors, setting the
@@ -304,20 +307,25 @@ public abstract class Drivetrain extends Subsystem {
     }
 
     /**
-     * Moves in the desired direction at the desired power for the desired distance in inches. The
+     * Moves in the desired direction at the default power for the desired distance in inches. The
      * direction is determined by the angle in degrees of the 8-direction compass directions given
      * by the unit circle. (eg. 45 is northeast).
      * @param direction Desired direction
-     * @param power Percentage power set to the motor as a decimal (0-1)
      * @param inches Desired distance
+     * @see #normalPower
+     * @see #strafePower
      */
-    public static void move(int direction, double power, double inches) {
+    public static void move(int direction, double inches) {
+        double power;
         double target = inches * TICKS_PER_INCH;
+        if (direction == 0 || direction == 180) {
+            target *= STRAFE_CORRECTION;
+            power = strafePower;
+        } else power = normalPower;
         setRunMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
         switch(direction) {
             case 0:
-                target *= STRAFE_CORRECTION;
                 setTargetPosition(target,
                         1, -1,
                         -1, 1);
@@ -338,7 +346,6 @@ public abstract class Drivetrain extends Subsystem {
                         1, 0);
                 break;
             case 180:
-                target *= STRAFE_CORRECTION;
                 setTargetPosition(target,
                         -1, 1,
                         1, -1);
@@ -360,9 +367,100 @@ public abstract class Drivetrain extends Subsystem {
                 break;
         }
 
+        setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT); // Float motors during movement
         setRunMode(DcMotor.RunMode.RUN_TO_POSITION);
         while (isBusy())
             setPower(power);
+        setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE); // Brake motors after movement
+        setPower(0);
+        setRunMode(DcMotor.RunMode.RUN_USING_ENCODER);
+    }
+
+    /**
+     * Moves in the desired direction at the desired power for the desired distance in inches. The
+     * direction is determined by the angle in degrees of the 8-direction compass directions given
+     * by the unit circle. (eg. 45 is northeast).
+     * @param direction Desired direction
+     * @param power Desired power
+     * @param inches Desired distance
+     */
+    public static void move(int direction, double power, double inches) {
+        double target = inches * TICKS_PER_INCH;
+        if (direction == 0 || direction == 180) target *= STRAFE_CORRECTION;
+        setRunMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        switch(direction) {
+            case 0:
+                setTargetPosition(target,
+                        1, -1,
+                        -1, 1);
+                break;
+            case 45:
+                setTargetPosition(target,
+                        1, 0,
+                        0, 1);
+                break;
+            case 90:
+                setTargetPosition(target,
+                        1, 1,
+                        1, 1);
+                break;
+            case 135:
+                setTargetPosition(target,
+                        0, 1,
+                        1, 0);
+                break;
+            case 180:
+                setTargetPosition(target,
+                        -1, 1,
+                        1, -1);
+                break;
+            case 225:
+                setTargetPosition(target,
+                        -1, 0,
+                        0, -1);
+                break;
+            case 270:
+                setTargetPosition(target,
+                        -1, -1,
+                        -1, -1);
+                break;
+            case 315:
+                setTargetPosition(target,
+                        0, -1,
+                        -1, 0);
+                break;
+        }
+
+        setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT); // Float motors during movement
+        setRunMode(DcMotor.RunMode.RUN_TO_POSITION);
+        while (isBusy())
+            setPower(power);
+        setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE); // Brake motors after movement
+        setPower(0);
+        setRunMode(DcMotor.RunMode.RUN_USING_ENCODER);
+    }
+
+    /**
+     * Rotates for the desired number of degrees at the default power. CW is negative, CCW is
+     * positive.
+     * @param deltaAngle Angle to turn.
+     * @see #rotatePower
+     */
+    public static void rotate(double deltaAngle) {
+        double target = deltaAngle * TICKS_PER_DEGREE;
+        setRunMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        setTargetPosition(target,
+                -1, 1,
+                -1, 1);
+
+        setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT); // Float motors during movement
+        setRunMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+        while (isBusy())
+            setPower(rotatePower);
+        setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE); // Brake motors after movement
         setPower(0);
         setRunMode(DcMotor.RunMode.RUN_USING_ENCODER);
     }
@@ -370,7 +468,7 @@ public abstract class Drivetrain extends Subsystem {
     /**
      * Rotates for the desired number of degrees at the specified power. CW is negative, CCW is
      * positive.
-     * @param power Percentage power set to the motor as a decimal (0-1)
+     * @param power Desired power
      * @param deltaAngle Angle to turn.
      */
     public static void rotate(double power, double deltaAngle) {
@@ -380,12 +478,30 @@ public abstract class Drivetrain extends Subsystem {
         setTargetPosition(target,
                 -1, 1,
                 -1, 1);
+
+        setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT); // Float motors during movement
         setRunMode(DcMotor.RunMode.RUN_TO_POSITION);
 
         while (isBusy())
             setPower(power);
+        setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE); // Brake motors after movement
         setPower(0);
         setRunMode(DcMotor.RunMode.RUN_USING_ENCODER);
+    }
+
+    /**
+     * Finds the angle difference between the target and current heading. Rotates by this angle in
+     * the opposite direction with {@link #rotate(double)} as the CW and CCW directions are flipped.
+     * @param targetHeading Desired heading as measured by the REV Hub IMU in euler angles
+     * [-180,180) or [-π,π) where 0 is north.
+     */
+    public static void rotateTo (double targetHeading) {
+        double currentHeading = getHeading(AngleUnit.DEGREES);
+        double deltaAngle = targetHeading - currentHeading;
+        if (Math.abs(deltaAngle) > 180) {
+            deltaAngle = 360 - Math.abs(deltaAngle);
+        }
+        rotate(-deltaAngle);
     }
 
     /**

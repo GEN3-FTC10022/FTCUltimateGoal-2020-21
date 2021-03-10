@@ -27,7 +27,7 @@ public class TestAuto extends LinearOpMode {
         telemetry.addData("Velocity", Shooter.getVelocity());
         telemetry.update();
         sleep(2000);
-        Shooter.stopLauncher();
+        // Shooter.stopLauncher();
 
         sleep(30000);
     }

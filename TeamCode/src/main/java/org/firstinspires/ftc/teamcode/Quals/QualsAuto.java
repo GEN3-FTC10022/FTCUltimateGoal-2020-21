@@ -26,89 +26,97 @@ public class QualsAuto extends LinearOpMode {
         Vision.scanStack(false, false);
 
         // Move to launch line
-        Drivetrain.move(90,0.8,62);
+        Drivetrain.move(90,62);
         sleep(250);
         Drivetrain.move(0,0.35,20);
         sleep(250);
 
-        // Shoot Rings
-        sleep(4000);
-
-        Shooter.stopLauncher();
+        // Launch rings to high goal
+        Shooter.launchAll(2);
+        sleep(250);
 
         Intake.drop();
 
         if (Vision.ringsFound == 0) { // Target Zone A
-            Drivetrain.move(180,0.5,25);
+
+            // Place 1st Wobble Goal
+            Drivetrain.move(180,25);
             sleep(250);
-            Drivetrain.move(90,0.8,13.5);
+            Drivetrain.move(90,13.5);
             sleep(250);
-            Drivetrain.rotate(0.5, -90.2);
+            Drivetrain.rotate(-90.2);
             sleep(250);
             WobbleMech.place();
-
-            // Face 2nd Wobble Goal
-            Drivetrain.rotate(0.5, -96);
             sleep(250);
-            Drivetrain.move(90,0.8, 48.5);
-            WobbleMech.aim();
-            sleep(1000);
 
+            // Collect 2nd Wobble Goal
+            Drivetrain.rotate(-96);
+            sleep(250);
+            Drivetrain.move(90,48.5);
+            WobbleMech.aim();
+            sleep(1000); // Wait till move is finished before collecting
             WobbleMech.collect();
             sleep(250);
 
-            Drivetrain.rotate(0.5, 164);
+            // Place 2nd Wobble Goal
+            Drivetrain.rotate(164);
             sleep(250);
-            Drivetrain.move(90, 0.8, 20);
+            Drivetrain.move(90,20);
             sleep(250);
-
             WobbleMech.place();
             sleep(250);
 
-            Drivetrain.rotate(0.5,108);
+            // Park at field-centric zero heading
+            Drivetrain.rotateTo(-90);
             sleep(250);
-            Drivetrain.move(0,0.5,24);
+            Drivetrain.move(0,24);
             sleep(250);
 
         } else if (Vision.ringsFound == 1) { // Target Zone B
 
-            Drivetrain.move(180,0.5,35);
+            // Place 1st Wobble Goal
+            Drivetrain.move(180,35);
             sleep(250);
-            Drivetrain.move(90,0.8,6);
+            Drivetrain.move(90,6);
+            sleep(250);
             WobbleMech.place();
-
-            // Face left
-            Drivetrain.rotate(0.5, -185);
             sleep(250);
 
-            Drivetrain.move(90,0.8, 40);
+            // Collect 2nd Wobble Goal
+            Drivetrain.rotate(-185);
+            sleep(250);
+            Drivetrain.move(90,40);
             WobbleMech.aim();
             sleep(1000);
-
             WobbleMech.collect();
             sleep(250);
 
+            // Place 2nd Wobble Goal
             Drivetrain.rotate(0.5, 185);
             sleep(250);
             Drivetrain.move(90,0.8, 42);
             sleep(250);
-
             WobbleMech.place();
             sleep(250);
 
+            // Park at field-centric zero heading
+            Drivetrain.rotateTo(-90);
+
 
         } else { // Target Zone C
-            Shooter.runLauncher();
-            Drivetrain.move(90,0.8,37);
-            sleep(500);
-            Drivetrain.move(180,0.5,11);
-            sleep(500);
-            WobbleMech.place();
-            Drivetrain.move(270,0.8,27);
-            sleep(500);
 
-            // Face left
-            Drivetrain.rotate(0.5, 89);
+            // Place 1st Wobble Goal
+            Drivetrain.move(90,37);
+            sleep(250);
+            Drivetrain.move(180,11);
+            sleep(250);
+            WobbleMech.place();
+            sleep(250);
+
+            // Park at field-centric zero heading
+            Drivetrain.move(270,0.8,27);
+            sleep(250);
+            Drivetrain.rotateTo(-90);
         }
 
         sleep(30000);
