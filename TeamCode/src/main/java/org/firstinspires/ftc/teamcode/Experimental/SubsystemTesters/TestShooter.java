@@ -24,7 +24,7 @@ public class TestShooter extends LinearOpMode {
     @Override
     public void runOpMode() {
 
-        initialize(true);
+        initialize(false);
 
         Constants.reset();
 

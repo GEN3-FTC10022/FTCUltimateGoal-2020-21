@@ -32,8 +32,9 @@ public abstract class Shooter extends Subsystem {
     public static final int POWER_SHOT_VELOCITY = 1100; // tested
     public static final int HIGH_GOAL_VELOCITY = 1580; // tested
     public static final int[] VELOCITIES = {ZERO_VELOCITY,POWER_SHOT_VELOCITY,HIGH_GOAL_VELOCITY};
-    private static int target, targetVelocity;
+    private static int target, targetVelocity, velocityTolerance;
     private static ElapsedTime shotTimer;
+    private static ElapsedTime rampUpTimer;
 
     // PID
     private static PIDCoefficients MOTOR_VELO_PID;
@@ -63,6 +64,8 @@ public abstract class Shooter extends Subsystem {
         launcherOne.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         launcherTwo.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         shotTimer = new ElapsedTime(ElapsedTime.Resolution.MILLISECONDS);
+        rampUpTimer = new ElapsedTime(ElapsedTime.Resolution.MILLISECONDS);
+        velocityTolerance = 20;
 
         // Trigger
         trigger.scaleRange(TRIGGER_MIN, TRIGGER_MAX);
@@ -207,6 +210,15 @@ public abstract class Shooter extends Subsystem {
         }
     }
 
+    public static void setVelocityTolerance(int tolerance) {
+        velocityTolerance = tolerance;
+    }
+
+    public static int getVelocityTolerance() {
+        return velocityTolerance;
+
+    }
+
     /**
      * Activates the launcher and pushes 3 rings; stops after the rings have been pushed.
      * @param target Desired target setting to run the launcher at
@@ -219,20 +231,20 @@ public abstract class Shooter extends Subsystem {
         setTarget(target);
         shotTimer.reset();
         veloTimer.reset();
+        rampUpTimer.reset();
         do {
             refreshLauncher();
             currentVelocity = getVelocity("launcherOne");
             double error = Math.abs(targetVelocity - currentVelocity);
-            tm.addData("L1", currentVelocity);
-            tm.addData("Error", error);
             tm.update();
-            if (error <= 20 && shotTimer.time() > 200) {
+            if (error <= velocityTolerance && shotTimer.time() > 400 && rampUpTimer.time() > 1500) {
                 shootSingle();
                 numShots++;
                 shotTimer.reset();
             }
         } while (numShots < 3);
 
+        sleep(1000);
         Shooter.stop();
     }
 

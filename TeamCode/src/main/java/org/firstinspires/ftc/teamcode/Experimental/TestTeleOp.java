@@ -161,7 +161,7 @@ public class TestTeleOp extends LinearOpMode {
                     Constants.left++;
                 else if (!gamepad1.dpad_left && Constants.left == 1) {
                     WobbleMech.drop();
-                    Constants.right--;
+                    Constants.left--;
                 }
 
             } else if (WobbleMech.getControlMode() == WobbleMech.ControlMode.MANUAL) {
