@@ -225,26 +225,27 @@ public abstract class Shooter extends Subsystem {
      * @see #VELOCITIES
      */
     public static void launchAll(int target) {
-        tm.setAutoClear(true);
         double currentVelocity;
-        int numShots = 0;
+        int numShots = 0, check = 0;
         setTarget(target);
-        shotTimer.reset();
         veloTimer.reset();
         rampUpTimer.reset();
+        shotTimer.reset();
         do {
             refreshLauncher();
             currentVelocity = getVelocity("launcherOne");
             double error = Math.abs(targetVelocity - currentVelocity);
-            tm.update();
-            if (error <= velocityTolerance && shotTimer.time() > 400 && rampUpTimer.time() > 1500) {
+
+            if (error <= velocityTolerance && check < 3)
+                check++;
+            else if (shotTimer.time() > 100 && rampUpTimer.time() > 350) {
                 shootSingle();
                 numShots++;
                 shotTimer.reset();
             }
         } while (numShots < 3);
 
-        sleep(1000);
+        sleep(250);
         Shooter.stop();
     }
 

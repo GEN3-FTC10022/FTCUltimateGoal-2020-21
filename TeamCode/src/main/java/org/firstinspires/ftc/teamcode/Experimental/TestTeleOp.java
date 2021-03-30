@@ -257,10 +257,6 @@ public class TestTeleOp extends LinearOpMode {
             brpower *= kSlow;
 
             Drivetrain.setPower(flpower, frpower, blpower, brpower);
-
-            // TELEMETRY ===========================================================================
-
-            updateTelemetry();
         }
     }
 

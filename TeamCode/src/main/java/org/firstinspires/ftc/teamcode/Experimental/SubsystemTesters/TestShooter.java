@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.Experimental.SubsystemTesters;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
+import org.firstinspires.ftc.teamcode.Subsystems.Intake;
 import org.firstinspires.ftc.teamcode.Subsystems.Shooter;
 import org.firstinspires.ftc.teamcode.Util.Constants;
 import org.firstinspires.ftc.teamcode.Util.Subsystem;
@@ -45,32 +46,47 @@ public class TestShooter extends LinearOpMode {
             Shooter.appendTelemetry(true);
             telemetry.update();
 
-            Shooter.refreshLauncher();
-
             // Velocity
-            if (gamepad1.dpad_up && Constants.up == 0)
-                Constants.up++;
-            else if (!gamepad1.dpad_up && Constants.up == 1) {
-                Shooter.increaseTarget();
-                Constants.up--;
-            } else if (gamepad1.dpad_down && Constants.down == 0)
-                Constants.down++;
-            else if (!gamepad1.dpad_down && Constants.down == 1) {
+            if (gamepad1.x && Constants.x == 0)
+                Constants.x++;
+            else if (!gamepad1.x && Constants.x == 1) {
                 Shooter.decreaseTarget();
-                Constants.down--;
+                Constants.x--;
+            } else if (gamepad1.y && Constants.y == 0)
+                Constants.y++;
+            else if (!gamepad1.y && Constants.y == 1) {
+                Shooter.increaseTarget();
+                Constants.y--;
             }
 
             // Launching
             if (gamepad1.right_bumper && Constants.rBumper == 0)
                 Constants.rBumper++;
             else if (!gamepad1.right_bumper && Constants.rBumper == 1) {
-                Shooter.shootSingle();
+                Intake.off();
+                Shooter.launchAll(2);
                 Constants.rBumper--;
-            } else if (gamepad1.left_bumper && Constants.lBumper == 0)
-                Constants.lBumper++;
-            else if (!gamepad1.left_bumper && Constants.lBumper == 1) {
-                Shooter.shootAll();
-                Constants.lBumper--;
+            }
+
+            // Rollers
+            if (gamepad1.a && Constants.a == 0)
+                Constants.a++;
+            else if (!gamepad1.a && Constants.a == 1 && !gamepad1.start) {
+                if (Intake.getDirection() == Intake.Direction.IN)
+                    Intake.off();
+                else {
+                    Intake.in();
+                    Shooter.setTarget(0); // Turn off shooter when intake is running
+                }
+                Constants.a--;
+            } else if (gamepad1.b && Constants.b == 0 && !gamepad1.start)
+                Constants.b++;
+            else if (!gamepad1.b && Constants.b == 1) {
+                if (Intake.getDirection() == Intake.Direction.OUT)
+                    Intake.off();
+                else
+                    Intake.out();
+                Constants.b--;
             }
         }
 
@@ -98,6 +114,7 @@ public class TestShooter extends LinearOpMode {
         Subsystem.initialize(hardwareMap, telemetry);
 
         Shooter.initialize();
+        Intake.initialize();
 
         if (!isAuto) {
             telemetry.setAutoClear(true);
