@@ -22,6 +22,14 @@ public abstract class Constants {
     public static int a2 = 0, b2 = 0, x2 = 0, y2 = 0, lBumper2 = 0, rBumper2 = 0, up2 = 0, down2 = 0, left2 = 0,
             right2 = 0, lStick2 = 0, rStick2 = 0, start2 = 0, back2 = 0;
 
+    // Field Constants
+    public static Pose2d wobbleGoalPos = new Pose2d(48,24);
+    public static double fieldLength = 144, fieldWidth = 96; // Inches
+
+    // Robot Constants
+    public static double robotWidth = 16.875, robotLength = 17.75; // Inches
+    public static double robotXOffset = 24-robotLength; // temp
+
     public static void reset() {
         a = 0;
         b = 0;

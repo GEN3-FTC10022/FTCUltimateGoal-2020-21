@@ -119,10 +119,10 @@ public class QualsAuto extends LinearOpMode {
             sleep(250);
 
             // Collect 2nd Wobble Goal
-            Drivetrain.rotate(161);
+            Drivetrain.rotate(159);
             sleep(250);
             WobbleMech.aim();
-            Drivetrain.move(90,75);
+            Drivetrain.move(90,78);
             sleep(250);
             WobbleMech.collect();
             sleep(250);

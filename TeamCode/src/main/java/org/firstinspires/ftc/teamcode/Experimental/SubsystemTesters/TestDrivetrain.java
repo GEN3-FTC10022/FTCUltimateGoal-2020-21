@@ -25,7 +25,7 @@ public class TestDrivetrain extends LinearOpMode {
     @Override
     public void runOpMode() {
 
-        initialize(false);
+        initialize(true);
 
         waitForStart();
 
@@ -150,14 +150,14 @@ public class TestDrivetrain extends LinearOpMode {
             if (gamepad1.a && Constants.a == 0)
                 Constants.a++;
             else if (!gamepad1.a && Constants.a == 1) {
-                Drivetrain.rotateToPID(0.5, 0);
+                Drivetrain.rotatePID(0.5, 90);
                 Constants.a--;
             }
         }
     }
 
     public void doAuto() {
-        Drivetrain.rotate(0.5, 90);
+        Drivetrain.odoForward(10);
         sleep(30000);
     }
 }

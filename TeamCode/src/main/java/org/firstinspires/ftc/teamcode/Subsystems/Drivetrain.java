@@ -1,6 +1,5 @@
 package org.firstinspires.ftc.teamcode.Subsystems;
 
-import com.acmerobotics.roadrunner.control.PIDFController;
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
@@ -10,12 +9,13 @@ import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
-import org.firstinspires.ftc.teamcode.RoadRunnerStuff.drive.StandardTrackingWheelLocalizer;
+import org.firstinspires.ftc.teamcode.Util.Constants;
 import org.firstinspires.ftc.teamcode.Util.PIDController;
-import org.firstinspires.ftc.teamcode.Util.ShooterTuning.VelocityPIDFController;
+import org.firstinspires.ftc.teamcode.Util.Pose2d;
 import org.firstinspires.ftc.teamcode.Util.Subsystem;
 
 import static org.firstinspires.ftc.teamcode.Util.Constants.motorTicksPerRev;
+import static org.firstinspires.ftc.teamcode.Util.Constants.robotXOffset;
 
 public abstract class Drivetrain extends Subsystem {
 
@@ -39,21 +39,30 @@ public abstract class Drivetrain extends Subsystem {
     private static final double WHEEL_CIRCUMFERENCE_INCHES = WHEEL_DIAMETER_INCHES * Math.PI;
     private static final double TICKS_PER_REV = motorTicksPerRev[0];
     private static final double GEAR_REDUCTION = 1;
-    private static final double TICKS_PER_INCH = (((TICKS_PER_REV * GEAR_REDUCTION) / WHEEL_CIRCUMFERENCE_INCHES));
+    private static final double TICKS_PER_INCH = (TICKS_PER_REV * GEAR_REDUCTION) / WHEEL_CIRCUMFERENCE_INCHES;
     private static final double TICKS_PER_DEGREE = 3585.0 /360.0; // temp
-    private static final double TRACK_WIDTH = 12.2047; //temp
     public static double STRAFE_CORRECTION = 5.0 /4.25;
     private static final double normalPower = 0.8;
     private static final double strafePower = 0.5;
     private static final double rotatePower = 0.5;
 
+    // Odometer Constants
+    private static double ODO_TICKS_PER_REV = 8192;
+    private static double ODO_WHEEL_RADIUS = 0.6889764; // in
+    private static double ODO_GEAR_RATIO = 1; // output (wheel) speed / input (encoder) speed
+    private static double ODO_X_MULTIPLIER = 1.0072696; // Multiplier in the X direction
+    private static double ODO_Y_MULTIPLIER = 1.0123121; // Multiplier in the Y direction
+    private static double ODO_TICKS_PER_INCH = (ODO_TICKS_PER_REV * ODO_GEAR_RATIO) / (2*ODO_WHEEL_RADIUS*Math.PI);
+
     // PID
-    private static PIDController rotationController, headingController;
+    private static PIDController rotationController;
     private static Orientation lastAngles;
     private static double globalAngle;
 
     // Odometry
-    private static StandardTrackingWheelLocalizer localizer;
+    private static DcMotorEx leftEncoder, rightEncoder, lateralEncoder;
+    private static double x, y;
+    public static Pose2d pose2d;
 
     /**
      * Initializes the drive train by reversing the frontRight and backRight motors, setting the
@@ -88,10 +97,11 @@ public abstract class Drivetrain extends Subsystem {
 
         // PID
         rotationController = new PIDController(0,0,0);
-        headingController = new PIDController(0,0,0);
 
         // Odometry
-        localizer = new StandardTrackingWheelLocalizer(hm);
+        x = 0;
+        y = 0;
+        pose2d = new Pose2d(x + Constants.robotWidth/2 + Constants.robotXOffset, y + Constants.robotLength/2);
 
         tm.addLine("Drivetrain initialized");
         tm.update();
@@ -177,7 +187,7 @@ public abstract class Drivetrain extends Subsystem {
     }
 
     /**
-     * Sets each motor to its respective power (fl, fr, bl, br) on the interval [-0.1, 0.1].
+     * Sets each motor to its respective power (fl, fr, bl, br) on the interval [-1.0, 1.0].
      *
      * @param flpower the power to be assigned to the front left motor
      * @param frpower the power to be assigned to the front right motor
@@ -435,6 +445,9 @@ public abstract class Drivetrain extends Subsystem {
         setRunMode(DcMotor.RunMode.RUN_USING_ENCODER);
     }
 
+    /**
+     * Resets current cumulative angle rotation to zero
+     */
     private static void resetAngle() {
         lastAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
         globalAngle = 0;
@@ -449,7 +462,6 @@ public abstract class Drivetrain extends Subsystem {
         // We have to process the angle because the imu works in euler angles so the Z axis is
         // returned as 0 to +180 or 0 to -180 rolling back to -179 or +179 when rotation passes
         // 180 degrees. We detect this transition and track the total cumulative angle of rotation.
-
         Orientation angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
         double deltaAngle = angles.firstAngle - lastAngles.firstAngle;
 
@@ -463,6 +475,12 @@ public abstract class Drivetrain extends Subsystem {
         return globalAngle;
     }
 
+    /**
+     * Rotates for the desired number of degrees at the specified power. CW is negative, CCW is
+     * positive.
+     * @param power Desired power
+     * @param deltaAngle Angle to turn.
+     */
     public static void rotatePID (double power, int deltaAngle) {
 
         setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -483,7 +501,6 @@ public abstract class Drivetrain extends Subsystem {
 
         // On right turn
         if (deltaAngle < 0) {
-            // globalAngle = 0.00001;
             do {
                 power = rotationController.performPID(getAngle()); // power will be - on right turn.
                 setPower(-power,power,-power,power);
@@ -496,60 +513,7 @@ public abstract class Drivetrain extends Subsystem {
         }
 
         setPower(0);
-        sleep(250);
         resetAngle();
-
-        setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
-    }
-
-    public static void rotateToPID (double power, int targetHeading) {
-
-        setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-
-        double kP = Math.abs(power/targetHeading);
-        double kI = 0;
-        double kD = 1;
-        headingController.reset();
-        headingController.setPID(kP, kI, kD);
-        headingController.setSetpoint(targetHeading);
-        headingController.setInputRange(-180, 180);
-        headingController.setOutputRange(0, power);
-        headingController.setContinuous(true);
-        headingController.setTolerance(1);
-        headingController.enable();
-
-        tm.addData("P", kP);
-        tm.addData("I", kI);
-        tm.addData("D", kD);
-        tm.update();
-
-        updateHeading();
-        double currentHeading = getHeading(AngleUnit.DEGREES);
-        double deltaAngle = targetHeading - currentHeading;
-        if (Math.abs(deltaAngle) > 180) {
-            deltaAngle = 360 - Math.abs(deltaAngle);
-        }
-
-        // Shortest path is CW (right turn)
-        if (deltaAngle < 0) {
-            do {
-                power = headingController.performPID(getHeading(AngleUnit.DEGREES)); // power will be - on right turn.
-                setPower(-power,power,-power,power);
-                updateHeading();
-            } while (!headingController.onTarget());
-        // Shortest path is CCW (left turn)
-        } else {
-            do {
-                power = headingController.performPID(getHeading(AngleUnit.DEGREES)); // power will be + on left turn.
-                setPower(-power,power,-power,power);
-                updateHeading();
-            } while (!headingController.onTarget());
-        }
-
-        setPower(0);
-        sleep(250);
-
-        setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
     }
 
     /**
@@ -565,6 +529,54 @@ public abstract class Drivetrain extends Subsystem {
             deltaAngle = 360 - Math.abs(deltaAngle);
         }
         rotate(-deltaAngle);
+    }
+
+    /**
+     * Converts odometry ticks to inches.
+     * @param ticks
+     * @return Distance in inches
+     */
+    private static double odoTicksToInches(double ticks) {
+        return ODO_WHEEL_RADIUS * 2 * Math.PI * ODO_GEAR_RATIO * ticks / ODO_TICKS_PER_REV;
+    }
+
+    /**
+     * @return Current average encoder reading of the left and right encoders
+     */
+    private static double getOdoY() {
+        return odoTicksToInches(ODO_X_MULTIPLIER * (leftEncoder.getCurrentPosition() + rightEncoder.getCurrentPosition())/2.0);
+    }
+
+    /**
+     * @return Current encoder reading of the lateral encoder
+     */
+    private static double getOdoX() {
+        return odoTicksToInches(ODO_Y_MULTIPLIER * lateralEncoder.getCurrentPosition());
+    }
+
+    public static void odoForward(double inches) {
+
+        x = getOdoX();
+        y = getOdoY();
+
+        setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        leftEncoder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightEncoder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        lateralEncoder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        setRunMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
+        while (getOdoX() < inches) {
+            fl.setPower(normalPower);
+            fr.setPower(normalPower);
+            bl.setPower(normalPower);
+            br.setPower(normalPower);
+        }
+
+        setPower(0);
+
+        x += getOdoX();
+        y += getOdoY();
     }
 
     /**
