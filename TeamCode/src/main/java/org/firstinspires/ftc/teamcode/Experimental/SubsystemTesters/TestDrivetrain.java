@@ -147,36 +147,11 @@ public class TestDrivetrain extends LinearOpMode {
                 Constants.back--;
             }
 
-            // Rotate Left 90deg
             if (gamepad1.a && Constants.a == 0)
                 Constants.a++;
             else if (!gamepad1.a && Constants.a == 1) {
-                Drivetrain.rotate(0.5, 90);
+                Drivetrain.rotateToPID(0.5, 0);
                 Constants.a--;
-            }
-
-            // Rotate Right 90deg
-            if (gamepad1.b && Constants.b == 0)
-                Constants.b++;
-            else if (!gamepad1.b && Constants.b == 1) {
-                Drivetrain.rotate(0.5, -90);
-                Constants.b--;
-            }
-
-            // Rotate Left 360deg
-            if (gamepad1.x && Constants.x == 0)
-                Constants.x++;
-            else if (!gamepad1.x && Constants.x == 1) {
-                Drivetrain.rotate(0.5, 360);
-                Constants.x--;
-            }
-
-            // Rotate Right 360deg
-            if (gamepad1.y && Constants.y == 0)
-                Constants.y++;
-            else if (!gamepad1.y && Constants.y == 1) {
-                Drivetrain.rotate(0.5, -360);
-                Constants.y--;
             }
         }
     }

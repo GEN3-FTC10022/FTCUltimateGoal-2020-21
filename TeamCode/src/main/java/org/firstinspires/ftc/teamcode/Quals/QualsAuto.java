@@ -23,16 +23,16 @@ public class QualsAuto extends LinearOpMode {
 
         waitForStart();
 
-        Vision.scanStack(false, false);
+        Vision.scanStack(true, false);
 
         telemetry.clear();
         telemetry.addData("Rings Found", Vision.ringsFound);
         telemetry.update();
 
         // Move to launch line
-        Drivetrain.move(90,63);
+        Drivetrain.move(90,62.5);
         sleep(250);
-        Drivetrain.move(0,0.35,20);
+        Drivetrain.move(0,0.35,12);
         sleep(250);
 
         // Launch rings to high goal
@@ -43,7 +43,7 @@ public class QualsAuto extends LinearOpMode {
             // Place 1st Wobble Goal
             Drivetrain.move(90,0); // Random Line, robot does not read this for some reason
             sleep(250);
-            Drivetrain.move(90,13.5);
+            Drivetrain.move(90,12);
             sleep(250);
             Drivetrain.move(180,25);
             sleep(250);
@@ -53,16 +53,16 @@ public class QualsAuto extends LinearOpMode {
             sleep(250);
 
             // Collect 2nd Wobble Goal
-            Drivetrain.rotate(-102);
+            Drivetrain.rotate(-105);
             sleep(250);
-            Drivetrain.move(90,46);
             WobbleMech.aim();
+            Drivetrain.move(90,46);
             sleep(1000); // Wait till move is finished before collecting
             WobbleMech.collect();
             sleep(250);
 
             // Place 2nd Wobble Goal
-            Drivetrain.rotate(164);
+            Drivetrain.rotate(168);
             sleep(250);
             Drivetrain.move(90,28);
             sleep(250);
@@ -83,18 +83,17 @@ public class QualsAuto extends LinearOpMode {
             // Place 1st Wobble Goal
             Drivetrain.move(180,35);
             sleep(250);
-            Drivetrain.move(90,6);
+            Drivetrain.move(90,8);
             sleep(250);
             WobbleMech.place();
             sleep(250);
 
-            /*
             // Collect 2nd Wobble Goal
-            Drivetrain.rotate(-185);
+            Drivetrain.rotate(166.5);
             sleep(250);
-            Drivetrain.move(90,36);
             WobbleMech.aim();
-            sleep(1000);
+            Drivetrain.move(90,44);
+            sleep(250);
             WobbleMech.collect();
             sleep(250);
 
@@ -105,7 +104,6 @@ public class QualsAuto extends LinearOpMode {
             sleep(250);
             WobbleMech.place();
             sleep(250);
-             */
 
         } else { // Target Zone C
 
@@ -120,8 +118,24 @@ public class QualsAuto extends LinearOpMode {
             WobbleMech.place();
             sleep(250);
 
-            // Park at field-centric zero heading
-            Drivetrain.move(270,0.8,27);
+            // Collect 2nd Wobble Goal
+            Drivetrain.rotate(161);
+            sleep(250);
+            WobbleMech.aim();
+            Drivetrain.move(90,75);
+            sleep(250);
+            WobbleMech.collect();
+            sleep(250);
+
+            // Place 2nd Wobble Goal
+            Drivetrain.rotate(-178);
+            sleep(250);
+            Drivetrain.move(90,76);
+            sleep(250);
+            WobbleMech.place();
+            sleep(250);
+            Drivetrain.move(90,-30);
+            sleep(250);
 
         }
         sleep(30000);

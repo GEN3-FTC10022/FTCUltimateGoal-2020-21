@@ -59,8 +59,6 @@ public class QualsTeleOp1P extends LinearOpMode {
 
         telemetry.setAutoClear(true);
 
-        Shooter.resetTimer();
-
         while (opModeIsActive()) {
 
             // CONTROL MODE ========================================================================
@@ -101,8 +99,6 @@ public class QualsTeleOp1P extends LinearOpMode {
 
             // SHOOTER =============================================================================
 
-            Shooter.refreshLauncher();
-
             // Velocity
             if (gamepad1.x && Constants.x == 0)
                 Constants.x++;
@@ -121,13 +117,8 @@ public class QualsTeleOp1P extends LinearOpMode {
             if (gamepad1.right_bumper && Constants.rBumper == 0)
                 Constants.rBumper++;
             else if (!gamepad1.right_bumper && Constants.rBumper == 1) {
-                Shooter.shootSingle();
+                Shooter.launchAll(2);
                 Constants.rBumper--;
-            } else if (gamepad1.left_bumper && Constants.lBumper == 0)
-                Constants.lBumper++;
-            else if (!gamepad1.left_bumper && Constants.lBumper == 1) {
-                Shooter.shootAll();
-                Constants.lBumper--;
             }
 
             // WOBBLE MECH =========================================================================
@@ -169,7 +160,7 @@ public class QualsTeleOp1P extends LinearOpMode {
                     Constants.left++;
                 else if (!gamepad1.dpad_left && Constants.left == 1) {
                     WobbleMech.drop();
-                    Constants.right--;
+                    Constants.left--;
                 }
 
             } else if (WobbleMech.getControlMode() == WobbleMech.ControlMode.MANUAL) {
@@ -265,10 +256,6 @@ public class QualsTeleOp1P extends LinearOpMode {
             brpower *= kSlow;
 
             Drivetrain.setPower(flpower, frpower, blpower, brpower);
-
-            // TELEMETRY ===========================================================================
-
-            updateTelemetry();
         }
     }
 
@@ -302,19 +289,6 @@ public class QualsTeleOp1P extends LinearOpMode {
         telemetry.addLine("Initialization Finished");
         telemetry.update();
         sleep(1000);
-
-        // Display telemetry
-        telemetry.setAutoClear(true);
-        while(!isStarted())
-            updateTelemetry();
-    }
-
-    private void updateTelemetry() {
-        Shooter.appendTelemetry(false);
-        WobbleMech.appendTelemetry(false);
-        Intake.appendTelemetry(false);
-        Drivetrain.appendTelemetry(false);
-        telemetry.update();
     }
 }
 

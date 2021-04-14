@@ -62,6 +62,9 @@ public class TestTeleOp extends LinearOpMode {
 
         while (opModeIsActive()) {
 
+            telemetry.addData("Heading:", Drivetrain.getHeading(AngleUnit.DEGREES));
+            telemetry.update();
+
             // CONTROL MODE ========================================================================
 
             if (gamepad1.back) {
@@ -154,6 +157,8 @@ public class TestTeleOp extends LinearOpMode {
                 else if (!gamepad1.dpad_right && Constants.right == 1) {
                     WobbleMech.place();
                     Constants.right--;
+                    sleep(200);
+                    WobbleMech.reset();
                 }
 
                 // Drop Wobble Goal
@@ -161,6 +166,8 @@ public class TestTeleOp extends LinearOpMode {
                     Constants.left++;
                 else if (!gamepad1.dpad_left && Constants.left == 1) {
                     WobbleMech.drop();
+                    sleep(200);
+                    WobbleMech.reset();
                     Constants.left--;
                 }
 
@@ -290,18 +297,5 @@ public class TestTeleOp extends LinearOpMode {
         telemetry.addLine("Initialization Finished");
         telemetry.update();
         sleep(1000);
-
-        // Display telemetry
-        telemetry.setAutoClear(true);
-        while(!isStarted())
-            updateTelemetry();
-    }
-
-    private void updateTelemetry() {
-        Shooter.appendTelemetry(false);
-        WobbleMech.appendTelemetry(false);
-        Intake.appendTelemetry(false);
-        Drivetrain.appendTelemetry(false);
-        telemetry.update();
     }
 }

@@ -30,7 +30,7 @@ public abstract class Shooter extends Subsystem {
     // Launcher Constants
     public static final int ZERO_VELOCITY = 0;
     public static final int POWER_SHOT_VELOCITY = 1100; // tested
-    public static final int HIGH_GOAL_VELOCITY = 1580; // tested
+    public static final int HIGH_GOAL_VELOCITY = 1540; // tested
     public static final int[] VELOCITIES = {ZERO_VELOCITY,POWER_SHOT_VELOCITY,HIGH_GOAL_VELOCITY};
     private static int target, targetVelocity, velocityTolerance;
     private static ElapsedTime shotTimer;
