@@ -47,7 +47,7 @@ public class DriveConstants {
      */
     public static double WHEEL_RADIUS = 2; // in
     public static double GEAR_RATIO = 1; // output (wheel) speed / input (motor) speed
-    public static double TRACK_WIDTH = 13.25; // in
+    public static double TRACK_WIDTH = 16.71; // in
 
     /*
      * These are the feedforward parameters used to model the drive motor behavior. If you are using
@@ -55,9 +55,22 @@ public class DriveConstants {
      * motor encoders or have elected not to use them for velocity control, these values should be
      * empirically tuned.
      */
-    public static double kV = 1.0 / rpmToVelocity(MAX_RPM);
-    public static double kA = 0;
-    public static double kStatic = 0;
+
+    /*
+     *  Automatic Tuner Values -
+     *  kA: 0.00013
+     *  kStatic: 0.06461
+     *  kV: 0.01386
+     *
+     *  Manually Tuned Values -
+     *  kA: 0.00245
+     *  kStatic: 0.025
+     *  kV: 0.0143
+     *
+     */
+    public static double kA = 0.00245;
+    public static double kStatic = 0.025;
+    public static double kV = 0.0143;
 
     /*
      * These values are used to generate the atrjectories for you robot. To ensure proper operation,
@@ -89,7 +102,7 @@ public class DriveConstants {
      */
     public static double MAX_VEL = 60.52801845916335;
     public static double MAX_ACCEL = 60.52801845916335;
-    public static double MAX_ANG_VEL = Math.toRadians(261.7358490566038);
+    public static double MAX_ANG_VEL = Math.toRadians(265.045);
     public static double MAX_ANG_ACCEL = Math.toRadians(261.7358490566038);
 
 
