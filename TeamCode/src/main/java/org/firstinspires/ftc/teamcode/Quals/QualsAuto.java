@@ -1,9 +1,11 @@
 package org.firstinspires.ftc.teamcode.Quals;
 
+import com.acmerobotics.roadrunner.drive.Drive;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.teamcode.Subsystems.Drivetrain;
 import org.firstinspires.ftc.teamcode.Subsystems.Intake;
 import org.firstinspires.ftc.teamcode.Subsystems.Shooter;
@@ -16,6 +18,8 @@ import org.firstinspires.ftc.teamcode.Util.Subsystem;
 
 public class QualsAuto extends LinearOpMode {
 
+    int stackHeight;
+
     @Override
     public void runOpMode() {
 
@@ -23,7 +27,7 @@ public class QualsAuto extends LinearOpMode {
 
         waitForStart();
 
-        Vision.scanStack(true, false);
+        Vision.scanStack(false, false);
 
         telemetry.clear();
         telemetry.addData("Rings Found", Vision.ringsFound);
@@ -53,10 +57,10 @@ public class QualsAuto extends LinearOpMode {
             sleep(250);
 
             // Collect 2nd Wobble Goal
-            Drivetrain.rotate(-105);
+            Drivetrain.rotate(-110);
             sleep(250);
             WobbleMech.aim();
-            Drivetrain.move(90,46);
+            Drivetrain.move(90,44.5);
             sleep(1000); // Wait till move is finished before collecting
             WobbleMech.collect();
             sleep(250);
@@ -92,15 +96,15 @@ public class QualsAuto extends LinearOpMode {
             Drivetrain.rotate(166.5);
             sleep(250);
             WobbleMech.aim();
-            Drivetrain.move(90,44);
+            Drivetrain.move(90,41.5);
             sleep(250);
             WobbleMech.collect();
             sleep(250);
 
             // Place 2nd Wobble Goal
-            Drivetrain.rotate(0.5, 185);
+            Drivetrain.rotate(0.5, 186);
             sleep(250);
-            Drivetrain.move(90,0.8, 42);
+            Drivetrain.move(90,0.8, 44);
             sleep(250);
             WobbleMech.place();
             sleep(250);
@@ -128,7 +132,7 @@ public class QualsAuto extends LinearOpMode {
             sleep(250);
 
             // Place 2nd Wobble Goal
-            Drivetrain.rotate(-178);
+            Drivetrain.rotate(-180       );
             sleep(250);
             Drivetrain.move(90,76);
             sleep(250);
